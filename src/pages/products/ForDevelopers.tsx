@@ -63,7 +63,7 @@ export default function ForDevelopers() {
               <br />
               <span className="gradient-text">Infrastructure</span>
             </h1>
-            <p className="text-light-bg/60 text-lg md:text-xl leading-relaxed mb-8">
+            <p className="text-gray-500 dark:text-light-bg/60 text-lg md:text-xl leading-relaxed mb-8">
               Integrate modular AI audio generation into your applications, games, and platforms. Production-ready API with multi-format output and cloud-scale delivery.
             </p>
             <div className="flex flex-wrap gap-4">
@@ -87,15 +87,15 @@ export default function ForDevelopers() {
             subtitle="Simple, powerful API for text-to-audio, MIDI, and preset generation."
           />
           <div className="max-w-4xl mx-auto">
-            <div className="bg-dark-bg/60 border border-white/5 rounded-2xl overflow-hidden">
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5">
+            <div className="bg-gray-100 dark:bg-dark-bg/60 border border-gray-200 dark:border-white/5 rounded-2xl overflow-hidden">
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-200 dark:border-white/5">
                 <div className="w-3 h-3 rounded-full bg-accent-pink/60" />
                 <div className="w-3 h-3 rounded-full bg-yellow-400/60" />
                 <div className="w-3 h-3 rounded-full bg-green-400/60" />
-                <span className="ml-3 text-xs text-light-bg/30 font-mono">generate.js</span>
+                <span className="ml-3 text-xs text-gray-300 dark:text-light-bg/30 font-mono">generate.js</span>
               </div>
               <pre className="p-6 overflow-x-auto text-sm leading-relaxed">
-                <code className="text-light-bg/70 font-mono">{codeExample}</code>
+                <code className="text-gray-600 dark:text-light-bg/70 font-mono">{codeExample}</code>
               </pre>
             </div>
           </div>
@@ -117,7 +117,7 @@ export default function ForDevelopers() {
                   <f.icon className="w-5 h-5 text-accent-cyan" />
                 </div>
                 <h3 className="font-poppins font-semibold mb-2">{f.title}</h3>
-                <p className="text-light-bg/50 text-sm leading-relaxed">{f.desc}</p>
+                <p className="text-gray-500 dark:text-light-bg/50 text-sm leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -151,7 +151,7 @@ export default function ForDevelopers() {
       <section className="section-padding">
         <div className="container-max text-center">
           <h2 className="font-poppins font-bold text-3xl md:text-4xl mb-4">Start Building Today</h2>
-          <p className="text-light-bg/60 max-w-xl mx-auto mb-8">
+          <p className="text-gray-500 dark:text-light-bg/60 max-w-xl mx-auto mb-8">
             Get API access and start integrating AI audio generation into your product.
           </p>
           <Link to="/api" className="btn-primary px-8 py-4 text-base">

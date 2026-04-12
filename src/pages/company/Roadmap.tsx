@@ -93,7 +93,7 @@ export default function Roadmap() {
                 }`}
               >
                 {/* Dot */}
-                <div className="absolute left-6 md:left-1/2 -translate-x-1/2 w-4 h-4 rounded-full border-2 border-accent-pink bg-dark-deeper z-10">
+                <div className="absolute left-6 md:left-1/2 -translate-x-1/2 w-4 h-4 rounded-full border-2 border-accent-pink bg-white dark:bg-dark-deeper z-10">
                   {m.status === "current" && (
                     <div className="absolute inset-0 rounded-full bg-accent-pink animate-ping opacity-30" />
                   )}
@@ -110,15 +110,15 @@ export default function Roadmap() {
                       {m.status === "current" ? (
                         <Clock className="w-3.5 h-3.5 text-accent-pink" />
                       ) : (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-light-bg/30" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-gray-300 dark:text-light-bg/30" />
                       )}
-                      <span className={`text-xs font-semibold ${m.status === "current" ? "text-accent-pink" : "text-light-bg/40"}`}>
+                      <span className={`text-xs font-semibold ${m.status === "current" ? "text-accent-pink" : "text-gray-400 dark:text-light-bg/40"}`}>
                         {m.quarter}
                       </span>
                     </div>
                     <ul className="space-y-2">
                       {m.items.map((item) => (
-                        <li key={item} className={`text-sm text-light-bg/50 flex items-start gap-2 ${i % 2 === 0 ? "md:justify-end" : ""}`}>
+                        <li key={item} className={`text-sm text-gray-500 dark:text-light-bg/50 flex items-start gap-2 ${i % 2 === 0 ? "md:justify-end" : ""}`}>
                           <span className="w-1 h-1 rounded-full bg-accent-cyan mt-2 flex-shrink-0" />
                           {item}
                         </li>

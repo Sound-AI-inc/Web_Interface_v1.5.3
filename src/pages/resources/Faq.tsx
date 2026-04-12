@@ -69,7 +69,7 @@ export default function Faq() {
                   />
                 </div>
                 {openIndex === i && (
-                  <p className="mt-4 text-light-bg/50 text-sm leading-relaxed">{faq.a}</p>
+                  <p className="mt-4 text-gray-500 dark:text-light-bg/50 text-sm leading-relaxed">{faq.a}</p>
                 )}
               </div>
             ))}

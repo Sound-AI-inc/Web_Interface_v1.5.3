@@ -39,11 +39,11 @@ export default function Documentation() {
           {/* Search */}
           <div className="max-w-2xl mx-auto mb-12">
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-light-bg/30" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 dark:text-light-bg/30" />
               <input
                 type="text"
                 placeholder="Search documentation..."
-                className="w-full bg-dark-bg/60 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-sm text-light-bg placeholder:text-light-bg/30 focus:outline-none focus:border-accent-cyan/50"
+                className="w-full bg-gray-100 dark:bg-dark-bg/60 border border-gray-200 dark:border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-sm text-gray-900 dark:text-light-bg placeholder:text-gray-300 dark:text-light-bg/30 focus:outline-none focus:border-accent-cyan/50"
               />
             </div>
           </div>
@@ -56,19 +56,19 @@ export default function Documentation() {
                   <div className="w-9 h-9 rounded-lg bg-accent-cyan/10 flex items-center justify-center group-hover:bg-accent-cyan/20 transition-colors">
                     <s.icon className="w-4.5 h-4.5 text-accent-cyan" />
                   </div>
-                  <span className="px-2 py-0.5 text-xs rounded-full bg-white/5 text-light-bg/30">{s.tag}</span>
+                  <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-white/5 text-gray-300 dark:text-light-bg/30">{s.tag}</span>
                 </div>
                 <h3 className="font-poppins font-semibold text-sm mb-1 group-hover:text-accent-cyan transition-colors">
                   {s.title}
                 </h3>
-                <p className="text-light-bg/40 text-xs leading-relaxed">{s.desc}</p>
+                <p className="text-gray-400 dark:text-light-bg/40 text-xs leading-relaxed">{s.desc}</p>
               </Link>
             ))}
           </div>
 
           {/* Quick links */}
           <div className="mt-12 text-center">
-            <p className="text-light-bg/40 text-sm mb-4">Need help getting started?</p>
+            <p className="text-gray-400 dark:text-light-bg/40 text-sm mb-4">Need help getting started?</p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link to="/api" className="btn-primary text-xs">
                 API Reference <ArrowRight className="w-3.5 h-3.5 ml-1" />

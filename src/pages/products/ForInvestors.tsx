@@ -84,7 +84,7 @@ export default function ForInvestors() {
               <br />
               <span className="gradient-text">Music Production AI</span>
             </h1>
-            <p className="text-light-bg/60 text-lg md:text-xl leading-relaxed mb-8">
+            <p className="text-gray-500 dark:text-light-bg/60 text-lg md:text-xl leading-relaxed mb-8">
               SoundAI is building the modular AI audio infrastructure for the next generation of music creators, developers, and enterprises.
             </p>
             <Link to="/support" className="btn-primary">
@@ -108,7 +108,7 @@ export default function ForInvestors() {
                 </div>
                 <ul className="space-y-2.5">
                   {s.items.map((item) => (
-                    <li key={item} className="flex items-start gap-2 text-sm text-light-bg/50">
+                    <li key={item} className="flex items-start gap-2 text-sm text-gray-500 dark:text-light-bg/50">
                       <span className="w-1.5 h-1.5 rounded-full bg-accent-pink mt-1.5 flex-shrink-0" />
                       {item}
                     </li>
@@ -135,7 +135,7 @@ export default function ForInvestors() {
                   <bm.icon className="w-6 h-6 text-accent-cyan" />
                 </div>
                 <h3 className="font-poppins font-semibold text-lg mb-2">{bm.title}</h3>
-                <p className="text-light-bg/50 text-sm">{bm.desc}</p>
+                <p className="text-gray-500 dark:text-light-bg/50 text-sm">{bm.desc}</p>
               </div>
             ))}
           </div>
@@ -160,7 +160,7 @@ export default function ForInvestors() {
               ].map((stat) => (
                 <div key={stat.label}>
                   <p className="font-poppins font-bold text-2xl gradient-text">{stat.value}</p>
-                  <p className="text-light-bg/40 text-xs mt-1">{stat.label}</p>
+                  <p className="text-gray-400 dark:text-light-bg/40 text-xs mt-1">{stat.label}</p>
                 </div>
               ))}
             </div>
@@ -182,7 +182,7 @@ export default function ForInvestors() {
             </div>
             <ul className="space-y-3">
               {risks.map((risk) => (
-                <li key={risk} className="flex items-start gap-2 text-sm text-light-bg/50">
+                <li key={risk} className="flex items-start gap-2 text-sm text-gray-500 dark:text-light-bg/50">
                   <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-1.5 flex-shrink-0" />
                   {risk}
                 </li>
@@ -195,15 +195,15 @@ export default function ForInvestors() {
       {/* Disclaimer + CTA */}
       <section className="section-padding">
         <div className="container-max max-w-4xl text-center">
-          <div className="bg-dark-bg/40 border border-white/5 rounded-xl p-6 mb-8">
-            <p className="text-light-bg/40 text-xs leading-relaxed">
+          <div className="bg-gray-100 dark:bg-dark-bg/40 border border-gray-200 dark:border-white/5 rounded-xl p-6 mb-8">
+            <p className="text-gray-400 dark:text-light-bg/40 text-xs leading-relaxed">
               This material is for informational purposes only and does not constitute an offer to sell securities.
               SoundAI does not make forward-looking statements or financial guarantees. All market projections are
               based on publicly available third-party research and are subject to change.
             </p>
           </div>
           <h2 className="font-poppins font-bold text-3xl mb-4">Learn More</h2>
-          <p className="text-light-bg/60 max-w-xl mx-auto mb-8">
+          <p className="text-gray-500 dark:text-light-bg/60 max-w-xl mx-auto mb-8">
             Interested in learning more about SoundAI's vision and growth trajectory?
           </p>
           <Link to="/support" className="btn-primary px-8 py-4 text-base">

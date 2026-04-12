@@ -76,21 +76,21 @@ export default function ForUsers() {
           />
 
           {/* UI Mockup */}
-          <div className="max-w-4xl mx-auto bg-dark-bg/40 backdrop-blur border border-white/5 rounded-2xl p-6 md:p-8">
+          <div className="max-w-4xl mx-auto bg-gray-100 dark:bg-dark-bg/40 backdrop-blur border border-gray-200 dark:border-white/5 rounded-2xl p-6 md:p-8">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-3 h-3 rounded-full bg-accent-pink/60" />
               <div className="w-3 h-3 rounded-full bg-yellow-400/60" />
               <div className="w-3 h-3 rounded-full bg-green-400/60" />
-              <span className="ml-3 text-xs text-light-bg/30 font-mono">SoundAI Studio</span>
+              <span className="ml-3 text-xs text-gray-300 dark:text-light-bg/30 font-mono">SoundAI Studio</span>
             </div>
-            <div className="bg-dark-deeper/60 rounded-lg p-4 border border-white/5 mb-4">
+            <div className="bg-gray-50 dark:bg-dark-deeper/60 rounded-lg p-4 border border-gray-200 dark:border-white/5 mb-4">
               <div className="flex items-center gap-3">
                 <Zap className="w-5 h-5 text-accent-pink" />
                 <input
                   type="text"
                   disabled
                   value="Lo-fi hip-hop chords, 85 BPM, Eb major, dusty vinyl texture..."
-                  className="flex-1 bg-transparent text-light-bg/70 text-sm font-mono outline-none"
+                  className="flex-1 bg-transparent text-gray-600 dark:text-light-bg/70 text-sm font-mono outline-none"
                 />
                 <button className="btn-primary text-xs px-4 py-1.5">Generate</button>
               </div>
@@ -102,12 +102,12 @@ export default function ForUsers() {
                 { label: "Synth Preset", type: ".fxp", size: "12 KB", color: "bg-purple-400/10 text-purple-400" },
                 { label: "Metadata", type: ".json", size: "1 KB", color: "bg-yellow-400/10 text-yellow-400" },
               ].map((item) => (
-                <div key={item.label} className="bg-dark-bg/60 border border-white/5 rounded-lg p-3">
+                <div key={item.label} className="bg-gray-100 dark:bg-dark-bg/60 border border-gray-200 dark:border-white/5 rounded-lg p-3">
                   <div className={`w-8 h-8 rounded-md ${item.color.split(" ")[0]} flex items-center justify-center mb-2`}>
                     <FileAudio className={`w-4 h-4 ${item.color.split(" ")[1]}`} />
                   </div>
                   <p className="text-xs font-semibold">{item.label}</p>
-                  <p className="text-xs text-light-bg/30 font-mono">{item.type} · {item.size}</p>
+                  <p className="text-xs text-gray-300 dark:text-light-bg/30 font-mono">{item.type} · {item.size}</p>
                 </div>
               ))}
             </div>
@@ -130,7 +130,7 @@ export default function ForUsers() {
                   <cap.icon className="w-5 h-5 text-accent-pink" />
                 </div>
                 <h3 className="font-poppins font-semibold mb-2">{cap.label}</h3>
-                <p className="text-light-bg/50 text-sm leading-relaxed">{cap.desc}</p>
+                <p className="text-gray-500 dark:text-light-bg/50 text-sm leading-relaxed">{cap.desc}</p>
               </div>
             ))}
           </div>
@@ -152,7 +152,7 @@ export default function ForUsers() {
                 </div>
                 <div>
                   <h3 className="font-poppins font-semibold text-xl mb-2">{fb.title}</h3>
-                  <p className="text-light-bg/50 leading-relaxed">{fb.desc}</p>
+                  <p className="text-gray-500 dark:text-light-bg/50 leading-relaxed">{fb.desc}</p>
                 </div>
               </div>
             ))}
@@ -164,7 +164,7 @@ export default function ForUsers() {
       <section className="section-padding">
         <div className="container-max text-center">
           <h2 className="font-poppins font-bold text-3xl md:text-4xl mb-4">Create Your First Asset</h2>
-          <p className="text-light-bg/60 max-w-xl mx-auto mb-8">
+          <p className="text-gray-500 dark:text-light-bg/60 max-w-xl mx-auto mb-8">
             Start generating production-ready audio, MIDI, and presets from natural language.
           </p>
           <Link to="/about" className="btn-primary px-8 py-4 text-base">

@@ -20,20 +20,20 @@ export default function LegalInfo() {
             </div>
             <div className="grid md:grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="text-light-bg/40 mb-1">Legal Entity</p>
-                <p className="text-light-bg/70">SoundAI Inc.</p>
+                <p className="text-gray-400 dark:text-light-bg/40 mb-1">Legal Entity</p>
+                <p className="text-gray-600 dark:text-light-bg/70">SoundAI Inc.</p>
               </div>
               <div>
-                <p className="text-light-bg/40 mb-1">Incorporation</p>
-                <p className="text-light-bg/70">State of Delaware, United States</p>
+                <p className="text-gray-400 dark:text-light-bg/40 mb-1">Incorporation</p>
+                <p className="text-gray-600 dark:text-light-bg/70">State of Delaware, United States</p>
               </div>
               <div>
-                <p className="text-light-bg/40 mb-1">Type</p>
-                <p className="text-light-bg/70">C-Corporation</p>
+                <p className="text-gray-400 dark:text-light-bg/40 mb-1">Type</p>
+                <p className="text-gray-600 dark:text-light-bg/70">C-Corporation</p>
               </div>
               <div>
-                <p className="text-light-bg/40 mb-1">Contact</p>
-                <p className="text-light-bg/70">legal@soundai.studio</p>
+                <p className="text-gray-400 dark:text-light-bg/40 mb-1">Contact</p>
+                <p className="text-gray-600 dark:text-light-bg/70">legal@soundai.studio</p>
               </div>
             </div>
           </div>
@@ -44,7 +44,7 @@ export default function LegalInfo() {
               <Globe className="w-5 h-5 text-accent-cyan" />
               <h3 className="font-poppins font-semibold text-lg">Regulatory Compliance</h3>
             </div>
-            <div className="space-y-3 text-sm text-light-bg/50 leading-relaxed">
+            <div className="space-y-3 text-sm text-gray-500 dark:text-light-bg/50 leading-relaxed">
               <p>
                 SoundAI complies with applicable data protection regulations including the General Data
                 Protection Regulation (GDPR) and the California Consumer Privacy Act (CCPA).
@@ -65,7 +65,7 @@ export default function LegalInfo() {
               <Shield className="w-5 h-5 text-accent-pink" />
               <h3 className="font-poppins font-semibold text-lg">Intellectual Property</h3>
             </div>
-            <div className="space-y-3 text-sm text-light-bg/50 leading-relaxed">
+            <div className="space-y-3 text-sm text-gray-500 dark:text-light-bg/50 leading-relaxed">
               <p>
                 SoundAI's trademarks, logos, and brand assets are protected under applicable trademark laws.
                 Use of SoundAI's brand assets requires prior written approval.
@@ -83,7 +83,7 @@ export default function LegalInfo() {
               <AlertTriangle className="w-5 h-5 text-yellow-400" />
               <h3 className="font-poppins font-semibold text-lg">Disclaimers</h3>
             </div>
-            <div className="space-y-3 text-sm text-light-bg/50 leading-relaxed">
+            <div className="space-y-3 text-sm text-gray-500 dark:text-light-bg/50 leading-relaxed">
               <p>
                 SoundAI does not make claims regarding regulatory approval of its AI models or generated
                 content in any specific jurisdiction. Users are responsible for ensuring compliance with

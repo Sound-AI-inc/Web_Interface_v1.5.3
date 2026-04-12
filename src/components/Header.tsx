@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X, ChevronDown, Sun, Moon } from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
 
 const navItems = [
   {
@@ -44,120 +45,143 @@ const navItems = [
 ];
 
 export default function Header() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [openSection, setOpenSection] = useState<string | null>(null);
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-dark-deeper/80 backdrop-blur-xl border-b border-white/5">
-      <div className="container-max flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="flex items-center gap-2 group">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-pink to-accent-cyan flex items-center justify-center">
-            <span className="text-white font-poppins font-bold text-sm">S</span>
-          </div>
-          <span className="font-poppins font-bold text-lg text-light-bg group-hover:text-accent-pink transition-colors">
-            SoundAI
-          </span>
-        </Link>
-
-        {/* Desktop nav */}
-        <nav className="hidden lg:flex items-center gap-1">
-          {navItems.map((item) => (
-            <div
-              key={item.label}
-              className="relative"
-              onMouseEnter={() => setOpenDropdown(item.label)}
-              onMouseLeave={() => setOpenDropdown(null)}
+    <>
+      {/* Top bar */}
+      <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 dark:bg-dark-deeper/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/5 transition-colors">
+        <div className="container-max flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="text-gray-600 dark:text-light-bg/70 hover:text-gray-900 dark:hover:text-light-bg transition-colors"
+              aria-label="Open menu"
             >
-              <button className="flex items-center gap-1 px-3 py-2 text-sm text-light-bg/70 hover:text-light-bg transition-colors font-medium">
+              <Menu className="w-5 h-5" />
+            </button>
+            <Link to="/" className="flex items-center gap-2 group">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-pink to-accent-cyan flex items-center justify-center">
+                <span className="text-white font-poppins font-bold text-sm">S</span>
+              </div>
+              <span className="font-poppins font-bold text-lg text-gray-900 dark:text-light-bg group-hover:text-accent-pink transition-colors">
+                SoundAI
+              </span>
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-500 dark:text-light-bg/60 hover:text-accent-pink dark:hover:text-accent-pink bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-all"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+            <Link to="/products/users" className="btn-secondary text-xs px-4 py-2 hidden sm:inline-flex">
+              Start Creating
+            </Link>
+            <Link to="/about" className="btn-primary text-xs px-4 py-2">
+              Join Beta
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar drawer */}
+      <aside
+        className={`fixed top-0 left-0 z-50 h-full w-80 max-w-[85vw] bg-white dark:bg-dark-deeper border-r border-gray-200 dark:border-white/10 shadow-2xl transition-transform duration-300 ease-in-out overflow-y-auto ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between h-16 px-5 border-b border-gray-200 dark:border-white/5">
+          <Link to="/" className="flex items-center gap-2" onClick={() => setSidebarOpen(false)}>
+            <div className="w-7 h-7 rounded-md bg-gradient-to-br from-accent-pink to-accent-cyan flex items-center justify-center">
+              <span className="text-white font-poppins font-bold text-xs">S</span>
+            </div>
+            <span className="font-poppins font-bold text-base text-gray-900 dark:text-light-bg">SoundAI</span>
+          </Link>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 dark:text-light-bg/60 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+            aria-label="Close menu"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <nav className="px-3 py-4 space-y-1">
+          <Link
+            to="/"
+            className={`block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              location.pathname === "/"
+                ? "text-accent-pink bg-accent-pink/5"
+                : "text-gray-700 dark:text-light-bg/70 hover:text-gray-900 dark:hover:text-light-bg hover:bg-gray-50 dark:hover:bg-white/5"
+            }`}
+            onClick={() => setSidebarOpen(false)}
+          >
+            Home
+          </Link>
+
+          {navItems.map((item) => (
+            <div key={item.label}>
+              <button
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-light-bg/70 hover:text-gray-900 dark:hover:text-light-bg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                onClick={() => setOpenSection(openSection === item.label ? null : item.label)}
+              >
                 {item.label}
-                <ChevronDown className="w-3.5 h-3.5" />
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform duration-200 ${
+                    openSection === item.label ? "rotate-180" : ""
+                  }`}
+                />
               </button>
-              {openDropdown === item.label && (
-                <div className="absolute top-full left-0 mt-1 w-52 bg-dark-bg border border-white/10 rounded-xl shadow-2xl shadow-black/40 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div
+                className={`overflow-hidden transition-all duration-200 ${
+                  openSection === item.label ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                }`}
+              >
+                <div className="pl-3 py-1 space-y-0.5">
                   {item.children.map((child) => (
                     <Link
                       key={child.to}
                       to={child.to}
-                      className={`block px-4 py-2.5 text-sm transition-colors ${
+                      className={`block px-3 py-2 rounded-md text-sm transition-colors ${
                         location.pathname === child.to
-                          ? "text-accent-pink bg-accent-pink/5"
-                          : "text-light-bg/70 hover:text-light-bg hover:bg-white/5"
+                          ? "text-accent-pink bg-accent-pink/5 font-medium"
+                          : "text-gray-500 dark:text-light-bg/50 hover:text-accent-pink hover:bg-gray-50 dark:hover:bg-white/5"
                       }`}
+                      onClick={() => setSidebarOpen(false)}
                     >
                       {child.label}
                     </Link>
                   ))}
                 </div>
-              )}
+              </div>
             </div>
           ))}
         </nav>
 
-        <div className="hidden lg:flex items-center gap-3">
-          <Link to="/products/users" className="btn-secondary text-xs px-4 py-2">
+        <div className="px-5 py-4 border-t border-gray-200 dark:border-white/5">
+          <Link to="/products/users" className="btn-primary w-full text-xs mb-2" onClick={() => setSidebarOpen(false)}>
             Start Creating
           </Link>
-          <Link to="/about" className="btn-primary text-xs px-4 py-2">
+          <Link to="/about" className="btn-secondary w-full text-xs" onClick={() => setSidebarOpen(false)}>
             Join Beta
           </Link>
         </div>
-
-        {/* Mobile toggle */}
-        <button
-          className="lg:hidden text-light-bg/70 hover:text-light-bg"
-          onClick={() => setMobileOpen(!mobileOpen)}
-        >
-          {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
-      </div>
-
-      {/* Mobile nav */}
-      {mobileOpen && (
-        <div className="lg:hidden bg-dark-deeper border-t border-white/5 max-h-screen overflow-y-auto">
-          <div className="px-4 py-4 space-y-2">
-            {navItems.map((item) => (
-              <div key={item.label}>
-                <button
-                  className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-light-bg/70"
-                  onClick={() =>
-                    setOpenDropdown(openDropdown === item.label ? null : item.label)
-                  }
-                >
-                  {item.label}
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform ${
-                      openDropdown === item.label ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-                {openDropdown === item.label && (
-                  <div className="pl-4 space-y-1">
-                    {item.children.map((child) => (
-                      <Link
-                        key={child.to}
-                        to={child.to}
-                        className="block px-3 py-2 text-sm text-light-bg/60 hover:text-accent-pink"
-                        onClick={() => setMobileOpen(false)}
-                      >
-                        {child.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-            <div className="pt-4 flex flex-col gap-2">
-              <Link to="/products/users" className="btn-secondary text-xs" onClick={() => setMobileOpen(false)}>
-                Start Creating
-              </Link>
-              <Link to="/about" className="btn-primary text-xs" onClick={() => setMobileOpen(false)}>
-                Join Beta
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
-    </header>
+      </aside>
+    </>
   );
 }

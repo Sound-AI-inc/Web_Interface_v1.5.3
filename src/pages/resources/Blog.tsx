@@ -69,7 +69,7 @@ export default function Blog() {
                 className={`px-4 py-2 rounded-full text-xs font-semibold transition-colors ${
                   i === 0
                     ? "bg-accent-pink text-white"
-                    : "bg-white/5 text-light-bg/50 hover:text-light-bg hover:bg-white/10"
+                    : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-light-bg/50 hover:text-gray-900 dark:text-light-bg hover:bg-gray-100 dark:bg-white/10"
                 }`}
               >
                 {cat}
@@ -88,9 +88,9 @@ export default function Blog() {
                 <h3 className="font-poppins font-semibold text-lg mb-2 group-hover:text-accent-pink transition-colors leading-snug">
                   {post.title}
                 </h3>
-                <p className="text-light-bg/50 text-sm leading-relaxed flex-1 mb-4">{post.excerpt}</p>
+                <p className="text-gray-500 dark:text-light-bg/50 text-sm leading-relaxed flex-1 mb-4">{post.excerpt}</p>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs text-light-bg/30">
+                  <div className="flex items-center gap-2 text-xs text-gray-300 dark:text-light-bg/30">
                     <Clock className="w-3 h-3" />
                     <span>{post.date}</span>
                     <span>·</span>

@@ -62,22 +62,22 @@ export default function Team() {
                 </div>
                 <h3 className="font-poppins font-semibold text-lg">{member.name}</h3>
                 <p className="text-accent-pink text-sm font-medium mb-3">{member.role}</p>
-                <p className="text-light-bg/50 text-sm leading-relaxed mb-4">{member.bio}</p>
+                <p className="text-gray-500 dark:text-light-bg/50 text-sm leading-relaxed mb-4">{member.bio}</p>
                 <div className="flex flex-wrap gap-1.5 mb-4">
                   {member.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="px-2 py-0.5 text-xs rounded-full bg-white/5 text-light-bg/40 border border-white/5"
+                      className="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-white/5 text-gray-400 dark:text-light-bg/40 border border-gray-200 dark:border-white/5"
                     >
                       {tag}
                     </span>
                   ))}
                 </div>
                 <div className="flex gap-3">
-                  <a href="#" className="text-light-bg/30 hover:text-accent-cyan transition-colors">
+                  <a href="#" className="text-gray-300 dark:text-light-bg/30 hover:text-accent-cyan transition-colors">
                     <Linkedin className="w-4 h-4" />
                   </a>
-                  <a href="#" className="text-light-bg/30 hover:text-accent-cyan transition-colors">
+                  <a href="#" className="text-gray-300 dark:text-light-bg/30 hover:text-accent-cyan transition-colors">
                     <Twitter className="w-4 h-4" />
                   </a>
                 </div>

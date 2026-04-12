@@ -81,7 +81,7 @@ export default function Api() {
             <h1 className="font-poppins font-extrabold text-4xl md:text-5xl leading-tight mb-6">
               SoundAI <span className="gradient-text">API</span>
             </h1>
-            <p className="text-light-bg/60 text-lg leading-relaxed mb-8">
+            <p className="text-gray-500 dark:text-light-bg/60 text-lg leading-relaxed mb-8">
               REST and GraphQL endpoints for AI audio generation. JSON responses, secure authentication, and cloud-hosted asset delivery.
             </p>
             <div className="flex flex-wrap gap-4">
@@ -109,7 +109,7 @@ export default function Api() {
               <div key={item.label} className="card text-center py-6">
                 <item.icon className="w-7 h-7 text-accent-cyan mx-auto mb-3" />
                 <p className="font-poppins font-semibold text-sm">{item.label}</p>
-                <p className="text-light-bg/40 text-xs mt-1">{item.desc}</p>
+                <p className="text-gray-400 dark:text-light-bg/40 text-xs mt-1">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -136,8 +136,8 @@ export default function Api() {
                 >
                   {ep.method}
                 </span>
-                <code className="font-mono text-sm text-light-bg/70 flex-1">{ep.path}</code>
-                <p className="text-light-bg/40 text-xs sm:text-right sm:max-w-xs">{ep.desc}</p>
+                <code className="font-mono text-sm text-gray-600 dark:text-light-bg/70 flex-1">{ep.path}</code>
+                <p className="text-gray-400 dark:text-light-bg/40 text-xs sm:text-right sm:max-w-xs">{ep.desc}</p>
               </div>
             ))}
           </div>
@@ -153,15 +153,15 @@ export default function Api() {
             subtitle="JSON response from the /v1/generate endpoint."
           />
           <div className="max-w-4xl mx-auto">
-            <div className="bg-dark-bg/60 border border-white/5 rounded-2xl overflow-hidden">
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5">
+            <div className="bg-gray-100 dark:bg-dark-bg/60 border border-gray-200 dark:border-white/5 rounded-2xl overflow-hidden">
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-200 dark:border-white/5">
                 <div className="w-3 h-3 rounded-full bg-accent-pink/60" />
                 <div className="w-3 h-3 rounded-full bg-yellow-400/60" />
                 <div className="w-3 h-3 rounded-full bg-green-400/60" />
-                <span className="ml-3 text-xs text-light-bg/30 font-mono">200 OK — application/json</span>
+                <span className="ml-3 text-xs text-gray-300 dark:text-light-bg/30 font-mono">200 OK — application/json</span>
               </div>
               <pre className="p-6 overflow-x-auto text-sm leading-relaxed">
-                <code className="text-light-bg/70 font-mono">{responseExample}</code>
+                <code className="text-gray-600 dark:text-light-bg/70 font-mono">{responseExample}</code>
               </pre>
             </div>
           </div>

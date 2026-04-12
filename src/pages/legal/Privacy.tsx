@@ -52,14 +52,14 @@ export default function Privacy() {
     <section className="section-padding">
       <div className="container-max max-w-4xl">
         <SectionHeading badge="Legal" title="Privacy Policy" />
-        <p className="text-light-bg/40 text-sm mb-8 text-center">
+        <p className="text-gray-400 dark:text-light-bg/40 text-sm mb-8 text-center">
           Last updated: March 1, 2026 · GDPR & CCPA Compliant
         </p>
         <div className="space-y-8">
           {sections.map((s) => (
             <div key={s.title}>
               <h3 className="font-poppins font-semibold text-lg mb-3">{s.title}</h3>
-              <p className="text-light-bg/50 text-sm leading-relaxed">{s.content}</p>
+              <p className="text-gray-500 dark:text-light-bg/50 text-sm leading-relaxed">{s.content}</p>
             </div>
           ))}
         </div>

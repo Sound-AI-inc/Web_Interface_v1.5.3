@@ -17,7 +17,7 @@ export default function SectionHeading({ badge, title, subtitle, centered = true
         {title}
       </h2>
       {subtitle && (
-        <p className="text-light-bg/60 max-w-2xl text-base md:text-lg leading-relaxed mx-auto">
+        <p className="text-gray-500 dark:text-light-bg/60 max-w-2xl text-base md:text-lg leading-relaxed mx-auto">
           {subtitle}
         </p>
       )}

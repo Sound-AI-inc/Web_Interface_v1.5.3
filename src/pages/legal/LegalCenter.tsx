@@ -44,7 +44,7 @@ export default function LegalCenter() {
                 </div>
                 <h3 className="font-poppins font-semibold text-lg">{t.title}</h3>
               </div>
-              <p className="text-light-bg/50 text-sm leading-relaxed">{t.content}</p>
+              <p className="text-gray-500 dark:text-light-bg/50 text-sm leading-relaxed">{t.content}</p>
             </div>
           ))}
         </div>

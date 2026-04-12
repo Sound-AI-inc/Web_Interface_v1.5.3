@@ -57,7 +57,7 @@ export default function About() {
               Accelerate Music Production with{" "}
               <span className="gradient-text">Modular AI</span>
             </h1>
-            <p className="text-light-bg/60 text-lg md:text-xl leading-relaxed mb-8">
+            <p className="text-gray-500 dark:text-light-bg/60 text-lg md:text-xl leading-relaxed mb-8">
               SoundAI generates editable samples, MIDI patterns, VST presets, and structured metadata
               from natural language prompts — purpose-built for real production workflows in professional DAWs.
             </p>
@@ -87,7 +87,7 @@ export default function About() {
                 {constraints.map((c, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <AlertTriangle className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-light-bg/60 text-sm">{c}</p>
+                    <p className="text-gray-500 dark:text-light-bg/60 text-sm">{c}</p>
                   </div>
                 ))}
               </div>
@@ -104,7 +104,7 @@ export default function About() {
                     <b.icon className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
                     <div>
                       <h4 className="font-poppins font-semibold text-sm">{b.title}</h4>
-                      <p className="text-light-bg/50 text-sm">{b.desc}</p>
+                      <p className="text-gray-500 dark:text-light-bg/50 text-sm">{b.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -124,10 +124,10 @@ export default function About() {
           />
           <div className="max-w-4xl mx-auto">
             {/* Prompt input */}
-            <div className="bg-dark-bg/60 border border-white/5 rounded-xl p-6 mb-6 text-center">
+            <div className="bg-gray-100 dark:bg-dark-bg/60 border border-gray-200 dark:border-white/5 rounded-xl p-6 mb-6 text-center">
               <Sparkles className="w-8 h-8 text-accent-pink mx-auto mb-3" />
               <p className="font-poppins font-semibold text-lg mb-1">Natural Language Prompt</p>
-              <p className="text-light-bg/40 text-sm italic">
+              <p className="text-gray-400 dark:text-light-bg/40 text-sm italic">
                 "Warm analog pad, 90 BPM, C minor, with slow attack and ambient tail"
               </p>
             </div>
@@ -148,7 +148,7 @@ export default function About() {
                 <div key={item.label} className="card text-center">
                   <item.icon className={`w-8 h-8 ${item.color} mx-auto mb-3`} />
                   <h4 className="font-poppins font-semibold text-sm mb-1">{item.label}</h4>
-                  <p className="text-light-bg/40 text-xs font-mono">{item.format}</p>
+                  <p className="text-gray-400 dark:text-light-bg/40 text-xs font-mono">{item.format}</p>
                 </div>
               ))}
             </div>
@@ -158,7 +158,7 @@ export default function About() {
               <Layers className="w-5 h-5 text-accent-cyan mt-0.5 flex-shrink-0" />
               <div>
                 <h4 className="font-poppins font-semibold text-sm text-accent-cyan">Asset Synchronization</h4>
-                <p className="text-light-bg/50 text-sm">
+                <p className="text-gray-500 dark:text-light-bg/50 text-sm">
                   All outputs share BPM, key, scale, and timing data — ensuring perfect alignment when loaded into your DAW project.
                 </p>
               </div>
@@ -173,7 +173,7 @@ export default function About() {
           <h2 className="font-poppins font-bold text-3xl md:text-4xl mb-4">
             Ready to Build with Modular AI?
           </h2>
-          <p className="text-light-bg/60 max-w-xl mx-auto mb-8">
+          <p className="text-gray-500 dark:text-light-bg/60 max-w-xl mx-auto mb-8">
             Join the beta and start generating production-ready assets from natural language.
           </p>
           <div className="flex flex-wrap justify-center gap-4">

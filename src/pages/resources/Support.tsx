@@ -41,7 +41,7 @@ export default function Support() {
                 <h3 className="font-poppins font-semibold mb-1 group-hover:text-accent-pink transition-colors">
                   {topic.title}
                 </h3>
-                <p className="text-light-bg/50 text-sm">{topic.desc}</p>
+                <p className="text-gray-500 dark:text-light-bg/50 text-sm">{topic.desc}</p>
               </Link>
             ))}
           </div>
@@ -56,25 +56,25 @@ export default function Support() {
               <div className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-light-bg/60 mb-1.5">Name</label>
+                    <label className="block text-sm font-medium text-gray-500 dark:text-light-bg/60 mb-1.5">Name</label>
                     <input
                       type="text"
                       placeholder="Your name"
-                      className="w-full bg-dark-deeper/60 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-light-bg placeholder:text-light-bg/30 focus:outline-none focus:border-accent-pink/50"
+                      className="w-full bg-gray-50 dark:bg-dark-deeper/60 border border-gray-200 dark:border-white/10 rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-light-bg placeholder:text-gray-300 dark:text-light-bg/30 focus:outline-none focus:border-accent-pink/50"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-light-bg/60 mb-1.5">Email</label>
+                    <label className="block text-sm font-medium text-gray-500 dark:text-light-bg/60 mb-1.5">Email</label>
                     <input
                       type="email"
                       placeholder="you@example.com"
-                      className="w-full bg-dark-deeper/60 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-light-bg placeholder:text-light-bg/30 focus:outline-none focus:border-accent-pink/50"
+                      className="w-full bg-gray-50 dark:bg-dark-deeper/60 border border-gray-200 dark:border-white/10 rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-light-bg placeholder:text-gray-300 dark:text-light-bg/30 focus:outline-none focus:border-accent-pink/50"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-light-bg/60 mb-1.5">Category</label>
-                  <select className="w-full bg-dark-deeper/60 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-light-bg/60 focus:outline-none focus:border-accent-pink/50">
+                  <label className="block text-sm font-medium text-gray-500 dark:text-light-bg/60 mb-1.5">Category</label>
+                  <select className="w-full bg-gray-50 dark:bg-dark-deeper/60 border border-gray-200 dark:border-white/10 rounded-lg px-4 py-2.5 text-sm text-gray-500 dark:text-light-bg/60 focus:outline-none focus:border-accent-pink/50">
                     <option>Getting Started</option>
                     <option>Billing</option>
                     <option>Export Issues</option>
@@ -84,11 +84,11 @@ export default function Support() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-light-bg/60 mb-1.5">Message</label>
+                  <label className="block text-sm font-medium text-gray-500 dark:text-light-bg/60 mb-1.5">Message</label>
                   <textarea
                     rows={5}
                     placeholder="Describe your issue or question..."
-                    className="w-full bg-dark-deeper/60 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-light-bg placeholder:text-light-bg/30 focus:outline-none focus:border-accent-pink/50 resize-none"
+                    className="w-full bg-gray-50 dark:bg-dark-deeper/60 border border-gray-200 dark:border-white/10 rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-light-bg placeholder:text-gray-300 dark:text-light-bg/30 focus:outline-none focus:border-accent-pink/50 resize-none"
                   />
                 </div>
                 <button className="btn-primary w-full py-3">

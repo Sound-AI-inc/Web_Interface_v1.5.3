@@ -66,7 +66,7 @@ export default function ForPartnerships() {
               <br />
               <span className="gradient-text">Ecosystem Together</span>
             </h1>
-            <p className="text-light-bg/60 text-lg md:text-xl leading-relaxed mb-8">
+            <p className="text-gray-500 dark:text-light-bg/60 text-lg md:text-xl leading-relaxed mb-8">
               Partner with SoundAI to bring AI-powered audio generation to DAWs, plugins, education, and creative platforms. Long-term ecosystem alignment over short-term gains.
             </p>
             <Link to="/support" className="btn-primary">
@@ -91,7 +91,7 @@ export default function ForPartnerships() {
                   <pt.icon className="w-6 h-6 text-accent-cyan" />
                 </div>
                 <h3 className="font-poppins font-semibold text-lg mb-2">{pt.title}</h3>
-                <p className="text-light-bg/50 text-sm leading-relaxed flex-1 mb-4">{pt.desc}</p>
+                <p className="text-gray-500 dark:text-light-bg/50 text-sm leading-relaxed flex-1 mb-4">{pt.desc}</p>
                 <ul className="space-y-1.5">
                   {pt.benefits.map((b) => (
                     <li key={b} className="flex items-center gap-2 text-xs text-accent-cyan/80">
@@ -112,7 +112,7 @@ export default function ForPartnerships() {
           <div className="card">
             <Handshake className="w-12 h-12 text-accent-pink mx-auto mb-4" />
             <h3 className="font-poppins font-bold text-2xl mb-3">Long-Term Ecosystem Alignment</h3>
-            <p className="text-light-bg/50 leading-relaxed max-w-2xl mx-auto mb-6">
+            <p className="text-gray-500 dark:text-light-bg/50 leading-relaxed max-w-2xl mx-auto mb-6">
               We believe the future of music production is collaborative. SoundAI partnerships are built on shared value creation,
               transparent communication, and long-term growth — not short-term transactions.
             </p>

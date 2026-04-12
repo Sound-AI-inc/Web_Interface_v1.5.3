@@ -70,14 +70,14 @@ export default function Careers() {
                     <span className="flex items-center gap-1 text-xs text-accent-cyan">
                       <Briefcase className="w-3 h-3" /> {role.team}
                     </span>
-                    <span className="flex items-center gap-1 text-xs text-light-bg/40">
+                    <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-light-bg/40">
                       <MapPin className="w-3 h-3" /> {role.location}
                     </span>
-                    <span className="px-2 py-0.5 text-xs rounded-full bg-white/5 text-light-bg/40">
+                    <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-white/5 text-gray-400 dark:text-light-bg/40">
                       {role.type}
                     </span>
                   </div>
-                  <p className="text-light-bg/50 text-sm">{role.desc}</p>
+                  <p className="text-gray-500 dark:text-light-bg/50 text-sm">{role.desc}</p>
                 </div>
                 <Link
                   to="#"
@@ -90,7 +90,7 @@ export default function Careers() {
           </div>
 
           <div className="mt-12 text-center">
-            <p className="text-light-bg/40 text-sm mb-4">
+            <p className="text-gray-400 dark:text-light-bg/40 text-sm mb-4">
               Don't see a role that fits? We're always looking for talented people.
             </p>
             <Link to="/support" className="btn-secondary">
