@@ -28,31 +28,36 @@ const featureBlocks = [
     icon: Brain,
     title: "Natural Language Understanding",
     desc: "Describe what you hear in your head. Our models understand musical concepts, genres, moods, textures, and production techniques. No presets to browse — just describe your sound.",
-    accent: "accent-pink",
+    iconBg: "bg-accent-pink/10",
+    iconColor: "text-accent-pink",
   },
   {
     icon: Layers,
     title: "Multi-Modal Generation",
     desc: "One prompt generates synchronized audio, MIDI, presets, and metadata. Each output is a standalone asset that works independently or together as a cohesive unit.",
-    accent: "accent-cyan",
+    iconBg: "bg-accent-cyan/10",
+    iconColor: "text-accent-cyan",
   },
   {
     icon: Download,
     title: "DAW-Ready Export",
     desc: "Export assets directly into your project. We support Ableton Live (.als), FL Studio (.flp), Logic Pro, and standard formats like WAV, MIDI, and FXP.",
-    accent: "accent-pink",
+    iconBg: "bg-accent-pink/10",
+    iconColor: "text-accent-pink",
   },
   {
     icon: Edit3,
     title: "Modular Editing",
     desc: "Every generated asset is fully editable. Adjust MIDI notes, tweak preset parameters, slice audio samples — you maintain complete creative control.",
-    accent: "accent-cyan",
+    iconBg: "bg-accent-cyan/10",
+    iconColor: "text-accent-cyan",
   },
   {
     icon: Shield,
     title: "Rights-Aware Outputs",
     desc: "All generated assets include clear usage rights and compliance metadata. Use them in commercial releases, sync licensing, and streaming distribution with confidence.",
-    accent: "accent-pink",
+    iconBg: "bg-accent-pink/10",
+    iconColor: "text-accent-pink",
   },
 ];
 
@@ -142,8 +147,8 @@ export default function ForUsers() {
           <div className="space-y-8 max-w-4xl mx-auto">
             {featureBlocks.map((fb, i) => (
               <div key={fb.title} className={`card flex flex-col md:flex-row items-start gap-6 ${i % 2 !== 0 ? "md:flex-row-reverse" : ""}`}>
-                <div className={`w-14 h-14 rounded-xl bg-${fb.accent}/10 flex items-center justify-center flex-shrink-0`}>
-                  <fb.icon className={`w-7 h-7 text-${fb.accent}`} />
+                <div className={`w-14 h-14 rounded-xl ${fb.iconBg} flex items-center justify-center flex-shrink-0`}>
+                  <fb.icon className={`w-7 h-7 ${fb.iconColor}`} />
                 </div>
                 <div>
                   <h3 className="font-poppins font-semibold text-xl mb-2">{fb.title}</h3>
