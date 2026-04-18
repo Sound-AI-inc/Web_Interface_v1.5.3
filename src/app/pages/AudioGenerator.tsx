@@ -89,56 +89,9 @@ export default function AudioGenerator() {
         </div>
       </section>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="rounded-card border border-surface p-2">
-          <Segmented
-            items={TYPE_OPTIONS}
-            value={type}
-            onChange={setType}
-          />
-        </div>
-        <div className="rounded-card border border-surface p-2">
-          <Segmented
-            items={modelOptions}
-            value={resolvedModel}
-            onChange={setModel}
-          />
-        </div>
-      </div>
-
       <div className="mt-4">
         <ResultsList items={audioResults} />
       </div>
     </PageContainer>
-  );
-}
-
-interface SegmentedProps {
-  items: string[];
-  value: string;
-  onChange: (v: string) => void;
-}
-
-function Segmented({ items, value, onChange }: SegmentedProps) {
-  return (
-    <div className="flex flex-col">
-      {items.map((item) => {
-        const active = item === value;
-        return (
-          <button
-            key={item}
-            type="button"
-            onClick={() => onChange(item)}
-            className={`rounded-button px-4 py-2.5 text-left font-codec text-sm transition-colors ${
-              active
-                ? "bg-primary/10 text-primary"
-                : "text-text/80 hover:bg-surface"
-            }`}
-          >
-            {item}
-          </button>
-        );
-      })}
-    </div>
   );
 }

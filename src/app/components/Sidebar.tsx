@@ -40,18 +40,21 @@ const userLayer: NavItem[] = [
   { label: "Settings", to: "/app/settings", icon: SettingsIcon },
 ];
 
+const NAV_ITEM_BASE =
+  "group flex items-center gap-3 rounded-button px-3 py-2 font-poppins text-[10px] font-bold uppercase tracking-[0.08em] transition-colors";
+
 function Item({ item }: { item: NavItem }) {
   const Icon = item.icon;
   if (item.disabled) {
     return (
       <div
-        className="flex cursor-not-allowed items-center gap-3 rounded-button px-3 py-2 font-codec text-sm text-text/40"
+        className={`${NAV_ITEM_BASE} cursor-not-allowed text-text/40`}
         aria-disabled
       >
         <Icon className="h-4 w-4" />
         <span className="flex-1">{item.label}</span>
         {item.badge && (
-          <span className="rounded-full bg-surface px-2 py-0.5 font-poppins text-[10px] font-medium tracking-wider text-text/40">
+          <span className="rounded-full bg-surface px-2 py-0.5 font-poppins text-[9px] font-bold tracking-wider text-text/40">
             {item.badge}
           </span>
         )}
@@ -62,17 +65,17 @@ function Item({ item }: { item: NavItem }) {
     <NavLink
       to={item.to}
       className={({ isActive }) =>
-        `group flex items-center gap-3 rounded-button px-3 py-2 font-codec text-sm transition-colors ${
+        `${NAV_ITEM_BASE} ${
           isActive
-            ? "bg-primary/10 text-primary"
-            : "text-text/70 hover:bg-surface hover:text-text"
+            ? "text-primary"
+            : "text-text hover:bg-surface"
         }`
       }
     >
       <Icon className="h-4 w-4" />
       <span className="flex-1">{item.label}</span>
       {item.badge && (
-        <span className="rounded-full bg-surface px-2 py-0.5 font-poppins text-[10px] font-medium tracking-wider text-text/50">
+        <span className="rounded-full bg-surface px-2 py-0.5 font-poppins text-[9px] font-bold tracking-wider text-text/50">
           {item.badge}
         </span>
       )}
@@ -82,7 +85,7 @@ function Item({ item }: { item: NavItem }) {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-2 mt-4 px-3 font-poppins text-[10px] font-medium uppercase tracking-[0.12em] text-text/40">
+    <div className="mb-2 mt-4 px-3 font-poppins text-[9px] font-bold uppercase tracking-[0.14em] text-text/40">
       {children}
     </div>
   );
@@ -100,7 +103,7 @@ export default function Sidebar() {
         <span className="font-poppins text-[15px] font-semibold text-text">SoundAI</span>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 pb-4">
+      <nav className="flex flex-1 flex-col justify-center overflow-y-auto px-3 pb-4">
         <div className="flex flex-col gap-1">
           {coreProduct.map((i) => (
             <Item key={i.to} item={i} />

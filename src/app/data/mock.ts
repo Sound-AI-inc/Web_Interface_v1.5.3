@@ -256,48 +256,158 @@ export const integrations: Integration[] = [
   },
 ];
 
+export interface CreditPackage {
+  credits: number;
+  price: number;
+}
+
 export interface Plan {
   id: string;
   name: string;
   price: string;
   cadence: string;
+  description: string;
   features: string[];
+  extras: string[];
   highlight?: boolean;
   cta: string;
+  creditPackages?: CreditPackage[];
+  pricingNote?: string;
 }
 
 export const plans: Plan[] = [
   {
     id: "free",
-    name: "Free",
+    name: "Free Trial",
     price: "$0",
-    cadence: "/ month",
-    features: ["20 generations / month", "Basic models", "WAV + MP3 export", "Community support"],
-    cta: "Current plan",
+    cadence: "/7 days",
+    description:
+      "Get started with 20 free credits for 7 days. Try AI sound generation and explore the Sound Library.",
+    features: [
+      "20 free credits",
+      "Basic audio generation",
+      "MP3 exports",
+      "Community support",
+    ],
+    extras: [
+      "🌐 Access to Basic Prompt Templates",
+      "🎛️ AI Sound Preview Mode (3–5 sec)",
+      "🧠 Limited Smart Prompt Suggestions",
+      "🔄 Auto-Save Drafts",
+    ],
+    cta: "Subscribe Now",
   },
   {
     id: "standard",
     name: "Standard",
-    price: "$19",
-    cadence: "/ month",
-    features: ["300 generations / month", "All core models", "All export formats", "Priority queue"],
+    price: "$7",
+    cadence: "/one-time",
+    description:
+      "Perfect for new creators. Includes 30 credits, advanced audio generation, WAV exports, and basic library access.",
+    features: [
+      "30 generation credits",
+      "Advanced audio editing",
+      "WAV exports",
+      "Basic sound library access",
+      "Email support",
+    ],
+    extras: [
+      "🎚️ AI Mixing Assistant (Lite)",
+      "🎧 Loop Integration Mode",
+      "📦 Download History Access",
+      "⚙️ Prompt-to-Preset Conversion (beta)",
+      "🔍 Searchable Sound Library by Tags",
+      "💾 Cloud Storage (up to 500 MB)",
+    ],
     highlight: true,
-    cta: "Upgrade",
+    cta: "Subscribe Now",
   },
   {
     id: "premium",
-    name: "Premium",
-    price: "$49",
-    cadence: "/ month",
-    features: ["Unlimited generations", "Early-access models", "Editor Mode", "API access"],
-    cta: "Upgrade",
+    name: "Premium Flex",
+    price: "$30",
+    cadence: "from",
+    description: "Flexible plan — pay only for the credits you need.",
+    creditPackages: [
+      { credits: 30, price: 30 },
+      { credits: 100, price: 85 },
+      { credits: 500, price: 380 },
+      { credits: 1000, price: 700 },
+      { credits: 3000, price: 1800 },
+    ],
+    features: [
+      "Advanced AI editing & plugins",
+      "All formats (WAV, MIDI, MP3)",
+      "Access to full sound library",
+      "Priority support",
+      "Commercial usage rights",
+    ],
+    extras: [
+      "🧠 AI Mastering Suite",
+      "🎼 MIDI-to-Sound AI Conversion",
+      "🧩 DAW Plugin Integration (VST/AU)",
+      "🔄 Stem Separation & Remixing",
+      "🎙️ Voice-to-Instrument AI",
+      "📈 Priority GPU Queue",
+      "☁️ Extended Cloud Storage (up to 10 GB)",
+      "🛠️ Early Access to Beta Features",
+      "🧩 Custom Model Training (by request)",
+      "🔐 Private Project Mode",
+      "📊 Sound Usage Analytics",
+      "🤝 Collaborative Sessions",
+      "🎯 Adaptive AI Model Selection",
+    ],
+    cta: "Subscribe Now",
+    pricingNote: "Prices adjust dynamically based on selected credits.",
   },
   {
     id: "enterprise",
     name: "Enterprise",
     price: "Custom",
-    cadence: "",
-    features: ["Dedicated models", "SSO & SCIM", "Custom SLA", "Named support"],
+    cadence: "pricing",
+    description:
+      "AI infrastructure for studios, labels, and enterprise partners. Scalable. Secure. Customizable.",
+    features: [
+      "Dedicated AI infrastructure",
+      "Custom model deployment",
+      "Enterprise compliance & SLAs",
+      "Named success manager",
+    ],
+    extras: [
+      "⚙️ Dedicated AI Cluster / Private GPU Node",
+      "🚀 Custom Model Deployment",
+      "🧩 Multi-User License Management",
+      "💼 Role-Based Access Control (RBAC)",
+      "🌍 Regional Data Hosting (EU/US/APAC)",
+      "🎚️ AI Stem Mixer Pro",
+      "🎼 Multi-Track AI Generation",
+      "🎙️ Voice Synthesis Suite",
+      "🔄 Batch Audio Generation API",
+      "🎛️ Custom Plugin SDK",
+      "🧩 Cross-App Integration",
+      "🔐 End-to-End Encryption (AES-256)",
+      "🧱 Private Environment Sandbox",
+      "📜 GDPR / SOC 2 / ISO 27001 Compliance",
+      "🕵️ Audit Log & Usage Tracking",
+      "🚫 No Public Model Training",
+      "🤝 Team Collaboration Hub",
+      "🗂️ Project Version Control",
+      "🕓 Real-Time Co-Editing",
+      "🔄 Integration with Notion, Slack, Jira",
+      "📦 Shared Asset Library",
+      "🧑‍💻 Dedicated Account Manager",
+      "⏱️ Priority SLA (99.9% uptime)",
+      "📞 24/7 Tech Support",
+      "🎓 Onboarding & Training Sessions",
+      "🧩 Custom Roadmap Collaboration",
+      "📊 Advanced Sound Analytics Dashboard",
+      "🧠 Usage Prediction Models",
+      "💡 Trend Intelligence Feed",
+      "🧩 White-Label Interface (add-on)",
+      "🎧 Custom Voice/Instrument Model Training (add-on)",
+      "💬 Private API Endpoint (add-on)",
+      "🌐 Multi-Language Voice Pack (add-on)",
+    ],
     cta: "Contact sales",
   },
 ];

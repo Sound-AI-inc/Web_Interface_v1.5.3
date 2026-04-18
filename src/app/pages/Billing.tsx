@@ -30,7 +30,7 @@ export default function Billing() {
       </div>
 
       <h2 className="app-section-title mb-4">Plans</h2>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-2 xl:grid-cols-4">
         {plans.map((p) => (
           <BillingCard key={p.id} plan={p} current={p.id === "free"} />
         ))}

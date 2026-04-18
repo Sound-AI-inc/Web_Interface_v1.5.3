@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tonejs/midi": "^2.0.28",
+    "audiobuffer-to-wav": "^1.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.364.0",
@@ -18,7 +20,10 @@
     "react-router-dom": "^7.14.0",
     "recharts": "^2.12.4",
     "tailwind-merge": "^3.5.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "tone": "^15.1.22",
+    "wavesurfer.js": "^7.12.6",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
