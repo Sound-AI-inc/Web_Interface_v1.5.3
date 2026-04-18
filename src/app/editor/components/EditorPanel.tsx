@@ -3,7 +3,6 @@ import {
   Undo2,
   Redo2,
   Save,
-  Upload,
   Music,
   Waves,
   SlidersHorizontal,
@@ -13,6 +12,8 @@ import WaveformEditor from "./WaveformEditor";
 import MidiEditor from "./MidiEditor";
 import SynthEditor from "./SynthEditor";
 import EffectsPanel from "./EffectsPanel";
+import MidiToolsPanel from "./MidiToolsPanel";
+import SynthPresetsPanel from "./SynthPresetsPanel";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { decodeArrayBuffer } from "../audio/engine";
 import { generateDefaultAudioBuffer } from "../audio/defaultBuffer";
@@ -81,14 +82,7 @@ export default function EditorPanel() {
     const ab = await file.arrayBuffer();
     const decoded = await decodeArrayBuffer(ab);
     replaceBuffer(decoded, "Import audio");
-  };
-
-  const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const ab = await file.arrayBuffer();
-    const decoded = await decodeArrayBuffer(ab);
-    replaceBuffer(decoded, "Import audio");
+    setTab("audio");
   };
 
   return (
@@ -141,16 +135,6 @@ export default function EditorPanel() {
           <Redo2 className="h-3.5 w-3.5" /> Redo
         </button>
 
-        <label className="app-btn-ghost h-9 cursor-pointer px-3">
-          <Upload className="h-3.5 w-3.5" /> Load audio
-          <input
-            type="file"
-            accept="audio/*"
-            onChange={onUpload}
-            className="hidden"
-          />
-        </label>
-
         <div className="ml-auto flex items-center gap-2">
           <span className="font-codec text-xs text-text/50">
             {dirty ? "Unsaved changes" : "All changes saved"}
@@ -178,7 +162,9 @@ export default function EditorPanel() {
             {tab === "synth" && <SynthEditor />}
           </div>
           <aside className="app-card p-5">
-            <EffectsPanel />
+            {tab === "audio" && <EffectsPanel />}
+            {tab === "midi" && <MidiToolsPanel />}
+            {tab === "synth" && <SynthPresetsPanel />}
           </aside>
         </div>
       )}

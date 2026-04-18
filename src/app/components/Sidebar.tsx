@@ -108,15 +108,20 @@ function SectionLabel({ children, collapsed }: { children: React.ReactNode; coll
 export default function Sidebar() {
   const { mode, toggle } = useInterfaceMode();
   const [collapsed, setCollapsed] = useState(false);
-  const width = collapsed ? "w-[72px]" : "w-[240px]";
+  const width = collapsed ? "w-[60px]" : "w-[220px]";
+  const isPro = mode === "pro";
 
   return (
-    <aside className={`flex h-screen ${width} shrink-0 flex-col border-r border-surface bg-surface-muted transition-[width] duration-200`}>
+    <aside className={`sticky top-0 flex h-screen ${width} shrink-0 flex-col self-start border-r border-surface bg-surface-muted transition-[width] duration-200`}>
       {/* Top: brand + collapse toggle */}
-      <div className={`flex h-16 items-center ${collapsed ? "justify-center px-2" : "justify-between px-5"}`}>
+      <div className={`flex h-16 items-center ${collapsed ? "justify-center px-2" : "justify-between px-4"}`}>
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
+            <div
+              className={`flex h-7 w-7 items-center justify-center rounded-md bg-primary ${
+                isPro ? "animate-pro-pulse" : ""
+              }`}
+            >
               <span className="font-poppins text-xs font-bold text-white">S</span>
             </div>
             <span className="font-poppins text-[15px] font-semibold text-text">SoundAI</span>
@@ -157,7 +162,18 @@ export default function Sidebar() {
       <div className={`border-t border-surface ${collapsed ? "p-2" : "p-4"}`}>
         {!collapsed && (
           <>
-            <div className="mb-2 font-poppins text-[11px] font-medium text-text/60">Interface Mode</div>
+            <div className="mb-2 flex items-center justify-between">
+              <span className="font-poppins text-[11px] font-medium text-text/60">
+                Interface Mode
+              </span>
+              <span
+                className={`font-poppins text-[10px] font-bold uppercase tracking-[0.14em] ${
+                  isPro ? "text-primary" : "text-text/40"
+                }`}
+              >
+                {isPro ? "Pro" : "Lite"}
+              </span>
+            </div>
             <button
               type="button"
               onClick={toggle}
@@ -166,12 +182,12 @@ export default function Sidebar() {
             >
               <span
                 className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
-                  mode === "pro" ? "bg-primary" : "bg-surface"
+                  isPro ? "bg-primary animate-pro-pulse" : "bg-surface"
                 }`}
               >
                 <span
                   className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                    mode === "pro" ? "translate-x-[18px]" : "translate-x-0.5"
+                    isPro ? "translate-x-[18px]" : "translate-x-0.5"
                   }`}
                 />
               </span>

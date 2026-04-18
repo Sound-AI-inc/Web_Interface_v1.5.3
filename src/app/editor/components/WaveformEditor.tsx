@@ -2,10 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin, { type Region } from "wavesurfer.js/dist/plugins/regions.esm.js";
 import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline.esm.js";
-import { Play, Pause, Scissors, Trash2, FastForward } from "lucide-react";
+import { Play, Pause, Scissors, Trash2, FastForward, Upload } from "lucide-react";
 import { useEditor } from "../core/store";
 import {
   bufferToWavBlob,
+  decodeArrayBuffer,
   downloadBlob,
   fadeIn,
   fadeOut,
@@ -13,6 +14,7 @@ import {
   reverse,
   trim,
 } from "../audio/engine";
+import { generateDefaultAudioBuffer } from "../audio/defaultBuffer";
 
 interface Props {
   onReady?: () => void;
@@ -162,6 +164,23 @@ export default function WaveformEditor({ onReady, onPlayStateChange }: Props) {
     downloadBlob(bufferToWavBlob(buffer), "soundai-edit.wav");
   };
 
+  const onLoadAudio = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const ab = await file.arrayBuffer();
+    const decoded = await decodeArrayBuffer(ab);
+    replaceBuffer(decoded, "Load audio");
+    regionsRef.current?.clearRegions();
+    setSelection(null);
+  };
+
+  const clearAudio = async () => {
+    const fresh = await generateDefaultAudioBuffer();
+    replaceBuffer(fresh, "Clear audio");
+    regionsRef.current?.clearRegions();
+    setSelection(null);
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -199,6 +218,23 @@ export default function WaveformEditor({ onReady, onPlayStateChange }: Props) {
         >
           <Trash2 className="h-3.5 w-3.5" /> Clear selection
         </button>
+        <button
+          type="button"
+          onClick={clearAudio}
+          className="app-btn-ghost h-9 px-3"
+          title="Reset audio to default sample"
+        >
+          <Trash2 className="h-3.5 w-3.5" /> Clear
+        </button>
+        <label className="app-btn-ghost h-9 cursor-pointer px-3">
+          <Upload className="h-3.5 w-3.5" /> Load audio
+          <input
+            type="file"
+            accept="audio/*"
+            onChange={onLoadAudio}
+            className="hidden"
+          />
+        </label>
         <div className="ml-auto flex items-center gap-2 font-codec text-xs text-text/60">
           Zoom
           <input

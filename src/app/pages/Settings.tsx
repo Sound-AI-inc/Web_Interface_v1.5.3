@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
 import PageContainer from "../components/PageContainer";
 import { Field, SettingsSection, Toggle } from "../components/SettingsForm";
-import { supabaseConfigured, supabaseUrl } from "../lib/supabase";
 
 export default function Settings() {
   // General
   const [workspaceName, setWorkspaceName] = useState("SoundAI · Studio");
   const [language, setLanguage] = useState("English (US)");
-  const [accentColor, setAccentColor] = useState("#FF3C82");
 
   // Audio Quality
   const [sampleRate, setSampleRate] = useState("48 kHz");
@@ -66,16 +64,6 @@ export default function Settings() {
       subtitle="System configuration"
       actions={<button className="app-btn-primary h-9">Save changes</button>}
     >
-      {supabaseConfigured() && (
-        <div className="mb-4 flex items-center gap-3 rounded-card border border-accent-light/60 bg-accent-light/20 px-4 py-3">
-          <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
-          <div className="min-w-0">
-            <div className="font-poppins text-xs font-semibold text-text">Supabase connected</div>
-            <div className="app-meta truncate">{supabaseUrl}</div>
-          </div>
-        </div>
-      )}
-
       <div className="rounded-card border border-surface bg-white shadow-flat-sm">
         <SettingsSection title="General" description="Workspace and regional defaults.">
           <Field label="Workspace name">
@@ -98,23 +86,6 @@ export default function Settings() {
               <option>Deutsch</option>
               <option>日本語</option>
             </select>
-          </Field>
-          <Field label="Accent color" hint="Used for primary buttons and highlights.">
-            <div className="flex items-center gap-2">
-              {["#FF3C82", "#FF98A8", "#A1E7EE"].map((c) => (
-                <button
-                  type="button"
-                  key={c}
-                  onClick={() => setAccentColor(c)}
-                  className={`h-8 w-8 rounded-full border ${
-                    accentColor === c ? "border-text" : "border-surface"
-                  }`}
-                  style={{ backgroundColor: c }}
-                  aria-label={`Pick ${c}`}
-                />
-              ))}
-              <span className="app-meta ml-2">{accentColor}</span>
-            </div>
           </Field>
         </SettingsSection>
 

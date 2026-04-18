@@ -1,5 +1,6 @@
 import PageContainer from "../components/PageContainer";
 import BillingCard from "../components/BillingCard";
+import BillingComparisonTable from "../components/BillingComparisonTable";
 import { plans } from "../data/mock";
 
 export default function Billing() {
@@ -30,11 +31,14 @@ export default function Billing() {
       </div>
 
       <h2 className="app-section-title mb-4">Plans</h2>
-      <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 items-stretch gap-5 md:grid-cols-2 xl:grid-cols-4">
         {plans.map((p) => (
           <BillingCard key={p.id} plan={p} current={p.id === "free"} />
         ))}
       </div>
+
+      <h2 className="app-section-title mb-4 mt-10">Compare plans</h2>
+      <BillingComparisonTable />
 
       <h2 className="app-section-title mb-4 mt-10">Recent invoices</h2>
       <div className="overflow-hidden rounded-card border border-surface bg-white">

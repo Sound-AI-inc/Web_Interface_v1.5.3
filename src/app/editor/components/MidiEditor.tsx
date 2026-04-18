@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Play, Square, Download, Upload } from "lucide-react";
+import {
+  Play,
+  Square,
+  Download,
+  Upload,
+  Trash2,
+  ChevronsUp,
+  ChevronsDown,
+} from "lucide-react";
 import { useEditor } from "../core/store";
 import {
   MidiEngine,
@@ -11,11 +19,15 @@ import {
 } from "../midi/engine";
 import type { MidiNote } from "../core/types";
 
-const LOW = 48; // C3
-const HIGH = 84; // C6
+// Full MIDI piano range C0 (24) — C8 (108). The viewport is scrollable so
+// pitches outside the visible window are reachable with the octave jump
+// controls or by dragging the scrollbar.
+const LOW = 24; // C0
+const HIGH = 108; // C8
 const ROW_H = 14;
 const PX_PER_SEC = 120;
-const DURATION = 4; // seconds of the grid
+const BASE_DURATION = 8; // minimum seconds of grid
+const VIEWPORT_H = 420; // scrollable viewport height
 
 export default function MidiEditor() {
   const notes = useEditor((s) => s.notes);
@@ -41,7 +53,42 @@ export default function MidiEditor() {
     return arr;
   }, []);
 
-  const cols = Math.ceil(DURATION / grid);
+  // The grid extends past the last note so the timeline is effectively
+  // unbounded — users can scroll horizontally forever and keep adding notes.
+  const lastNoteEnd = notes.reduce((m, n) => Math.max(m, n.start + n.duration), 0);
+  const duration = Math.max(BASE_DURATION, Math.ceil(lastNoteEnd + 4));
+  const cols = Math.ceil(duration / grid);
+
+  // Scroll the viewport to a specific pitch (centered).
+  const scrollToPitch = (pitch: number) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const row = HIGH - pitch;
+    const y = Math.max(0, row * ROW_H - VIEWPORT_H / 2 + ROW_H / 2);
+    el.scrollTo({ top: y, behavior: "smooth" });
+  };
+
+  // Center on C4 (MIDI 60) the first time the component mounts.
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const row = HIGH - 60;
+    el.scrollTop = row * ROW_H - VIEWPORT_H / 2;
+  }, []);
+
+  const octaveJump = (dir: 1 | -1) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const delta = 12 * ROW_H * dir;
+    el.scrollTo({ top: el.scrollTop + delta, behavior: "smooth" });
+  };
+
+  const clearAll = () => {
+    if (notes.length === 0) return;
+    replaceNotes([], "Clear notes");
+  };
+
+  void scrollToPitch; // reserved for future "go to note" UX
 
   const onGridClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -167,6 +214,34 @@ export default function MidiEditor() {
           <input type="file" accept=".mid,.midi" onChange={onFileUpload} className="hidden" />
         </label>
 
+        <button
+          type="button"
+          onClick={() => octaveJump(-1)}
+          className="app-btn-ghost h-9 px-2"
+          aria-label="Scroll up one octave"
+          title="Octave up"
+        >
+          <ChevronsUp className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => octaveJump(1)}
+          className="app-btn-ghost h-9 px-2"
+          aria-label="Scroll down one octave"
+          title="Octave down"
+        >
+          <ChevronsDown className="h-3.5 w-3.5" />
+        </button>
+
+        <button
+          type="button"
+          onClick={clearAll}
+          className="app-btn-ghost h-9 px-3"
+          title="Remove all notes"
+        >
+          <Trash2 className="h-3.5 w-3.5" /> Clear
+        </button>
+
         <div className="ml-auto flex items-center gap-2">
           <button
             type="button"
@@ -178,20 +253,25 @@ export default function MidiEditor() {
         </div>
       </div>
 
-      <div className="rounded-card border border-surface bg-white">
+      <div
+        ref={scrollerRef}
+        className="rounded-card border border-surface bg-white overflow-auto"
+        style={{ maxHeight: VIEWPORT_H }}
+      >
         <div className="flex">
           {/* keys */}
-          <div className="sticky left-0 w-12 shrink-0 border-r border-surface">
+          <div className="sticky left-0 z-10 w-12 shrink-0 border-r border-surface bg-white">
             {pitches.map((p) => {
               const name = midiToNoteName(p);
               const isBlack = name.includes("#");
+              const isC = name.startsWith("C") && !name.includes("#");
               return (
                 <div
                   key={p}
                   style={{ height: ROW_H }}
                   className={`flex items-center justify-center font-codec text-[9px] ${
                     isBlack ? "bg-surface text-text/50" : "bg-white text-text/70"
-                  }`}
+                  } ${isC ? "font-semibold text-text" : ""}`}
                 >
                   {name}
                 </div>
@@ -200,10 +280,10 @@ export default function MidiEditor() {
           </div>
 
           {/* grid area */}
-          <div ref={scrollerRef} className="flex-1 overflow-x-auto">
+          <div className="flex-1">
             <div
               className="relative"
-              style={{ width: PX_PER_SEC * DURATION, height: pitches.length * ROW_H }}
+              style={{ width: PX_PER_SEC * duration, height: pitches.length * ROW_H }}
               onClick={onGridClick}
             >
               {/* bg rows */}

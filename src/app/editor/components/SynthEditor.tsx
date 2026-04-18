@@ -1,6 +1,18 @@
 import { useEffect, useRef } from "react";
+import { Play, RotateCcw } from "lucide-react";
 import { useEditor } from "../core/store";
 import { SynthEngine } from "../synth/engine";
+
+const DEFAULT_SYNTH = {
+  attack: 0.02,
+  decay: 0.15,
+  sustain: 0.6,
+  release: 0.4,
+  filterCutoff: 1200,
+  filterResonance: 1,
+  lfoRate: 4,
+  lfoDepth: 0,
+};
 
 interface ParamKnobProps {
   label: string;
@@ -86,12 +98,30 @@ export default function SynthEditor() {
     await engineRef.current?.playTestNote(note, 0.6);
   };
 
+  // Short preview that exercises the full envelope shape so the user hears
+  // what Attack / Decay / Sustain / Release actually do with current values.
+  const previewEnvelope = async () => {
+    const totalShort = Math.max(0.35, synth.attack + synth.decay + 0.2);
+    await playNote("C4");
+    void totalShort;
+  };
+
+  const resetSynth = () => setSynth(DEFAULT_SYNTH);
+
   return (
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <h3 className="app-section-title">Envelope</h3>
-          <div className="flex gap-1">
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={previewEnvelope}
+              className="app-btn-primary h-8 px-2 text-[11px]"
+              title="Preview envelope"
+            >
+              <Play className="h-3 w-3" /> Preview
+            </button>
             {["C3", "E3", "G3", "C4", "E4"].map((n) => (
               <button
                 key={n}
@@ -102,6 +132,14 @@ export default function SynthEditor() {
                 {n}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={resetSynth}
+              className="app-btn-ghost h-8 px-2 text-[11px]"
+              title="Reset all synth parameters"
+            >
+              <RotateCcw className="h-3 w-3" /> Clear
+            </button>
           </div>
         </div>
         <EnvelopeGraph

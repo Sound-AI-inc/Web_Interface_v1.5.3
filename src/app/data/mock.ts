@@ -290,65 +290,202 @@ export const library: LibraryAsset[] = [
   },
 ];
 
+export type IntegrationCategory =
+  | "DAW"
+  | "AI Tools"
+  | "Distribution"
+  | "Samples"
+  | "Storage"
+  | "Processing";
+
 export interface Integration {
   id: string;
   name: string;
-  category: "DAW" | "Format" | "API";
+  category: IntegrationCategory;
   description: string;
   connected: boolean;
-  soon?: boolean;
+  pro?: boolean;
   iconLetter: string;
 }
 
 export const integrations: Integration[] = [
+  // DAW (5)
   {
     id: "ableton",
     name: "Ableton Live",
     category: "DAW",
-    description: "Send generated audio and MIDI directly to an open Ableton set.",
-    connected: true,
+    description: "Export and import WAV and MIDI directly into your Ableton sessions.",
+    connected: false,
     iconLetter: "A",
   },
   {
-    id: "fl",
+    id: "fl-studio",
     name: "FL Studio",
     category: "DAW",
-    description: "Drop stems and patterns into FL Studio's playlist.",
+    description: "Send generated samples and melodies straight into your FL Studio projects.",
     connected: false,
     iconLetter: "F",
   },
   {
-    id: "logic",
+    id: "logic-pro",
     name: "Logic Pro",
     category: "DAW",
-    description: "Bounce directly to a Logic project session.",
+    description: "Sync through file exchange and Apple Script integration with Logic sessions.",
     connected: false,
     iconLetter: "L",
   },
   {
-    id: "wav",
-    name: "WAV / MP3 / FLAC",
-    category: "Format",
-    description: "Multi-format export pipeline — lossless and lossy options.",
-    connected: true,
-    iconLetter: "W",
-  },
-  {
-    id: "midi",
-    name: "MIDI 2.0",
-    category: "Format",
-    description: "High-resolution MIDI export for modern DAWs.",
-    connected: true,
-    iconLetter: "M",
-  },
-  {
-    id: "api",
-    name: "SoundAI API",
-    category: "API",
-    description: "Generate programmatically from your own services.",
+    id: "reaper",
+    name: "Reaper",
+    category: "DAW",
+    description: "Import audio via a ReaScript plugin integration for fast project delivery.",
     connected: false,
-    soon: true,
-    iconLetter: "{ }",
+    iconLetter: "R",
+  },
+  {
+    id: "bandlab",
+    name: "BandLab",
+    category: "DAW",
+    description: "Collaborate and share projects with the online BandLab DAW.",
+    connected: false,
+    iconLetter: "B",
+  },
+
+  // AI Tools (5)
+  {
+    id: "chatgpt",
+    name: "ChatGPT",
+    category: "AI Tools",
+    description: "AI text generation for lyrics, track descriptions, and creative content.",
+    connected: false,
+    pro: true,
+    iconLetter: "C",
+  },
+  {
+    id: "sora",
+    name: "Sora",
+    category: "AI Tools",
+    description: "AI video generation from audio and text prompts.",
+    connected: false,
+    pro: true,
+    iconLetter: "S",
+  },
+  {
+    id: "runway",
+    name: "Runway",
+    category: "AI Tools",
+    description: "AI video editing and generation for music videos.",
+    connected: false,
+    pro: true,
+    iconLetter: "Rw",
+  },
+  {
+    id: "midjourney",
+    name: "Midjourney",
+    category: "AI Tools",
+    description: "AI image generation for album covers and artwork.",
+    connected: false,
+    pro: true,
+    iconLetter: "Mj",
+  },
+  {
+    id: "stable-diffusion",
+    name: "Stable Diffusion",
+    category: "AI Tools",
+    description: "Open-source AI image generation for creative music visuals.",
+    connected: false,
+    iconLetter: "SD",
+  },
+
+  // Distribution (3)
+  {
+    id: "soundcloud",
+    name: "SoundCloud",
+    category: "Distribution",
+    description: "Direct track upload with automatic tag filling.",
+    connected: false,
+    iconLetter: "Sc",
+  },
+  {
+    id: "landr",
+    name: "LANDR",
+    category: "Distribution",
+    description: "API mastering and DSP distribution to all major stores.",
+    connected: false,
+    pro: true,
+    iconLetter: "Ln",
+  },
+  {
+    id: "audius",
+    name: "Audius",
+    category: "Distribution",
+    description: "Decentralized Web3 track publishing.",
+    connected: false,
+    iconLetter: "Au",
+  },
+
+  // Samples (2)
+  {
+    id: "splice",
+    name: "Splice",
+    category: "Samples",
+    description: "Automatic sample uploads to your Splice library.",
+    connected: false,
+    pro: true,
+    iconLetter: "Sp",
+  },
+  {
+    id: "jamahook",
+    name: "Jamahook",
+    category: "Samples",
+    description: "AI sample suggestions and export functionality.",
+    connected: false,
+    iconLetter: "Jh",
+  },
+
+  // Storage (3)
+  {
+    id: "gdrive",
+    name: "Google Drive",
+    category: "Storage",
+    description: "Cloud storage and backup for your audio projects and exports.",
+    connected: false,
+    iconLetter: "G",
+  },
+  {
+    id: "dropbox",
+    name: "Dropbox",
+    category: "Storage",
+    description: "Sync and share your music projects across devices.",
+    connected: false,
+    iconLetter: "D",
+  },
+  {
+    id: "onedrive",
+    name: "OneDrive",
+    category: "Storage",
+    description: "Microsoft cloud storage integration for projects.",
+    connected: false,
+    iconLetter: "O1",
+  },
+
+  // Processing (2)
+  {
+    id: "lalal",
+    name: "LALAL.AI",
+    category: "Processing",
+    description: "AI-powered stem separation and track isolation.",
+    connected: false,
+    pro: true,
+    iconLetter: "La",
+  },
+  {
+    id: "deepgram",
+    name: "Deepgram",
+    category: "Processing",
+    description: "Speech-to-text and text-to-speech API for podcasts and voiceovers.",
+    connected: false,
+    iconLetter: "Dg",
   },
 ];
 

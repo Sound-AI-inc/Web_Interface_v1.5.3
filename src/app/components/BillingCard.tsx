@@ -17,9 +17,9 @@ export default function BillingCard({ plan, current }: BillingCardProps) {
   const displayCadence = selectedPkg ? `/ ${selectedPkg.credits} credits` : plan.cadence;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex h-full flex-col">
       <div
-        className={`relative flex flex-col gap-4 rounded-card p-6 ${
+        className={`relative flex h-full flex-col gap-4 rounded-card p-6 ${
           isHighlight
             ? "border-2 border-primary bg-white shadow-flat"
             : "border border-surface bg-white shadow-flat-sm"
@@ -89,7 +89,7 @@ export default function BillingCard({ plan, current }: BillingCardProps) {
         </ul>
 
         <button
-          className={isHighlight ? "app-btn-primary h-10" : "app-btn-ghost h-10"}
+          className={`mt-auto ${isHighlight ? "app-btn-primary h-10" : "app-btn-ghost h-10"}`}
           disabled={current}
         >
           {current ? "Current plan" : plan.cta}
@@ -99,21 +99,6 @@ export default function BillingCard({ plan, current }: BillingCardProps) {
           <p className="font-codec text-[11px] italic text-text/50">{plan.pricingNote}</p>
         )}
       </div>
-
-      {plan.extras.length > 0 && (
-        <div className="rounded-card border border-surface bg-surface-muted p-5">
-          <div className="mb-3 font-poppins text-[10px] font-bold uppercase tracking-[0.14em] text-text/60">
-            Included benefits
-          </div>
-          <ul className="flex flex-col gap-2">
-            {plan.extras.map((e) => (
-              <li key={e} className="font-codec text-xs leading-relaxed text-text/70">
-                {e}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 }

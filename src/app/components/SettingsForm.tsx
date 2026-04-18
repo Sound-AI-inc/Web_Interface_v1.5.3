@@ -43,16 +43,23 @@ interface ToggleProps {
 
 export function Toggle({ label, description, checked, onChange }: ToggleProps) {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-card border border-surface p-4">
-      <div>
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`flex w-full items-center justify-between gap-4 rounded-card border p-4 text-left transition-colors ${
+        checked
+          ? "border-primary/40 bg-primary/5"
+          : "border-surface bg-white hover:border-primary/20"
+      }`}
+    >
+      <div className="min-w-0">
         <div className="font-poppins text-sm font-medium text-text">{label}</div>
         {description && <p className="app-meta mt-0.5">{description}</p>}
       </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        onClick={() => onChange(!checked)}
+      <span
+        aria-hidden
         className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
           checked ? "bg-primary" : "bg-surface"
         }`}
@@ -62,7 +69,7 @@ export function Toggle({ label, description, checked, onChange }: ToggleProps) {
             checked ? "translate-x-[22px]" : "translate-x-0.5"
           }`}
         />
-      </button>
-    </div>
+      </span>
+    </button>
   );
 }

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import ProBadge from "./ProBadge";
 
 interface PageContainerProps {
   title: string;
@@ -12,9 +13,12 @@ export default function PageContainer({ title, subtitle, actions, children }: Pa
     <div className="mx-auto w-full max-w-[1280px] px-8 py-8">
       <header className="mb-8 flex items-start justify-between gap-6">
         <div>
-          <h1 className="font-poppins text-[28px] font-semibold leading-tight text-text">
-            {title}
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="font-poppins text-[28px] font-semibold leading-tight text-text">
+              {title}
+            </h1>
+            <ProBadge />
+          </div>
           {subtitle && (
             <p className="mt-1 font-codec text-sm text-text/60">{subtitle}</p>
           )}

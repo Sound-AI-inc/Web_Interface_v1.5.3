@@ -1,6 +1,23 @@
 import { useEffect, useRef } from "react";
+import { Play, RotateCcw } from "lucide-react";
 import { useEditor } from "../core/store";
 import { EffectsChain } from "../audio/effects";
+
+const DEFAULT_EFFECTS = {
+  reverbEnabled: false,
+  reverbWet: 0.3,
+  delayEnabled: false,
+  delayTime: 0.25,
+  delayFeedback: 0.3,
+  chorusEnabled: false,
+  chorusDepth: 0.5,
+  compressorEnabled: false,
+  compressorThreshold: -24,
+  eqEnabled: false,
+  eqLow: 0,
+  eqMid: 0,
+  eqHigh: 0,
+};
 
 interface SliderProps {
   label: string;
@@ -101,11 +118,25 @@ export default function EffectsPanel() {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <h3 className="app-section-title">Effects</h3>
-        <button type="button" onClick={preview} className="app-btn-ghost h-8 px-3 text-xs">
-          Preview
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={preview}
+            className="app-btn-primary h-8 px-3 text-xs"
+          >
+            <Play className="h-3 w-3" /> Preview
+          </button>
+          <button
+            type="button"
+            onClick={() => setEffects(DEFAULT_EFFECTS)}
+            className="app-btn-ghost h-8 px-3 text-xs"
+            title="Reset all effects"
+          >
+            <RotateCcw className="h-3 w-3" /> Clear
+          </button>
+        </div>
       </div>
 
       <EffectBlock
