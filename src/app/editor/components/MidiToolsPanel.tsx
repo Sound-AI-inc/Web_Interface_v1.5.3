@@ -31,31 +31,31 @@ export default function MidiToolsPanel() {
     replaceNotes(transposeNotes(notes, delta), `Transpose · ${label}`);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h3 className="app-section-title">MIDI tools</h3>
-        <span className="inline-flex items-center gap-1 font-codec text-[11px] text-text/50">
+    <div className="flex min-w-0 flex-col gap-3">
+      <div className="flex min-w-0 items-center justify-between gap-2">
+        <h3 className="app-section-title truncate">MIDI tools</h3>
+        <span className="inline-flex shrink-0 items-center gap-1 font-codec text-[10px] text-text/50">
           <Music className="h-3 w-3" />
-          {stats.count} notes
+          {stats.count}
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 rounded-card border border-surface p-3 font-codec text-xs text-text/70">
-        <div>
-          <div className="text-[10px] uppercase tracking-wider text-text/40">Range</div>
-          <div className="font-poppins text-sm text-text">
-            {stats.min} – {stats.max}
+      <div className="grid min-w-0 grid-cols-2 gap-2 rounded-card border border-surface p-2.5 font-codec text-xs text-text/70">
+        <div className="min-w-0">
+          <div className="truncate text-[9px] uppercase tracking-wider text-text/40">Range</div>
+          <div className="truncate font-poppins text-xs text-text">
+            {stats.min}–{stats.max}
           </div>
         </div>
-        <div>
-          <div className="text-[10px] uppercase tracking-wider text-text/40">Length</div>
-          <div className="font-poppins text-sm text-text">{stats.length}s</div>
+        <div className="min-w-0">
+          <div className="truncate text-[9px] uppercase tracking-wider text-text/40">Length</div>
+          <div className="truncate font-poppins text-xs text-text">{stats.length}s</div>
         </div>
       </div>
 
-      <div className="rounded-card border border-surface p-3">
-        <div className="mb-2 flex items-center gap-2 font-poppins text-[11px] font-bold uppercase tracking-wider text-text">
-          <Layers className="h-3.5 w-3.5" /> Quantize
+      <div className="min-w-0 rounded-card border border-surface p-2.5">
+        <div className="mb-1.5 flex items-center gap-1.5 font-poppins text-[10px] font-bold uppercase tracking-wider text-text">
+          <Layers className="h-3 w-3" /> Quantize
         </div>
         <div className="grid grid-cols-4 gap-1">
           {[
@@ -68,7 +68,7 @@ export default function MidiToolsPanel() {
               key={q.l}
               type="button"
               onClick={() => quantize(q.g, q.l)}
-              className="app-btn-ghost h-8 px-2 text-[11px]"
+              className="app-btn-ghost h-7 min-w-0 !px-1 text-[10px]"
             >
               {q.l}
             </button>
@@ -76,24 +76,23 @@ export default function MidiToolsPanel() {
         </div>
       </div>
 
-      <div className="rounded-card border border-surface p-3">
-        <div className="mb-2 font-poppins text-[11px] font-bold uppercase tracking-wider text-text">
+      <div className="min-w-0 rounded-card border border-surface p-2.5">
+        <div className="mb-1.5 font-poppins text-[10px] font-bold uppercase tracking-wider text-text">
           Transpose
         </div>
         <div className="grid grid-cols-4 gap-1">
           <button
             type="button"
             onClick={() => transpose(-12, "-1 oct")}
-            className="app-btn-ghost h-8 min-w-0 !px-1 text-[10px]"
+            className="app-btn-ghost h-7 min-w-0 !px-1 text-[10px]"
             title="Down one octave"
           >
             <ArrowDown className="h-3 w-3 shrink-0" />
-            <span>8va</span>
           </button>
           <button
             type="button"
             onClick={() => transpose(-1, "-1 st")}
-            className="app-btn-ghost h-8 min-w-0 !px-1 text-[10px]"
+            className="app-btn-ghost h-7 min-w-0 !px-1 text-[10px]"
             title="Down one semitone"
           >
             −1
@@ -101,7 +100,7 @@ export default function MidiToolsPanel() {
           <button
             type="button"
             onClick={() => transpose(1, "+1 st")}
-            className="app-btn-ghost h-8 min-w-0 !px-1 text-[10px]"
+            className="app-btn-ghost h-7 min-w-0 !px-1 text-[10px]"
             title="Up one semitone"
           >
             +1
@@ -109,11 +108,10 @@ export default function MidiToolsPanel() {
           <button
             type="button"
             onClick={() => transpose(12, "+1 oct")}
-            className="app-btn-ghost h-8 min-w-0 !px-1 text-[10px]"
+            className="app-btn-ghost h-7 min-w-0 !px-1 text-[10px]"
             title="Up one octave"
           >
             <ArrowUp className="h-3 w-3 shrink-0" />
-            <span>8va</span>
           </button>
         </div>
       </div>
@@ -122,7 +120,7 @@ export default function MidiToolsPanel() {
         type="button"
         onClick={() => replaceNotes([], "Clear notes")}
         disabled={notes.length === 0}
-        className="app-btn-ghost h-9 w-full"
+        className="app-btn-ghost h-8 w-full text-[11px]"
       >
         <Trash2 className="h-3.5 w-3.5" /> Clear pattern
       </button>

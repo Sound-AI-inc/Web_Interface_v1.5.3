@@ -8,12 +8,12 @@ interface SettingsSectionProps {
 
 export function SettingsSection({ title, description, children }: SettingsSectionProps) {
   return (
-    <section className="grid grid-cols-1 gap-6 border-b border-surface py-8 last:border-0 md:grid-cols-[280px_1fr]">
+    <section className="grid grid-cols-1 gap-4 border-b border-surface px-6 py-6 last:border-0 md:grid-cols-[240px_1fr]">
       <div>
-        <h3 className="font-poppins text-sm font-semibold text-text">{title}</h3>
+        <h3 className="font-poppins text-[13px] font-semibold text-text">{title}</h3>
         {description && <p className="app-meta mt-1">{description}</p>}
       </div>
-      <div className="flex flex-col gap-4">{children}</div>
+      <div className="flex flex-col gap-3">{children}</div>
     </section>
   );
 }
@@ -26,11 +26,13 @@ interface FieldProps {
 
 export function Field({ label, children, hint }: FieldProps) {
   return (
-    <label className="block">
-      <span className="mb-1.5 block font-codec text-xs font-medium text-text/70">{label}</span>
+    <div className="block">
+      <span className="mb-1.5 block font-codec text-[11px] font-medium uppercase tracking-wider text-text/60">
+        {label}
+      </span>
       {children}
-      {hint && <span className="mt-1 block font-codec text-xs text-text/40">{hint}</span>}
-    </label>
+      {hint && <span className="mt-1 block font-codec text-[11px] text-text/40">{hint}</span>}
+    </div>
   );
 }
 

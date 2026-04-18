@@ -14,7 +14,6 @@ import SynthEditor from "./SynthEditor";
 import EffectsPanel from "./EffectsPanel";
 import MidiToolsPanel from "./MidiToolsPanel";
 import SynthPresetsPanel from "./SynthPresetsPanel";
-import ExportPanel from "./ExportPanel";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { decodeArrayBuffer } from "../audio/engine";
 import { generateDefaultAudioBuffer } from "../audio/defaultBuffer";
@@ -151,8 +150,8 @@ export default function EditorPanel() {
           Generating default sample…
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_320px]">
-          <div className="app-card p-5">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="app-card min-w-0 overflow-hidden p-4">
             {tab === "audio" && (
               <WaveformEditor
                 onReady={() => undefined}
@@ -162,13 +161,12 @@ export default function EditorPanel() {
             {tab === "midi" && <MidiEditor />}
             {tab === "synth" && <SynthEditor />}
           </div>
-          <aside className="flex flex-col gap-5">
-            <div className="app-card p-5">
+          <aside className="flex min-w-0 flex-col gap-4">
+            <div className="app-card min-w-0 overflow-hidden p-4">
               {tab === "audio" && <EffectsPanel />}
               {tab === "midi" && <MidiToolsPanel />}
               {tab === "synth" && <SynthPresetsPanel />}
             </div>
-            <ExportPanel />
           </aside>
         </div>
       )}

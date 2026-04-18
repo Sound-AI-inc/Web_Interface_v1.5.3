@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import PageContainer from "../components/PageContainer";
 import ResultCard, { toCardItem } from "../components/ResultCard";
+import FolderFilePlayer from "../components/FolderFilePlayer";
 import type { LibraryAsset, ResultKind } from "../data/mock";
 import { LIBRARY_ROOT_ID, useLibraryStore } from "../state/libraryStore";
 import { useLanguage } from "../i18n/LanguageProvider";
@@ -233,19 +234,14 @@ export default function Library() {
                   </div>
 
                   {expanded && (
-                    <div className="ml-6 mt-0.5 flex flex-col gap-0.5">
+                    <div className="ml-4 mt-0.5 flex flex-col gap-0.5 border-l border-surface pl-2">
                       {assets
                         .filter(
                           (a) =>
                             (assetFolder[a.id] ?? LIBRARY_ROOT_ID) === f.id,
                         )
                         .map((a) => (
-                          <div
-                            key={a.id}
-                            className="flex items-center gap-1 truncate rounded px-2 py-0.5 font-codec text-[11px] text-text/50"
-                          >
-                            <span className="truncate">{a.title}</span>
-                          </div>
+                          <FolderFilePlayer key={a.id} asset={a} />
                         ))}
                       {countFor(f.id) === 0 && (
                         <div className="px-2 py-0.5 font-codec text-[11px] text-text/30">

@@ -24,10 +24,12 @@ import LibraryImportMenu from "./LibraryImportMenu";
 // controls or by dragging the scrollbar.
 const LOW = 24; // C0
 const HIGH = 108; // C8
-const ROW_H = 14;
-const PX_PER_SEC = 120;
+const ROW_H = 12;
+const PX_PER_SEC = 110;
 const BASE_DURATION = 8; // minimum seconds of grid
-const VIEWPORT_H = 420; // scrollable viewport height
+// Matches the combined height of the Audio waveform + timeline so the three
+// editor tabs feel the same size visually.
+const VIEWPORT_H = 280;
 
 export default function MidiEditor() {
   const notes = useEditor((s) => s.notes);

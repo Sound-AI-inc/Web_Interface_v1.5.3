@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import PageContainer from "../components/PageContainer";
+import BrandSelect from "../components/BrandSelect";
 import { Field, SettingsSection, Toggle } from "../components/SettingsForm";
 import { useLanguage } from "../i18n/LanguageProvider";
 import { LANGUAGES, type LanguageCode } from "../i18n/translations";
@@ -18,7 +19,7 @@ export default function Settings() {
 
   // Interface
   const [sidebarWidth, setSidebarWidth] = useState(216);
-  const [density, setDensity] = useState("Comfortable");
+  const [density, setDensity] = useState("comfortable");
   const [showTooltips, setShowTooltips] = useState(true);
 
   // Devices
@@ -60,6 +61,17 @@ export default function Settings() {
     void run();
   }, []);
 
+  const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
+  const densityOptions = [
+    { value: "comfortable", label: t("settings.densityComfortable") },
+    { value: "compact", label: t("settings.densityCompact") },
+  ];
+  const qualityPresets: { value: "draft" | "standard" | "studio"; label: string }[] = [
+    { value: "draft", label: t("settings.qualityDraft") },
+    { value: "standard", label: t("settings.qualityStandard") },
+    { value: "studio", label: t("settings.qualityStudio") },
+  ];
+
   return (
     <PageContainer
       title={t("settings.title")}
@@ -71,9 +83,9 @@ export default function Settings() {
       <div className="rounded-card border border-surface bg-white shadow-flat-sm">
         <SettingsSection
           title={t("settings.general")}
-          description="Workspace and regional defaults."
+          description={t("settings.generalDesc")}
         >
-          <Field label="Workspace name">
+          <Field label={t("settings.workspaceName")}>
             <input
               className="app-input"
               value={workspaceName}
@@ -81,62 +93,42 @@ export default function Settings() {
             />
           </Field>
           <Field label={t("settings.language")} hint={t("settings.languageDesc")}>
-            <select
-              className="app-input"
+            <BrandSelect
               value={language}
-              onChange={(e) => setLanguage(e.target.value as LanguageCode)}
-            >
-              {LANGUAGES.map((l) => (
-                <option key={l.code} value={l.code}>
-                  {l.label}
-                </option>
-              ))}
-            </select>
+              options={languageOptions}
+              onChange={(v) => setLanguage(v as LanguageCode)}
+            />
           </Field>
         </SettingsSection>
 
         <SettingsSection
           title={t("settings.audioQuality")}
-          description="Defaults for rendering and exports."
+          description={t("settings.audioQualityDesc")}
         >
-          <Field label="Sample rate">
-            <select
-              className="app-input"
+          <Field label={t("settings.sampleRate")}>
+            <BrandSelect
               value={sampleRate}
-              onChange={(e) => setSampleRate(e.target.value)}
-            >
-              <option>44.1 kHz</option>
-              <option>48 kHz</option>
-              <option>88.2 kHz</option>
-              <option>96 kHz</option>
-            </select>
+              options={["44.1 kHz", "48 kHz", "88.2 kHz", "96 kHz"]}
+              onChange={setSampleRate}
+            />
           </Field>
-          <Field label="Bit depth">
-            <select
-              className="app-input"
+          <Field label={t("settings.bitDepth")}>
+            <BrandSelect
               value={bitDepth}
-              onChange={(e) => setBitDepth(e.target.value)}
-            >
-              <option>16-bit</option>
-              <option>24-bit</option>
-              <option>32-bit float</option>
-            </select>
+              options={["16-bit", "24-bit", "32-bit float"]}
+              onChange={setBitDepth}
+            />
           </Field>
-          <Field label="Default export format">
-            <select
-              className="app-input"
+          <Field label={t("settings.defaultExportFormat")}>
+            <BrandSelect
               value={defaultExportFormat}
-              onChange={(e) => setDefaultExportFormat(e.target.value)}
-            >
-              <option>WAV</option>
-              <option>MP3</option>
-              <option>FLAC</option>
-              <option>OGG</option>
-            </select>
+              options={["WAV", "MP3", "FLAC", "OGG"]}
+              onChange={setDefaultExportFormat}
+            />
           </Field>
           <Toggle
-            label="Apply dither on downconversion"
-            description="Reduces quantization noise when exporting at lower bit depths."
+            label={t("settings.dither")}
+            description={t("settings.ditherDesc")}
             checked={dither}
             onChange={setDither}
           />
@@ -144,9 +136,9 @@ export default function Settings() {
 
         <SettingsSection
           title={t("settings.interface")}
-          description="Tune the dashboard to your workflow."
+          description={t("settings.interfaceDesc")}
         >
-          <Field label="Sidebar width" hint={`${sidebarWidth}px`}>
+          <Field label={t("settings.sidebarWidth")} hint={`${sidebarWidth}px`}>
             <input
               type="range"
               min={180}
@@ -156,19 +148,16 @@ export default function Settings() {
               className="w-full accent-[#FF3C82]"
             />
           </Field>
-          <Field label="Density">
-            <select
-              className="app-input"
+          <Field label={t("settings.density")}>
+            <BrandSelect
               value={density}
-              onChange={(e) => setDensity(e.target.value)}
-            >
-              <option>Comfortable</option>
-              <option>Compact</option>
-            </select>
+              options={densityOptions}
+              onChange={setDensity}
+            />
           </Field>
           <Toggle
-            label="Show tooltips"
-            description="Inline explanations on buttons and fields."
+            label={t("settings.tooltips")}
+            description={t("settings.tooltipsDesc")}
             checked={showTooltips}
             onChange={setShowTooltips}
           />
@@ -176,70 +165,58 @@ export default function Settings() {
 
         <SettingsSection
           title={t("settings.devices")}
-          description="Audio I/O for generation playback and Editor Mode."
+          description={t("settings.devicesDesc")}
         >
           <Field
-            label="Input device"
-            hint="Grant microphone permission to see all connected devices."
+            label={t("settings.inputDevice")}
+            hint={t("settings.inputDeviceHint")}
           >
-            <select
-              className="app-input"
+            <BrandSelect
               value={inputDevice}
-              onChange={(e) => setInputDevice(e.target.value)}
-            >
-              {(devices.inputs.length ? devices.inputs : ["Default — System"]).map(
-                (d) => (
-                  <option key={d}>{d}</option>
-                ),
-              )}
-            </select>
+              options={devices.inputs.length ? devices.inputs : ["Default — System"]}
+              onChange={setInputDevice}
+            />
           </Field>
-          <Field label="Output device">
-            <select
-              className="app-input"
+          <Field label={t("settings.outputDevice")}>
+            <BrandSelect
               value={outputDevice}
-              onChange={(e) => setOutputDevice(e.target.value)}
-            >
-              {(devices.outputs.length ? devices.outputs : ["Default — System"]).map(
-                (d) => (
-                  <option key={d}>{d}</option>
-                ),
-              )}
-            </select>
+              options={devices.outputs.length ? devices.outputs : ["Default — System"]}
+              onChange={setOutputDevice}
+            />
           </Field>
         </SettingsSection>
 
         <SettingsSection
           title={t("settings.export")}
-          description="Defaults when sending assets out of SoundAI."
+          description={t("settings.exportDesc")}
         >
-          <Field label="Quality preset">
+          <Field label={t("settings.qualityPreset")}>
             <div className="flex items-center gap-2">
-              {(["draft", "standard", "studio"] as const).map((q) => (
+              {qualityPresets.map((q) => (
                 <button
-                  key={q}
+                  key={q.value}
                   type="button"
-                  onClick={() => setQualityPreset(q)}
-                  className={`h-9 rounded-button px-4 font-poppins text-xs font-medium capitalize transition-colors ${
-                    qualityPreset === q
+                  onClick={() => setQualityPreset(q.value)}
+                  className={`h-9 rounded-button px-4 font-poppins text-xs font-medium transition-colors ${
+                    qualityPreset === q.value
                       ? "bg-primary text-white"
                       : "bg-surface-muted text-text/60 hover:bg-surface"
                   }`}
                 >
-                  {q}
+                  {q.label}
                 </button>
               ))}
             </div>
           </Field>
           <Toggle
-            label="Bundle stems when exporting"
-            description="Adds separated stems (drums, bass, melody) to exported projects."
+            label={t("settings.stemsBundle")}
+            description={t("settings.stemsBundleDesc")}
             checked={stemsBundle}
             onChange={setStemsBundle}
           />
           <Toggle
-            label="Prefer lossless formats"
-            description="Use WAV / FLAC when the target supports them."
+            label={t("settings.preferLossless")}
+            description={t("settings.preferLosslessDesc")}
             checked={preferLossless}
             onChange={setPreferLossless}
           />

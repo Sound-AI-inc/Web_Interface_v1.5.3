@@ -112,14 +112,18 @@ export default function WaveformEditor({ onReady, onPlayStateChange }: Props) {
     ws.loadBlob(blob);
   }, [buffer]);
 
-  // Apply zoom (only after audio has been decoded).
+  // Apply zoom (only after audio has been decoded). Debounced so dragging
+  // the slider doesn't trigger a wavesurfer re-render on every integer step.
   useEffect(() => {
     if (!readyRef.current) return;
-    try {
-      wsRef.current?.zoom(zoom);
-    } catch {
-      // wavesurfer throws if buffer is not ready yet
-    }
+    const handle = window.setTimeout(() => {
+      try {
+        wsRef.current?.zoom(zoom);
+      } catch {
+        // wavesurfer throws if buffer is not ready yet
+      }
+    }, 80);
+    return () => window.clearTimeout(handle);
   }, [zoom]);
 
   const playToggle = useCallback(() => {
