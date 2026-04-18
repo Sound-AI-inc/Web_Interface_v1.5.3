@@ -2,22 +2,22 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Play,
   Square,
-  Download,
   Upload,
   Trash2,
   ChevronsUp,
   ChevronsDown,
+  FolderOpen,
 } from "lucide-react";
 import { useEditor } from "../core/store";
 import {
   MidiEngine,
-  exportMidi,
   midiToNoteName,
   parseMidiFile,
   quantizeNotes,
   transposeNotes,
 } from "../midi/engine";
 import type { MidiNote } from "../core/types";
+import LibraryImportMenu from "./LibraryImportMenu";
 
 // Full MIDI piano range C0 (24) — C8 (108). The viewport is scrollable so
 // pitches outside the visible window are reachable with the octave jump
@@ -174,6 +174,10 @@ export default function MidiEditor() {
     if (parsed.length > 0) replaceNotes(parsed, "Import MIDI");
   };
 
+  const onImportFromLibrary = (libraryNotes: MidiNote[]) => {
+    if (libraryNotes.length > 0) replaceNotes(libraryNotes, "Import from library");
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -209,15 +213,10 @@ export default function MidiEditor() {
           +Octave
         </button>
 
-        <label className="app-btn-ghost h-9 cursor-pointer px-3">
-          <Upload className="h-3.5 w-3.5" /> Import MIDI
-          <input type="file" accept=".mid,.midi" onChange={onFileUpload} className="hidden" />
-        </label>
-
         <button
           type="button"
           onClick={() => octaveJump(-1)}
-          className="app-btn-ghost h-9 px-2"
+          className="app-btn-ghost h-9 px-3"
           aria-label="Scroll up one octave"
           title="Octave up"
         >
@@ -226,7 +225,7 @@ export default function MidiEditor() {
         <button
           type="button"
           onClick={() => octaveJump(1)}
-          className="app-btn-ghost h-9 px-2"
+          className="app-btn-ghost h-9 px-3"
           aria-label="Scroll down one octave"
           title="Octave down"
         >
@@ -243,13 +242,19 @@ export default function MidiEditor() {
         </button>
 
         <div className="ml-auto flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => exportMidi(notes)}
-            className="app-btn-primary h-9 px-3"
-          >
-            <Download className="h-3.5 w-3.5" /> Export .mid
-          </button>
+          <label className="app-btn-ghost h-9 cursor-pointer px-3">
+            <Upload className="h-3.5 w-3.5" /> Import .mid
+            <input type="file" accept=".mid,.midi" onChange={onFileUpload} className="hidden" />
+          </label>
+          <LibraryImportMenu
+            kind="midi"
+            trigger={
+              <span className="app-btn-ghost h-9 px-3">
+                <FolderOpen className="h-3.5 w-3.5" /> Import from library
+              </span>
+            }
+            onImportMidi={onImportFromLibrary}
+          />
         </div>
       </div>
 

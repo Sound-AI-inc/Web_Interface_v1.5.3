@@ -6,7 +6,6 @@ interface ResultsListProps {
   title?: string;
   savedIds?: Set<string>;
   onAddToLibrary?: (item: AudioResult) => void;
-  onExport?: (item: AudioResult) => void;
   onRemix?: (item: AudioResult) => void;
 }
 
@@ -15,7 +14,6 @@ export default function ResultsList({
   title = "AudioResults",
   savedIds,
   onAddToLibrary,
-  onExport,
   onRemix,
 }: ResultsListProps) {
   return (
@@ -31,7 +29,6 @@ export default function ResultsList({
             item={toCardItem(item)}
             savedToLibrary={savedIds?.has(item.id)}
             onAddToLibrary={() => onAddToLibrary?.(item)}
-            onExport={() => onExport?.(item)}
             onRemix={() => onRemix?.(item)}
           />
         ))}

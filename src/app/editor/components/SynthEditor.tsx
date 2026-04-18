@@ -1,7 +1,9 @@
 import { useEffect, useRef } from "react";
-import { Play, RotateCcw } from "lucide-react";
+import { Play, RotateCcw, Upload, FolderOpen } from "lucide-react";
 import { useEditor } from "../core/store";
 import { SynthEngine } from "../synth/engine";
+import LibraryImportMenu from "./LibraryImportMenu";
+import type { SynthParams } from "../core/types";
 
 const DEFAULT_SYNTH = {
   attack: 0.02,
@@ -108,8 +110,52 @@ export default function SynthEditor() {
 
   const resetSynth = () => setSynth(DEFAULT_SYNTH);
 
+  const onImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text) as Partial<SynthParams>;
+      setSynth({
+        attack: Number(parsed.attack ?? synth.attack),
+        decay: Number(parsed.decay ?? synth.decay),
+        sustain: Number(parsed.sustain ?? synth.sustain),
+        release: Number(parsed.release ?? synth.release),
+        filterCutoff: Number(parsed.filterCutoff ?? synth.filterCutoff),
+        filterResonance: Number(parsed.filterResonance ?? synth.filterResonance),
+        lfoRate: Number(parsed.lfoRate ?? synth.lfoRate),
+        lfoDepth: Number(parsed.lfoDepth ?? synth.lfoDepth),
+      });
+    } catch {
+      // ignore malformed files
+    }
+  };
+
+  const onImportLibraryPreset = (params: SynthParams) => setSynth(params);
+
   return (
     <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="app-btn-ghost h-9 cursor-pointer px-3">
+          <Upload className="h-3.5 w-3.5" /> Import preset
+          <input
+            type="file"
+            accept="application/json,.json"
+            onChange={onImportFile}
+            className="hidden"
+          />
+        </label>
+        <LibraryImportMenu
+          kind="preset"
+          trigger={
+            <span className="app-btn-ghost h-9 px-3">
+              <FolderOpen className="h-3.5 w-3.5" /> Import from library
+            </span>
+          }
+          onImportPreset={onImportLibraryPreset}
+        />
+      </div>
+
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <h3 className="app-section-title">Envelope</h3>

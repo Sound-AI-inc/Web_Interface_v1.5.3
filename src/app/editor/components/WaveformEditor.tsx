@@ -2,12 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin, { type Region } from "wavesurfer.js/dist/plugins/regions.esm.js";
 import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline.esm.js";
-import { Play, Pause, Scissors, Trash2, FastForward, Upload } from "lucide-react";
+import { Play, Pause, Scissors, Trash2, FastForward, Upload, FolderOpen } from "lucide-react";
 import { useEditor } from "../core/store";
 import {
   bufferToWavBlob,
   decodeArrayBuffer,
-  downloadBlob,
   fadeIn,
   fadeOut,
   normalize,
@@ -15,6 +14,7 @@ import {
   trim,
 } from "../audio/engine";
 import { generateDefaultAudioBuffer } from "../audio/defaultBuffer";
+import LibraryImportMenu from "./LibraryImportMenu";
 
 interface Props {
   onReady?: () => void;
@@ -159,11 +159,6 @@ export default function WaveformEditor({ onReady, onPlayStateChange }: Props) {
   const doNormalize = () => applyEdit(normalize, "Normalize");
   const doReverse = () => applyEdit(reverse, "Reverse");
 
-  const exportWav = () => {
-    if (!buffer) return;
-    downloadBlob(bufferToWavBlob(buffer), "soundai-edit.wav");
-  };
-
   const onLoadAudio = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -209,17 +204,6 @@ export default function WaveformEditor({ onReady, onPlayStateChange }: Props) {
         </button>
         <button
           type="button"
-          onClick={() => {
-            regionsRef.current?.clearRegions();
-            setSelection(null);
-          }}
-          disabled={!selection}
-          className="app-btn-ghost h-9 px-3"
-        >
-          <Trash2 className="h-3.5 w-3.5" /> Clear selection
-        </button>
-        <button
-          type="button"
           onClick={clearAudio}
           className="app-btn-ghost h-9 px-3"
           title="Reset audio to default sample"
@@ -235,6 +219,23 @@ export default function WaveformEditor({ onReady, onPlayStateChange }: Props) {
             className="hidden"
           />
         </label>
+        <LibraryImportMenu
+          kind="audio"
+          trigger={
+            <span className="app-btn-ghost h-9 px-3">
+              <FolderOpen className="h-3.5 w-3.5" /> Import from library
+            </span>
+          }
+          onImportAudio={async (_id, title) => {
+            // Library audio assets are deterministic synthetic sounds; for now
+            // we regenerate a fresh default buffer so the editor has something
+            // to operate on and we preserve the asset title as the commit label.
+            const fresh = await generateDefaultAudioBuffer();
+            replaceBuffer(fresh, `Import · ${title}`);
+            regionsRef.current?.clearRegions();
+            setSelection(null);
+          }}
+        />
         <div className="ml-auto flex items-center gap-2 font-codec text-xs text-text/60">
           Zoom
           <input
@@ -245,9 +246,6 @@ export default function WaveformEditor({ onReady, onPlayStateChange }: Props) {
             onChange={(e) => setZoom(Number(e.target.value))}
             className="w-32 accent-[#FF3C82]"
           />
-          <button type="button" onClick={exportWav} className="app-btn-primary h-9 px-3">
-            Export WAV
-          </button>
         </div>
       </div>
 

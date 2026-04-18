@@ -14,6 +14,7 @@ import SynthEditor from "./SynthEditor";
 import EffectsPanel from "./EffectsPanel";
 import MidiToolsPanel from "./MidiToolsPanel";
 import SynthPresetsPanel from "./SynthPresetsPanel";
+import ExportPanel from "./ExportPanel";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { decodeArrayBuffer } from "../audio/engine";
 import { generateDefaultAudioBuffer } from "../audio/defaultBuffer";
@@ -161,10 +162,13 @@ export default function EditorPanel() {
             {tab === "midi" && <MidiEditor />}
             {tab === "synth" && <SynthEditor />}
           </div>
-          <aside className="app-card p-5">
-            {tab === "audio" && <EffectsPanel />}
-            {tab === "midi" && <MidiToolsPanel />}
-            {tab === "synth" && <SynthPresetsPanel />}
+          <aside className="flex flex-col gap-5">
+            <div className="app-card p-5">
+              {tab === "audio" && <EffectsPanel />}
+              {tab === "midi" && <MidiToolsPanel />}
+              {tab === "synth" && <SynthPresetsPanel />}
+            </div>
+            <ExportPanel />
           </aside>
         </div>
       )}

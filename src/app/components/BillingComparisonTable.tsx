@@ -16,9 +16,17 @@ interface Group {
 
 const GROUPS: Group[] = [
   {
-    title: "Usage & Credits",
+    title: "Interface & Credits",
     rows: [
-      { label: "Credits included", values: ["20", "30", "30 – 3000", "Custom"] },
+      {
+        label: "Interface",
+        values: ["Lite", "Lite", "Lite + Pro", "Lite + Pro"],
+      },
+      {
+        label: "Credits included",
+        values: ["20", "30 + auto 3× throttled refills", "50 – 3000 / month", "Custom"],
+      },
+      { label: "Billing cadence", values: ["7-day trial", "One-time or $84 / year", "$50+ / month", "Custom"] },
       { label: "Priority GPU queue", values: [false, false, true, "Dedicated GPU node"] },
       { label: "Batch / API generation", values: [false, false, false, true] },
       { label: "Early access to beta features", values: [false, false, true, true] },

@@ -53,17 +53,17 @@ export default function Profile() {
       subtitle="Your identity on SoundAI"
       actions={<button className="app-btn-primary h-9">Save changes</button>}
     >
-      <div className="rounded-card border border-surface bg-white shadow-flat-sm">
+      <div className="rounded-card border border-surface bg-white px-6 shadow-flat-sm">
         <SettingsSection title="Account" description="How you appear across SoundAI.">
           <div className="flex items-center gap-5">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 font-poppins text-xl font-semibold text-primary">
               DM
             </div>
-            <div>
-              <div className="font-poppins text-sm font-semibold text-text">Dmitriy M.</div>
-              <div className="app-meta">dmitriy@soundai.studio</div>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-poppins text-sm font-semibold text-text">Dmitriy M.</span>
+              <span className="font-codec text-xs text-text/60">dmitriy@soundai.studio</span>
             </div>
-            <button className="app-btn-ghost ml-auto h-9">Change avatar</button>
+            <button className="app-btn-ghost ml-auto h-9 px-3 text-xs">Change avatar</button>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Field label="Display name">
@@ -185,7 +185,7 @@ export default function Profile() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-card border border-surface bg-surface-muted p-4">
-      <div className="app-meta">{label}</div>
+      <div className="font-codec text-xs font-medium text-text/60">{label}</div>
       <div className="mt-1 font-poppins text-2xl font-semibold text-text">{value}</div>
     </div>
   );

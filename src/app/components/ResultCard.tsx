@@ -1,4 +1,4 @@
-import { Download, Heart, Repeat } from "lucide-react";
+import { Heart, Repeat } from "lucide-react";
 import type { AudioResult, LibraryAsset, ResultKind } from "../data/mock";
 import AudioPreview from "./previews/AudioPreview";
 import MidiPreview from "./previews/MidiPreview";
@@ -21,7 +21,6 @@ export interface ResultCardItem {
 interface ResultCardProps {
   item: ResultCardItem;
   onAddToLibrary?: () => void;
-  onExport?: () => void;
   onRemix?: () => void;
   savedToLibrary?: boolean;
 }
@@ -41,7 +40,6 @@ const kindBadge: Record<ResultKind, string> = {
 export default function ResultCard({
   item,
   onAddToLibrary,
-  onExport,
   onRemix,
   savedToLibrary,
 }: ResultCardProps) {
@@ -88,10 +86,6 @@ export default function ResultCard({
         >
           <Heart className={`h-3.5 w-3.5 ${savedToLibrary ? "fill-primary text-primary" : ""}`} />
           <span>{savedToLibrary ? "In library" : "Add to library"}</span>
-        </button>
-        <button type="button" onClick={onExport} className="app-btn-ghost h-9 px-3">
-          <Download className="h-3.5 w-3.5" />
-          <span>Export</span>
         </button>
         <button type="button" onClick={onRemix} className="app-btn-ghost h-9 px-3">
           <Repeat className="h-3.5 w-3.5" />

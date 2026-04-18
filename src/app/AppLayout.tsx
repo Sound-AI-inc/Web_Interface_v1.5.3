@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
+import AnimatedBackground from "./components/AnimatedBackground";
 import { InterfaceModeContext, type InterfaceMode } from "./hooks/useInterfaceMode";
 
 export default function AppLayout() {
@@ -13,7 +14,8 @@ export default function AppLayout() {
 
   return (
     <InterfaceModeContext.Provider value={ctx}>
-      <div className="flex min-h-screen bg-white font-codec text-text">
+      <AnimatedBackground />
+      <div className="flex min-h-screen bg-white/80 font-codec text-text">
         <Sidebar />
         <main className="flex-1 overflow-x-hidden">
           <Outlet />

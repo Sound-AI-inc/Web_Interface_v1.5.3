@@ -494,6 +494,14 @@ export interface CreditPackage {
   price: number;
 }
 
+export interface PricingOption {
+  id: string;
+  label: string;
+  price: string;
+  cadence: string;
+  note?: string;
+}
+
 export interface Plan {
   id: string;
   name: string;
@@ -506,6 +514,8 @@ export interface Plan {
   cta: string;
   creditPackages?: CreditPackage[];
   pricingNote?: string;
+  pricingOptions?: PricingOption[];
+  proOnly?: boolean;
 }
 
 export const plans: Plan[] = [
@@ -551,19 +561,34 @@ export const plans: Plan[] = [
       "⚙️ Prompt-to-Preset Conversion (beta)",
       "🔍 Searchable Sound Library by Tags",
       "💾 Cloud Storage (up to 500 MB)",
+      "♻️ When credits run out, the next 30 auto-recharge with 3× usage throttle",
     ],
     highlight: true,
+    pricingOptions: [
+      { id: "monthly", label: "One-time", price: "$7", cadence: "/one-time" },
+      {
+        id: "annual",
+        label: "Annual",
+        price: "$84",
+        cadence: "/year",
+        note: "12 months of Standard — save vs. monthly top-ups.",
+      },
+    ],
     cta: "Subscribe Now",
   },
   {
     id: "premium",
     name: "Premium Flex",
-    price: "$30",
-    cadence: "/from",
-    description: "Flexible plan — pay only for the credits you need.",
+    price: "$50",
+    cadence: "/month",
+    description:
+      "Flexible monthly plan — starts at 50 credits/month and scales to 3000. Unlocks full Pro interface.",
+    proOnly: true,
     features: [
+      "50 generation credits (expandable)",
+      "Pro interface unlocked",
       "Advanced AI editing & plugins",
-      "All formats (WAV, MIDI, MP3)",
+      "All formats (WAV, MIDI, MP3, VST)",
       "Access to full sound library",
       "Priority support",
       "Commercial usage rights",
@@ -584,13 +609,14 @@ export const plans: Plan[] = [
       "🎯 Adaptive AI Model Selection",
     ],
     creditPackages: [
-      { credits: 30, price: 30 },
+      { credits: 50, price: 50 },
       { credits: 100, price: 85 },
       { credits: 500, price: 380 },
       { credits: 1000, price: 700 },
       { credits: 3000, price: 1800 },
     ],
-    pricingNote: "Prices adjust dynamically based on selected credits.",
+    pricingNote:
+      "Monthly subscription. Prices adjust dynamically based on selected credit package.",
     cta: "Subscribe Now",
   },
   {

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Upload, Lightbulb } from "lucide-react";
 import PageContainer from "../components/PageContainer";
 import PromptInput from "../components/PromptInput";
@@ -7,31 +7,92 @@ import ResultsList from "../components/ResultsList";
 import { audioResults, type AudioResult } from "../data/mock";
 import { useInterfaceMode } from "../hooks/useInterfaceMode";
 
-const TYPE_OPTIONS = ["Audio Sample", "MIDI Melody", "VST Preset"];
-const MODEL_OPTIONS_PRO = ["SoundCraft v1", "MidiCraft", "SoundCraft"];
-const MODEL_OPTIONS_LITE = ["ACE-STEP V1.5", "Mus Meta v2.5", "Diffusion v4.5"];
-const FORMAT_OPTIONS_PRO = ["WAV Audio", "MP3 Audio", "FLAC", "OGG"];
-const FORMAT_OPTIONS_LITE = ["MP3 Audio"];
+// --- Lite mode ---------------------------------------------------------------
+// Single type (Audio Sample). Models come from Hugging Face. Output is MP3 only.
+const LITE_TYPES = ["Audio Sample"] as const;
+const LITE_MODELS_BY_TYPE: Record<(typeof LITE_TYPES)[number], string[]> = {
+  "Audio Sample": ["ACE-STEP", "Mus Meta", "Diffusion"],
+};
+const LITE_FORMATS_BY_TYPE: Record<(typeof LITE_TYPES)[number], string[]> = {
+  "Audio Sample": ["MP3"],
+};
+
+// --- Pro mode ----------------------------------------------------------------
+// Three types. Each type is bound to one SoundAI model, which in turn drives
+// the list of allowed output formats.
+const PRO_TYPES = ["Audio Sample", "MIDI Melody", "VST Preset"] as const;
+const PRO_MODELS_BY_TYPE: Record<(typeof PRO_TYPES)[number], string[]> = {
+  "Audio Sample": ["SoundCraft"],
+  "MIDI Melody": ["MidiCraft"],
+  "VST Preset": ["VSTCraft"],
+};
+const PRO_FORMATS_BY_TYPE: Record<(typeof PRO_TYPES)[number], string[]> = {
+  "Audio Sample": ["WAV", "FLAC", "OGG"],
+  "MIDI Melody": ["MIDI"],
+  "VST Preset": [
+    "VST3 (.vstpreset)",
+    "VST2 (.fxp)",
+    "VST Bank (.fxb)",
+    "Serum (.fxp)",
+    "Vital (.vital)",
+    "Massive (.nmsv)",
+    "Ableton Rack (.adv)",
+    "Logic Pro (.aupreset)",
+  ],
+};
 
 export default function AudioGenerator() {
   const { mode } = useInterfaceMode();
+  const isPro = mode === "pro";
+
+  const typeOptions: string[] = useMemo(
+    () => (isPro ? [...PRO_TYPES] : [...LITE_TYPES]),
+    [isPro],
+  );
+
   const [prompt, setPrompt] = useState("");
-  const [type, setType] = useState(TYPE_OPTIONS[0]);
-  const modelOptions = mode === "pro" ? MODEL_OPTIONS_PRO : MODEL_OPTIONS_LITE;
-  const formatOptions = mode === "pro" ? FORMAT_OPTIONS_PRO : FORMAT_OPTIONS_LITE;
+  const [type, setType] = useState<string>(typeOptions[0]);
+
+  // When the mode switches, make sure the current type is still valid.
+  useEffect(() => {
+    if (!typeOptions.includes(type)) {
+      setType(typeOptions[0]);
+    }
+  }, [typeOptions, type]);
+
+  const modelOptions = useMemo(() => {
+    if (isPro) {
+      const key = type as (typeof PRO_TYPES)[number];
+      return PRO_MODELS_BY_TYPE[key] ?? PRO_MODELS_BY_TYPE["Audio Sample"];
+    }
+    const key = type as (typeof LITE_TYPES)[number];
+    return LITE_MODELS_BY_TYPE[key] ?? LITE_MODELS_BY_TYPE["Audio Sample"];
+  }, [isPro, type]);
+
+  const formatOptions = useMemo(() => {
+    if (isPro) {
+      const key = type as (typeof PRO_TYPES)[number];
+      return PRO_FORMATS_BY_TYPE[key] ?? PRO_FORMATS_BY_TYPE["Audio Sample"];
+    }
+    const key = type as (typeof LITE_TYPES)[number];
+    return LITE_FORMATS_BY_TYPE[key] ?? LITE_FORMATS_BY_TYPE["Audio Sample"];
+  }, [isPro, type]);
+
   const [model, setModel] = useState(modelOptions[0]);
   const [format, setFormat] = useState(formatOptions[0]);
-  const [saved, setSaved] = useState<Set<string>>(new Set());
 
-  // Re-sync model/format when mode switches so the available options stay valid.
-  const resolvedModel = useMemo(
-    () => (modelOptions.includes(model) ? model : modelOptions[0]),
-    [modelOptions, model],
-  );
-  const resolvedFormat = useMemo(
-    () => (formatOptions.includes(format) ? format : formatOptions[0]),
-    [formatOptions, format],
-  );
+  const resolvedModel = modelOptions.includes(model) ? model : modelOptions[0];
+  const resolvedFormat = formatOptions.includes(format) ? format : formatOptions[0];
+
+  // Keep local state in sync whenever the derived options collapse.
+  useEffect(() => {
+    if (!modelOptions.includes(model)) setModel(modelOptions[0]);
+  }, [modelOptions, model]);
+  useEffect(() => {
+    if (!formatOptions.includes(format)) setFormat(formatOptions[0]);
+  }, [formatOptions, format]);
+
+  const [saved, setSaved] = useState<Set<string>>(new Set());
 
   const handleAddToLibrary = (item: AudioResult) => {
     setSaved((prev) => {
@@ -40,17 +101,6 @@ export default function AudioGenerator() {
       next.add(item.id);
       return next;
     });
-  };
-
-  const handleExport = (item: AudioResult) => {
-    // Minimal placeholder: download a JSON metadata stub so the action is observable.
-    const blob = new Blob([JSON.stringify(item, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${item.title.replace(/\s+/g, "-").toLowerCase()}.${item.format.toLowerCase()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   const handleRemix = (item: AudioResult) => {
@@ -71,7 +121,7 @@ export default function AudioGenerator() {
       <section className="rounded-card border border-primary/40 p-6">
         <header className="mb-4 flex items-center justify-between">
           <h2 className="font-poppins text-sm font-semibold text-text">AdaptivePrompt</h2>
-          {mode === "pro" && (
+          {isPro && (
             <div className="flex items-center gap-2">
               <button className="app-btn-ghost h-9 px-3 text-xs">
                 <Upload className="h-3.5 w-3.5" /> Import
@@ -91,14 +141,19 @@ export default function AudioGenerator() {
           }}
         />
 
-        {mode === "pro" && (
+        {isPro && (
           <p className="mt-2 font-codec text-xs italic text-text/50">
-            Smart suggestions adapt as you type to improve generation quality.
+            Smart suggestions adapt as you type. Type, model and output format stay in sync.
           </p>
         )}
 
         <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
-          <ControlDropdown label="Type" value={type} options={TYPE_OPTIONS} onChange={setType} />
+          <ControlDropdown
+            label="Type"
+            value={type}
+            options={typeOptions}
+            onChange={setType}
+          />
           <ControlDropdown
             label="Model"
             value={resolvedModel}
@@ -112,6 +167,12 @@ export default function AudioGenerator() {
             onChange={setFormat}
           />
         </div>
+
+        {!isPro && (
+          <p className="mt-3 font-codec text-[11px] italic text-text/50">
+            Lite mode: Audio Sample only · Hugging Face models · MP3 output. Switch to Pro to unlock MIDI and VST generation.
+          </p>
+        )}
       </section>
 
       <div className="mt-4">
@@ -119,7 +180,6 @@ export default function AudioGenerator() {
           items={audioResults}
           savedIds={saved}
           onAddToLibrary={handleAddToLibrary}
-          onExport={handleExport}
           onRemix={handleRemix}
         />
       </div>

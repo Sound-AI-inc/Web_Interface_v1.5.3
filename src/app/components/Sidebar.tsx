@@ -112,7 +112,7 @@ export default function Sidebar() {
   const isPro = mode === "pro";
 
   return (
-    <aside className={`sticky top-0 flex h-screen ${width} shrink-0 flex-col self-start border-r border-surface bg-surface-muted transition-[width] duration-200`}>
+    <aside className={`sticky top-0 flex h-screen ${width} shrink-0 flex-col self-start border-r border-surface bg-surface-muted transition-[width] duration-300 ease-in-out`}>
       {/* Top: brand + collapse toggle */}
       <div className={`flex h-16 items-center ${collapsed ? "justify-center px-2" : "justify-between px-4"}`}>
         {!collapsed && (
