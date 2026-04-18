@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import PageContainer from "../components/PageContainer";
 import { Field, SettingsSection, Toggle } from "../components/SettingsForm";
+import { useLanguage } from "../i18n/LanguageProvider";
+import { LANGUAGES, type LanguageCode } from "../i18n/translations";
 
 export default function Settings() {
+  const { t, language, setLanguage } = useLanguage();
+
   // General
   const [workspaceName, setWorkspaceName] = useState("SoundAI · Studio");
-  const [language, setLanguage] = useState("English (US)");
 
   // Audio Quality
   const [sampleRate, setSampleRate] = useState("48 kHz");
@@ -14,7 +17,7 @@ export default function Settings() {
   const [defaultExportFormat, setDefaultExportFormat] = useState("WAV");
 
   // Interface
-  const [sidebarWidth, setSidebarWidth] = useState(240);
+  const [sidebarWidth, setSidebarWidth] = useState(216);
   const [density, setDensity] = useState("Comfortable");
   const [showTooltips, setShowTooltips] = useState(true);
 
@@ -29,14 +32,10 @@ export default function Settings() {
   // Export
   const [stemsBundle, setStemsBundle] = useState(true);
   const [preferLossless, setPreferLossless] = useState(true);
-  const [qualityPreset, setQualityPreset] = useState<"draft" | "standard" | "studio">("standard");
-
-  // AI Behaviour (kept)
-  const [explicitContent, setExplicitContent] = useState(false);
-  const [autoSave, setAutoSave] = useState(true);
+  const [qualityPreset, setQualityPreset] =
+    useState<"draft" | "standard" | "studio">("standard");
 
   useEffect(() => {
-    // Enumerate available audio devices.
     const run = async () => {
       if (!navigator.mediaDevices?.enumerateDevices) return;
       try {
@@ -52,7 +51,10 @@ export default function Settings() {
           outputs: outputs.length ? outputs : ["Default — System"],
         });
       } catch {
-        setDevices({ inputs: ["Default — System"], outputs: ["Default — System"] });
+        setDevices({
+          inputs: ["Default — System"],
+          outputs: ["Default — System"],
+        });
       }
     };
     void run();
@@ -60,12 +62,17 @@ export default function Settings() {
 
   return (
     <PageContainer
-      title="Settings"
-      subtitle="System configuration"
-      actions={<button className="app-btn-primary h-9">Save changes</button>}
+      title={t("settings.title")}
+      subtitle={t("settings.subtitle")}
+      actions={
+        <button className="app-btn-primary h-9">{t("settings.save")}</button>
+      }
     >
       <div className="rounded-card border border-surface bg-white shadow-flat-sm">
-        <SettingsSection title="General" description="Workspace and regional defaults.">
+        <SettingsSection
+          title={t("settings.general")}
+          description="Workspace and regional defaults."
+        >
           <Field label="Workspace name">
             <input
               className="app-input"
@@ -73,24 +80,23 @@ export default function Settings() {
               onChange={(e) => setWorkspaceName(e.target.value)}
             />
           </Field>
-          <Field label="Language">
+          <Field label={t("settings.language")} hint={t("settings.languageDesc")}>
             <select
               className="app-input"
               value={language}
-              onChange={(e) => setLanguage(e.target.value)}
+              onChange={(e) => setLanguage(e.target.value as LanguageCode)}
             >
-              <option>English (US)</option>
-              <option>English (UK)</option>
-              <option>Русский</option>
-              <option>Español</option>
-              <option>Deutsch</option>
-              <option>日本語</option>
+              {LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code}>
+                  {l.label}
+                </option>
+              ))}
             </select>
           </Field>
         </SettingsSection>
 
         <SettingsSection
-          title="Audio Quality"
+          title={t("settings.audioQuality")}
           description="Defaults for rendering and exports."
         >
           <Field label="Sample rate">
@@ -136,7 +142,10 @@ export default function Settings() {
           />
         </SettingsSection>
 
-        <SettingsSection title="Interface" description="Tune the dashboard to your workflow.">
+        <SettingsSection
+          title={t("settings.interface")}
+          description="Tune the dashboard to your workflow."
+        >
           <Field label="Sidebar width" hint={`${sidebarWidth}px`}>
             <input
               type="range"
@@ -166,7 +175,7 @@ export default function Settings() {
         </SettingsSection>
 
         <SettingsSection
-          title="Devices"
+          title={t("settings.devices")}
           description="Audio I/O for generation playback and Editor Mode."
         >
           <Field
@@ -178,9 +187,11 @@ export default function Settings() {
               value={inputDevice}
               onChange={(e) => setInputDevice(e.target.value)}
             >
-              {(devices.inputs.length ? devices.inputs : ["Default — System"]).map((d) => (
-                <option key={d}>{d}</option>
-              ))}
+              {(devices.inputs.length ? devices.inputs : ["Default — System"]).map(
+                (d) => (
+                  <option key={d}>{d}</option>
+                ),
+              )}
             </select>
           </Field>
           <Field label="Output device">
@@ -189,14 +200,19 @@ export default function Settings() {
               value={outputDevice}
               onChange={(e) => setOutputDevice(e.target.value)}
             >
-              {(devices.outputs.length ? devices.outputs : ["Default — System"]).map((d) => (
-                <option key={d}>{d}</option>
-              ))}
+              {(devices.outputs.length ? devices.outputs : ["Default — System"]).map(
+                (d) => (
+                  <option key={d}>{d}</option>
+                ),
+              )}
             </select>
           </Field>
         </SettingsSection>
 
-        <SettingsSection title="Export" description="Defaults when sending assets out of SoundAI.">
+        <SettingsSection
+          title={t("settings.export")}
+          description="Defaults when sending assets out of SoundAI."
+        >
           <Field label="Quality preset">
             <div className="flex items-center gap-2">
               {(["draft", "standard", "studio"] as const).map((q) => (
@@ -226,24 +242,6 @@ export default function Settings() {
             description="Use WAV / FLAC when the target supports them."
             checked={preferLossless}
             onChange={setPreferLossless}
-          />
-        </SettingsSection>
-
-        <SettingsSection title="AI behavior" description="Basic controls for generation.">
-          <Field label="Creativity" hint="Higher values produce more varied, less predictable results.">
-            <input type="range" defaultValue={60} className="w-full accent-[#FF3C82]" />
-          </Field>
-          <Toggle
-            label="Auto-save generations"
-            description="Automatically save every result to your library."
-            checked={autoSave}
-            onChange={setAutoSave}
-          />
-          <Toggle
-            label="Allow explicit content"
-            description="Opt into outputs that may contain explicit themes."
-            checked={explicitContent}
-            onChange={setExplicitContent}
           />
         </SettingsSection>
       </div>

@@ -14,6 +14,7 @@ import PageContainer from "../components/PageContainer";
 import ResultCard, { toCardItem } from "../components/ResultCard";
 import type { LibraryAsset, ResultKind } from "../data/mock";
 import { LIBRARY_ROOT_ID, useLibraryStore } from "../state/libraryStore";
+import { useLanguage } from "../i18n/LanguageProvider";
 
 type TypeFilter = "all" | ResultKind;
 
@@ -25,6 +26,7 @@ const TYPE_FILTERS: { value: TypeFilter; label: string }[] = [
 ];
 
 export default function Library() {
+  const { t } = useLanguage();
   const folders = useLibraryStore((s) => s.folders);
   const assets = useLibraryStore((s) => s.assets);
   const assetFolder = useLibraryStore((s) => s.assetFolder);
@@ -42,6 +44,25 @@ export default function Library() {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [moveMenuFor, setMoveMenuFor] = useState<string | null>(null);
+  const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
+
+  const onDragStartAsset = (e: React.DragEvent, assetId: string) => {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/soundai-asset-id", assetId);
+  };
+  const onDragOverFolder = (e: React.DragEvent, folderId: string) => {
+    if (e.dataTransfer.types.includes("text/soundai-asset-id")) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      setDragOverFolder(folderId);
+    }
+  };
+  const onDropOnFolder = (e: React.DragEvent, folderId: string) => {
+    e.preventDefault();
+    const id = e.dataTransfer.getData("text/soundai-asset-id");
+    if (id) moveAsset(id, folderId);
+    setDragOverFolder(null);
+  };
 
   const toggleFolder = (id: string) => {
     setExpandedFolders((prev) => {
@@ -92,7 +113,7 @@ export default function Library() {
     assets.filter((a) => (assetFolder[a.id] ?? LIBRARY_ROOT_ID) === fid).length;
 
   return (
-    <PageContainer title="Library" subtitle="Your generated and saved assets">
+    <PageContainer title={t("library.title")} subtitle={t("library.subtitle")}>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[240px_1fr]">
         {/* Folders sidebar */}
         <aside className="app-card flex flex-col gap-2 p-4">
@@ -114,13 +135,19 @@ export default function Library() {
               const active = selectedFolder === f.id;
               const expanded = expandedFolders.has(f.id);
               const renaming = renamingId === f.id;
+              const isDragTarget = dragOverFolder === f.id;
               return (
                 <div key={f.id} className="flex flex-col">
                   <div
+                    onDragOver={(e) => onDragOverFolder(e, f.id)}
+                    onDragLeave={() => setDragOverFolder(null)}
+                    onDrop={(e) => onDropOnFolder(e, f.id)}
                     className={`group flex items-center gap-1 rounded-button px-2 py-1.5 font-codec text-xs transition-colors ${
-                      active
-                        ? "bg-primary/10 text-primary"
-                        : "text-text/70 hover:bg-surface-muted"
+                      isDragTarget
+                        ? "bg-primary/15 text-primary ring-1 ring-primary"
+                        : active
+                          ? "bg-primary/10 text-primary"
+                          : "text-text/70 hover:bg-surface-muted"
                     }`}
                   >
                     <button
@@ -271,7 +298,12 @@ export default function Library() {
 
           <div className="flex flex-col gap-3">
             {filtered.map((a) => (
-              <div key={a.id} className="relative">
+              <div
+                key={a.id}
+                draggable
+                onDragStart={(e) => onDragStartAsset(e, a.id)}
+                className="relative cursor-grab active:cursor-grabbing"
+              >
                 <ResultCard item={toCardItem(a)} savedToLibrary />
                 <div className="absolute right-4 top-4 z-10">
                   <button

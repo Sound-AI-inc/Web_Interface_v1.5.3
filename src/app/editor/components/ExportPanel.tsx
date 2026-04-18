@@ -4,24 +4,18 @@ import {
   ChevronRight,
   Download,
   Folder as FolderIcon,
-  Lock,
-  Sparkles,
 } from "lucide-react";
 import { LIBRARY_ROOT_ID, useLibraryStore } from "../../state/libraryStore";
-import { useInterfaceMode } from "../../hooks/useInterfaceMode";
 
 /**
  * Compact "Export" subpanel pinned at the bottom of the Editor Mode right
- * sidebar. Shows library folders → files so the user can queue an export to
- * their local DAW / file system. Gated behind Pro — Lite users see the list
- * but the export button is disabled with a Pro badge.
+ * sidebar. Shows library folders → files so the user can queue an export
+ * to their local DAW / file system.
  */
 export default function ExportPanel() {
   const folders = useLibraryStore((s) => s.folders);
   const assets = useLibraryStore((s) => s.assets);
   const assetFolder = useLibraryStore((s) => s.assetFolder);
-  const { mode } = useInterfaceMode();
-  const isPro = mode === "pro";
 
   const [expanded, setExpanded] = useState<Set<string>>(
     () => new Set([LIBRARY_ROOT_ID]),
@@ -42,21 +36,14 @@ export default function ExportPanel() {
   return (
     <section className="app-card flex flex-col gap-3 p-4">
       <header className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h3 className="app-section-title">Export</h3>
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 font-poppins text-[9px] font-bold uppercase tracking-wider text-primary">
-            <Sparkles className="h-3 w-3" />
-            Pro
-          </span>
-        </div>
+        <h3 className="app-section-title">Export</h3>
         <span className="font-codec text-[10px] text-text/40">
-          {isPro ? "ready" : "locked"}
+          {assets.length} items
         </span>
       </header>
 
       <p className="font-codec text-[11px] italic text-text/50">
-        Push files from your library straight to your DAW / local machine.
-        Available with an active paid subscription.
+        Push files from your library straight to your DAW or local disk.
       </p>
 
       <div className="flex flex-col gap-1">
@@ -101,19 +88,10 @@ export default function ExportPanel() {
                         </span>
                         <button
                           type="button"
-                          disabled={!isPro}
-                          className={`inline-flex h-6 items-center gap-1 rounded-button px-2 font-codec text-[10px] transition-colors ${
-                            isPro
-                              ? "bg-primary text-white hover:bg-primary/90"
-                              : "bg-surface-muted text-text/40"
-                          }`}
-                          title={isPro ? "Export" : "Pro plan required"}
+                          className="inline-flex h-6 items-center gap-1 rounded-button bg-primary px-2 font-codec text-[10px] text-white transition-colors hover:bg-primary/90"
+                          title="Export"
                         >
-                          {isPro ? (
-                            <Download className="h-3 w-3" />
-                          ) : (
-                            <Lock className="h-3 w-3" />
-                          )}
+                          <Download className="h-3 w-3" />
                           Export
                         </button>
                       </div>
@@ -125,12 +103,6 @@ export default function ExportPanel() {
           );
         })}
       </div>
-
-      {!isPro && (
-        <div className="rounded-button bg-primary/5 px-2.5 py-2 font-codec text-[11px] text-primary">
-          Upgrade to Premium Flex to unlock direct library → DAW exports.
-        </div>
-      )}
     </section>
   );
 }

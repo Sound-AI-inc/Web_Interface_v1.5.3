@@ -180,7 +180,7 @@ export default function MidiEditor() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-1.5">
         <button
           type="button"
           onClick={isPlaying ? stop : play}
@@ -193,41 +193,56 @@ export default function MidiEditor() {
         <select
           value={grid}
           onChange={(e) => setGrid(Number(e.target.value))}
-          className="app-input h-9 w-auto py-0 pr-8 text-xs"
+          className="app-input h-9 py-0 pr-7 text-[11px]"
         >
-          <option value={0.0625}>Grid 1/16</option>
-          <option value={0.125}>Grid 1/8</option>
-          <option value={0.25}>Grid 1/4</option>
-          <option value={0.5}>Grid 1/2</option>
+          <option value={0.0625}>1/16</option>
+          <option value={0.125}>1/8</option>
+          <option value={0.25}>1/4</option>
+          <option value={0.5}>1/2</option>
         </select>
-        <button type="button" onClick={doQuantize} className="app-btn-ghost h-9 px-3">
+        <button type="button" onClick={doQuantize} className="app-btn-ghost h-9 px-2 text-[11px]">
           Quantize
         </button>
-        <button type="button" onClick={() => doTranspose(1)} className="app-btn-ghost h-9 px-3">
-          +1 st
+        <button
+          type="button"
+          onClick={() => doTranspose(1)}
+          className="app-btn-ghost h-9 px-2 text-[11px]"
+          title="Up one semitone"
+        >
+          +1
         </button>
-        <button type="button" onClick={() => doTranspose(-1)} className="app-btn-ghost h-9 px-3">
-          −1 st
+        <button
+          type="button"
+          onClick={() => doTranspose(-1)}
+          className="app-btn-ghost h-9 px-2 text-[11px]"
+          title="Down one semitone"
+        >
+          −1
         </button>
-        <button type="button" onClick={() => doTranspose(12)} className="app-btn-ghost h-9 px-3">
-          +Octave
+        <button
+          type="button"
+          onClick={() => doTranspose(12)}
+          className="app-btn-ghost h-9 px-2 text-[11px]"
+          title="Up one octave"
+        >
+          +8va
         </button>
 
         <button
           type="button"
           onClick={() => octaveJump(-1)}
-          className="app-btn-ghost h-9 px-3"
+          className="app-btn-ghost h-9 w-9 !px-0"
           aria-label="Scroll up one octave"
-          title="Octave up"
+          title="Scroll up"
         >
           <ChevronsUp className="h-3.5 w-3.5" />
         </button>
         <button
           type="button"
           onClick={() => octaveJump(1)}
-          className="app-btn-ghost h-9 px-3"
+          className="app-btn-ghost h-9 w-9 !px-0"
           aria-label="Scroll down one octave"
-          title="Octave down"
+          title="Scroll down"
         >
           <ChevronsDown className="h-3.5 w-3.5" />
         </button>
@@ -235,27 +250,25 @@ export default function MidiEditor() {
         <button
           type="button"
           onClick={clearAll}
-          className="app-btn-ghost h-9 px-3"
+          className="app-btn-ghost h-9 px-2 text-[11px]"
           title="Remove all notes"
         >
           <Trash2 className="h-3.5 w-3.5" /> Clear
         </button>
 
-        <div className="ml-auto flex items-center gap-2">
-          <label className="app-btn-ghost h-9 cursor-pointer px-3">
-            <Upload className="h-3.5 w-3.5" /> Import .mid
-            <input type="file" accept=".mid,.midi" onChange={onFileUpload} className="hidden" />
-          </label>
-          <LibraryImportMenu
-            kind="midi"
-            trigger={
-              <span className="app-btn-ghost h-9 px-3">
-                <FolderOpen className="h-3.5 w-3.5" /> Import from library
-              </span>
-            }
-            onImportMidi={onImportFromLibrary}
-          />
-        </div>
+        <label className="app-btn-ghost h-9 cursor-pointer px-2 text-[11px]">
+          <Upload className="h-3.5 w-3.5" /> Import
+          <input type="file" accept=".mid,.midi" onChange={onFileUpload} className="hidden" />
+        </label>
+        <LibraryImportMenu
+          kind="midi"
+          trigger={
+            <span className="app-btn-ghost h-9 px-2 text-[11px]">
+              <FolderOpen className="h-3.5 w-3.5" /> Library
+            </span>
+          }
+          onImportMidi={onImportFromLibrary}
+        />
       </div>
 
       <div

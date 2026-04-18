@@ -6,6 +6,7 @@ import Prompts from "./app/pages/Prompts";
 import Arrangement from "./app/pages/Arrangement";
 import EditorMode from "./app/pages/EditorMode";
 import Library from "./app/pages/Library";
+import Export from "./app/pages/Export";
 import Integrations from "./app/pages/Integrations";
 import Billing from "./app/pages/Billing";
 import Profile from "./app/pages/Profile";
@@ -67,6 +68,7 @@ function App() {
           <Route path="arrangement" element={<Arrangement />} />
           <Route path="editor" element={<EditorMode />} />
           <Route path="library" element={<Library />} />
+          <Route path="export" element={<Export />} />
           <Route path="integrations" element={<Integrations />} />
           <Route path="billing" element={<Billing />} />
           <Route path="profile" element={<Profile />} />

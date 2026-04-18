@@ -84,30 +84,36 @@ export default function MidiToolsPanel() {
           <button
             type="button"
             onClick={() => transpose(-12, "-1 oct")}
-            className="app-btn-ghost h-8 px-2 text-[11px]"
+            className="app-btn-ghost h-8 min-w-0 !px-1 text-[10px]"
+            title="Down one octave"
           >
-            <ArrowDown className="h-3 w-3" /> 8va
+            <ArrowDown className="h-3 w-3 shrink-0" />
+            <span>8va</span>
           </button>
           <button
             type="button"
             onClick={() => transpose(-1, "-1 st")}
-            className="app-btn-ghost h-8 px-2 text-[11px]"
+            className="app-btn-ghost h-8 min-w-0 !px-1 text-[10px]"
+            title="Down one semitone"
           >
             −1
           </button>
           <button
             type="button"
             onClick={() => transpose(1, "+1 st")}
-            className="app-btn-ghost h-8 px-2 text-[11px]"
+            className="app-btn-ghost h-8 min-w-0 !px-1 text-[10px]"
+            title="Up one semitone"
           >
             +1
           </button>
           <button
             type="button"
             onClick={() => transpose(12, "+1 oct")}
-            className="app-btn-ghost h-8 px-2 text-[11px]"
+            className="app-btn-ghost h-8 min-w-0 !px-1 text-[10px]"
+            title="Up one octave"
           >
-            <ArrowUp className="h-3 w-3" /> 8va
+            <ArrowUp className="h-3 w-3 shrink-0" />
+            <span>8va</span>
           </button>
         </div>
       </div>
