@@ -19,6 +19,8 @@ import Privacy from "./pages/legal/Privacy";
 import LegalCenter from "./pages/legal/LegalCenter";
 import Licenses from "./pages/legal/Licenses";
 import LegalInfo from "./pages/legal/LegalInfo";
+import ComingSoon from "./pages/ComingSoon";
+import Auth from "./pages/Auth";
 
 function App() {
   return (
@@ -48,6 +50,9 @@ function App() {
           <Route path="/legal/center" element={<LegalCenter />} />
           <Route path="/legal/licenses" element={<Licenses />} />
           <Route path="/legal/info" element={<LegalInfo />} />
+          {/* Auth & Coming Soon */}
+          <Route path="/coming-soon" element={<ComingSoon />} />
+          <Route path="/auth" element={<Auth />} />
         </Route>
       </Routes>
     </BrowserRouter>

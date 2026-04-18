@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ChevronDown, Sun, Moon } from "lucide-react";
+import { ChevronRight, X, ChevronDown, Sun, Moon } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 
 const navItems = [
@@ -53,15 +53,15 @@ export default function Header() {
   return (
     <>
       {/* Top bar */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 dark:bg-dark-deeper/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/5 transition-colors">
+      <header className="fixed top-0 left-0 right-0 z-40 bg-white/70 dark:bg-dark-deeper/70 backdrop-blur-xl border-b border-gray-200/50 dark:border-white/5 transition-colors">
         <div className="container-max flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="text-gray-600 dark:text-light-bg/70 hover:text-gray-900 dark:hover:text-light-bg transition-colors"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 dark:text-light-bg/60 hover:text-accent-pink dark:hover:text-accent-pink bg-gray-100/80 dark:bg-white/5 hover:bg-gray-200/80 dark:hover:bg-white/10 transition-all"
               aria-label="Open menu"
             >
-              <Menu className="w-5 h-5" />
+              <ChevronRight className="w-4 h-4" />
             </button>
             <Link to="/" className="flex items-center gap-2 group">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-pink to-accent-cyan flex items-center justify-center">
@@ -76,16 +76,16 @@ export default function Header() {
           <div className="flex items-center gap-3">
             <button
               onClick={toggleTheme}
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-500 dark:text-light-bg/60 hover:text-accent-pink dark:hover:text-accent-pink bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-all"
+              className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-500 dark:text-light-bg/60 hover:text-accent-pink dark:hover:text-accent-pink bg-gray-100/80 dark:bg-white/5 hover:bg-gray-200/80 dark:hover:bg-white/10 transition-all"
               aria-label="Toggle theme"
             >
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
-            <Link to="/products/users" className="btn-secondary text-xs px-4 py-2 hidden sm:inline-flex">
-              Start Creating
+            <Link to="/coming-soon" className="btn-secondary text-xs px-4 py-2 hidden sm:inline-flex">
+              Sign Up
             </Link>
-            <Link to="/about" className="btn-primary text-xs px-4 py-2">
-              Join Beta
+            <Link to="/coming-soon" className="btn-primary text-xs px-4 py-2">
+              Log In
             </Link>
           </div>
         </div>
@@ -99,13 +99,13 @@ export default function Header() {
         />
       )}
 
-      {/* Sidebar drawer */}
+      {/* Sidebar drawer — frosted glass */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-80 max-w-[85vw] bg-white dark:bg-dark-deeper border-r border-gray-200 dark:border-white/10 shadow-2xl transition-transform duration-300 ease-in-out overflow-y-auto ${
+        className={`fixed top-0 left-0 z-50 h-full w-80 max-w-[85vw] bg-white/80 dark:bg-dark-deeper/80 backdrop-blur-2xl border-r border-gray-200/50 dark:border-white/10 shadow-2xl transition-transform duration-300 ease-in-out overflow-y-auto ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between h-16 px-5 border-b border-gray-200 dark:border-white/5">
+        <div className="flex items-center justify-between h-16 px-5 border-b border-gray-200/50 dark:border-white/5">
           <Link to="/" className="flex items-center gap-2" onClick={() => setSidebarOpen(false)}>
             <div className="w-7 h-7 rounded-md bg-gradient-to-br from-accent-pink to-accent-cyan flex items-center justify-center">
               <span className="text-white font-poppins font-bold text-xs">S</span>
@@ -173,12 +173,12 @@ export default function Header() {
           ))}
         </nav>
 
-        <div className="px-5 py-4 border-t border-gray-200 dark:border-white/5">
-          <Link to="/products/users" className="btn-primary w-full text-xs mb-2" onClick={() => setSidebarOpen(false)}>
-            Start Creating
+        <div className="px-5 py-4 border-t border-gray-200/50 dark:border-white/5">
+          <Link to="/coming-soon" className="btn-primary w-full text-xs mb-2" onClick={() => setSidebarOpen(false)}>
+            Sign Up
           </Link>
-          <Link to="/about" className="btn-secondary w-full text-xs" onClick={() => setSidebarOpen(false)}>
-            Join Beta
+          <Link to="/coming-soon" className="btn-secondary w-full text-xs" onClick={() => setSidebarOpen(false)}>
+            Log In
           </Link>
         </div>
       </aside>
