@@ -28,7 +28,7 @@ export default function Prompts() {
       title="Prompts"
       subtitle="Your reusable prompt library"
       actions={
-        <button className="app-btn-primary h-10">
+        <button className="app-btn-primary h-9">
           <Plus className="h-4 w-4" /> New prompt
         </button>
       }

@@ -29,6 +29,7 @@ export default function WaveformEditor({ onReady, onPlayStateChange }: Props) {
   const selection = useEditor((s) => s.selection);
   const [zoom, setZoom] = useState(60);
   const [isPlaying, setPlaying] = useState(false);
+  const readyRef = useRef(false);
 
   // Init wavesurfer once
   useEffect(() => {
@@ -55,8 +56,17 @@ export default function WaveformEditor({ onReady, onPlayStateChange }: Props) {
     };
 
     ws.on("ready", () => {
+      readyRef.current = true;
+      try {
+        ws.zoom(zoom);
+      } catch {
+        // ignore
+      }
       enableDragSelection();
       onReady?.();
+    });
+    ws.on("destroy", () => {
+      readyRef.current = false;
     });
 
     regions.on("region-created", (region: Region) => {
@@ -100,9 +110,14 @@ export default function WaveformEditor({ onReady, onPlayStateChange }: Props) {
     ws.loadBlob(blob);
   }, [buffer]);
 
-  // Apply zoom.
+  // Apply zoom (only after audio has been decoded).
   useEffect(() => {
-    wsRef.current?.zoom(zoom);
+    if (!readyRef.current) return;
+    try {
+      wsRef.current?.zoom(zoom);
+    } catch {
+      // wavesurfer throws if buffer is not ready yet
+    }
   }, [zoom]);
 
   const playToggle = useCallback(() => {

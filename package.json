@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.103.3",
     "@tonejs/midi": "^2.0.28",
     "audiobuffer-to-wav": "^1.0.0",
     "class-variance-authority": "^0.7.1",

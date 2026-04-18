@@ -4,7 +4,7 @@ import PageContainer from "../components/PageContainer";
 import PromptInput from "../components/PromptInput";
 import ControlDropdown from "../components/ControlDropdown";
 import ResultsList from "../components/ResultsList";
-import { audioResults } from "../data/mock";
+import { audioResults, type AudioResult } from "../data/mock";
 import { useInterfaceMode } from "../hooks/useInterfaceMode";
 
 const TYPE_OPTIONS = ["Audio Sample", "MIDI Melody", "VST Preset"];
@@ -21,6 +21,7 @@ export default function AudioGenerator() {
   const formatOptions = mode === "pro" ? FORMAT_OPTIONS_PRO : FORMAT_OPTIONS_LITE;
   const [model, setModel] = useState(modelOptions[0]);
   const [format, setFormat] = useState(formatOptions[0]);
+  const [saved, setSaved] = useState<Set<string>>(new Set());
 
   // Re-sync model/format when mode switches so the available options stay valid.
   const resolvedModel = useMemo(
@@ -31,6 +32,30 @@ export default function AudioGenerator() {
     () => (formatOptions.includes(format) ? format : formatOptions[0]),
     [formatOptions, format],
   );
+
+  const handleAddToLibrary = (item: AudioResult) => {
+    setSaved((prev) => {
+      if (prev.has(item.id)) return prev;
+      const next = new Set(prev);
+      next.add(item.id);
+      return next;
+    });
+  };
+
+  const handleExport = (item: AudioResult) => {
+    // Minimal placeholder: download a JSON metadata stub so the action is observable.
+    const blob = new Blob([JSON.stringify(item, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${item.title.replace(/\s+/g, "-").toLowerCase()}.${item.format.toLowerCase()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleRemix = (item: AudioResult) => {
+    setPrompt((p) => (p ? `${p} · remix of ${item.title}` : `Remix of ${item.title}`));
+  };
 
   return (
     <PageContainer
@@ -48,10 +73,10 @@ export default function AudioGenerator() {
           <h2 className="font-poppins text-sm font-semibold text-text">AdaptivePrompt</h2>
           {mode === "pro" && (
             <div className="flex items-center gap-2">
-              <button className="app-btn-ghost h-8 px-3 text-xs">
+              <button className="app-btn-ghost h-9 px-3 text-xs">
                 <Upload className="h-3.5 w-3.5" /> Import
               </button>
-              <button className="app-btn-ghost h-8 px-3 text-xs">
+              <button className="app-btn-ghost h-9 px-3 text-xs">
                 Ideas <Lightbulb className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -90,7 +115,13 @@ export default function AudioGenerator() {
       </section>
 
       <div className="mt-4">
-        <ResultsList items={audioResults} />
+        <ResultsList
+          items={audioResults}
+          savedIds={saved}
+          onAddToLibrary={handleAddToLibrary}
+          onExport={handleExport}
+          onRemix={handleRemix}
+        />
       </div>
     </PageContainer>
   );

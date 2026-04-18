@@ -2,14 +2,42 @@ export type AudioType = "Audio Sample" | "MIDI Melody" | "VST Preset";
 export type ModelName = "SoundCraft v1" | "MidiCraft" | "SoundCraft";
 export type OutputFormat = "WAV Audio" | "MP3 Audio" | "FLAC" | "OGG";
 
+export type ResultKind = "audio" | "midi" | "preset";
+
+export interface MidiNoteLite {
+  pitch: number; // midi number
+  start: number; // seconds
+  duration: number; // seconds
+  velocity?: number; // 0..1
+}
+
+export interface PresetGlance {
+  oscillator: "sine" | "triangle" | "sawtooth" | "square" | "fmsine" | "amsine";
+  attack: number;
+  decay: number;
+  sustain: number;
+  release: number;
+  filterCutoff: number; // Hz
+  filterResonance: number;
+}
+
 export interface AudioResult {
   id: string;
   title: string;
   model: string;
+  kind: ResultKind;
   durationSeconds: number;
   format: string;
-  waveformHue: string;
   description: string;
+  tags: string[];
+  // For audio previews: a seed that drives a deterministic synthetic waveform.
+  audioSeed?: number;
+  // For MIDI previews: a sequence of notes played back on a sampled piano.
+  notes?: MidiNoteLite[];
+  // For VST preset previews: the preset parameters used to drive a Tone synth.
+  preset?: PresetGlance;
+  // Optional visual hue for legacy thumbs.
+  waveformHue?: string;
 }
 
 export const audioResults: AudioResult[] = [
@@ -17,28 +45,54 @@ export const audioResults: AudioResult[] = [
     id: "r1",
     title: "Summer Lo-fi Sketch",
     model: "SoundCraft v1.5",
-    durationSeconds: 60,
+    kind: "audio",
+    durationSeconds: 6,
     format: "MP3",
+    description: "Dusty keys, tape wobble, gentle brush drums.",
+    tags: ["lofi", "chill"],
+    audioSeed: 1,
     waveformHue: "from-[#3b1a6b] via-[#ff3c82] to-[#ff98a8]",
-    description: "Waveform visualization — preview with scrub",
   },
   {
     id: "r2",
-    title: "Rainy Day Prompts Mix",
-    model: "SoundCraft 1.5",
-    durationSeconds: 45,
-    format: "WAV",
-    waveformHue: "from-[#ff6a00] via-[#ff3c82] to-[#ffb86b]",
-    description: "Waveform visualization — stereo spread view",
+    title: "Rainy Day Melody",
+    model: "MidiCraft",
+    kind: "midi",
+    durationSeconds: 6,
+    format: "MID",
+    description: "8-bar melodic sketch in A minor for acoustic piano.",
+    tags: ["piano", "melody"],
+    notes: [
+      { pitch: 69, start: 0.0, duration: 0.45 },
+      { pitch: 72, start: 0.5, duration: 0.45 },
+      { pitch: 76, start: 1.0, duration: 0.45 },
+      { pitch: 74, start: 1.5, duration: 0.45 },
+      { pitch: 72, start: 2.0, duration: 0.45 },
+      { pitch: 69, start: 2.5, duration: 0.45 },
+      { pitch: 67, start: 3.0, duration: 0.95 },
+      { pitch: 69, start: 4.0, duration: 0.45 },
+      { pitch: 72, start: 4.5, duration: 0.45 },
+      { pitch: 76, start: 5.0, duration: 0.95 },
+    ],
   },
   {
     id: "r3",
-    title: "Punk Energy Loop",
-    model: "SoundCraft 1.5",
-    durationSeconds: 30,
-    format: "OGG",
-    waveformHue: "from-[#0fd3b8] via-[#0891b2] to-[#a1e7ee]",
-    description: "Waveform visualization — tight transient control",
+    title: "Warm Rhodes Preset",
+    model: "SoundCraft",
+    kind: "preset",
+    durationSeconds: 4,
+    format: "FXP",
+    description: "Lush Rhodes-style preset. Slow attack, gentle filter sweep.",
+    tags: ["keys", "rhodes"],
+    preset: {
+      oscillator: "fmsine",
+      attack: 0.02,
+      decay: 0.3,
+      sustain: 0.6,
+      release: 1.2,
+      filterCutoff: 1800,
+      filterResonance: 0.6,
+    },
   },
 ];
 
@@ -126,71 +180,113 @@ export const prompts: PromptItem[] = [
 export interface LibraryAsset {
   id: string;
   title: string;
-  type: "Audio" | "MIDI" | "Preset";
+  kind: ResultKind;
   format: string;
   duration?: string;
+  durationSeconds: number;
   tags: string[];
   createdAt: string;
-  waveformHue: string;
+  audioSeed?: number;
+  notes?: MidiNoteLite[];
+  preset?: PresetGlance;
+  waveformHue?: string;
 }
 
 export const library: LibraryAsset[] = [
   {
     id: "l1",
     title: "Summer Lo-fi Sketch",
-    type: "Audio",
+    kind: "audio",
     format: "WAV",
-    duration: "0:60",
+    duration: "0:06",
+    durationSeconds: 6,
     tags: ["lofi", "chill"],
     createdAt: "Apr 14",
+    audioSeed: 1,
     waveformHue: "from-[#3b1a6b] via-[#ff3c82] to-[#ff98a8]",
   },
   {
     id: "l2",
     title: "Punchy Synthwave Lead",
-    type: "MIDI",
+    kind: "midi",
     format: "MID",
+    durationSeconds: 6,
     tags: ["synthwave", "lead"],
     createdAt: "Apr 12",
-    waveformHue: "from-[#ff6a00] via-[#ff3c82] to-[#ffb86b]",
+    notes: [
+      { pitch: 66, start: 0, duration: 0.25 },
+      { pitch: 73, start: 0.25, duration: 0.25 },
+      { pitch: 70, start: 0.5, duration: 0.25 },
+      { pitch: 73, start: 0.75, duration: 0.25 },
+      { pitch: 78, start: 1.0, duration: 0.5 },
+      { pitch: 75, start: 1.5, duration: 0.5 },
+      { pitch: 73, start: 2.0, duration: 0.5 },
+      { pitch: 70, start: 2.5, duration: 0.5 },
+      { pitch: 66, start: 3.0, duration: 1.0 },
+    ],
   },
   {
     id: "l3",
     title: "Warm Rhodes Preset",
-    type: "Preset",
+    kind: "preset",
     format: "FXP",
+    durationSeconds: 4,
     tags: ["keys", "rhodes"],
     createdAt: "Apr 10",
-    waveformHue: "from-[#0fd3b8] via-[#0891b2] to-[#a1e7ee]",
+    preset: {
+      oscillator: "fmsine",
+      attack: 0.02,
+      decay: 0.3,
+      sustain: 0.6,
+      release: 1.2,
+      filterCutoff: 1800,
+      filterResonance: 0.6,
+    },
   },
   {
     id: "l4",
     title: "Cinematic Tension Bed",
-    type: "Audio",
+    kind: "audio",
     format: "WAV",
-    duration: "1:12",
+    duration: "0:12",
+    durationSeconds: 12,
     tags: ["cinematic", "pad"],
     createdAt: "Apr 08",
+    audioSeed: 4,
     waveformHue: "from-[#1e1e2a] via-[#ff3c82] to-[#a1e7ee]",
   },
   {
     id: "l5",
     title: "Boom-bap Drum Loop",
-    type: "Audio",
+    kind: "audio",
     format: "WAV",
     duration: "0:08",
+    durationSeconds: 8,
     tags: ["drums", "hiphop"],
     createdAt: "Apr 05",
+    audioSeed: 5,
     waveformHue: "from-[#5b3a29] via-[#ff6a00] to-[#ffb86b]",
   },
   {
     id: "l6",
     title: "Acid 303 MIDI",
-    type: "MIDI",
+    kind: "midi",
     format: "MID",
+    durationSeconds: 4,
     tags: ["acid", "bass"],
     createdAt: "Apr 02",
-    waveformHue: "from-[#6e00ff] via-[#ff3c82] to-[#a1e7ee]",
+    notes: [
+      { pitch: 45, start: 0.0, duration: 0.2 },
+      { pitch: 45, start: 0.25, duration: 0.15 },
+      { pitch: 48, start: 0.5, duration: 0.15 },
+      { pitch: 50, start: 0.75, duration: 0.15 },
+      { pitch: 45, start: 1.0, duration: 0.2 },
+      { pitch: 52, start: 1.25, duration: 0.2 },
+      { pitch: 55, start: 1.5, duration: 0.2 },
+      { pitch: 45, start: 2.0, duration: 0.4 },
+      { pitch: 48, start: 2.5, duration: 0.4 },
+      { pitch: 45, start: 3.0, duration: 0.8 },
+    ],
   },
 ];
 
@@ -209,7 +305,7 @@ export const integrations: Integration[] = [
     id: "ableton",
     name: "Ableton Live",
     category: "DAW",
-    description: "Drag-and-drop export to Ableton sessions.",
+    description: "Send generated audio and MIDI directly to an open Ableton set.",
     connected: true,
     iconLetter: "A",
   },
@@ -217,7 +313,7 @@ export const integrations: Integration[] = [
     id: "fl",
     name: "FL Studio",
     category: "DAW",
-    description: "One-click project export with channel racks.",
+    description: "Drop stems and patterns into FL Studio's playlist.",
     connected: false,
     iconLetter: "F",
   },
@@ -225,7 +321,7 @@ export const integrations: Integration[] = [
     id: "logic",
     name: "Logic Pro",
     category: "DAW",
-    description: "Export stems and MIDI to Logic.",
+    description: "Bounce directly to a Logic project session.",
     connected: false,
     iconLetter: "L",
   },
@@ -233,26 +329,26 @@ export const integrations: Integration[] = [
     id: "wav",
     name: "WAV / MP3 / FLAC",
     category: "Format",
-    description: "Standard audio export formats.",
+    description: "Multi-format export pipeline — lossless and lossy options.",
     connected: true,
     iconLetter: "W",
   },
   {
     id: "midi",
-    name: "MIDI Export",
+    name: "MIDI 2.0",
     category: "Format",
-    description: "Portable .mid export for any DAW.",
+    description: "High-resolution MIDI export for modern DAWs.",
     connected: true,
     iconLetter: "M",
   },
   {
     id: "api",
-    name: "Developer API",
+    name: "SoundAI API",
     category: "API",
-    description: "Programmatic access to SoundAI models.",
+    description: "Generate programmatically from your own services.",
     connected: false,
     soon: true,
-    iconLetter: "{}",
+    iconLetter: "{ }",
   },
 ];
 
@@ -277,7 +373,7 @@ export interface Plan {
 
 export const plans: Plan[] = [
   {
-    id: "free",
+    id: "trial",
     name: "Free Trial",
     price: "$0",
     cadence: "/7 days",
@@ -326,15 +422,8 @@ export const plans: Plan[] = [
     id: "premium",
     name: "Premium Flex",
     price: "$30",
-    cadence: "from",
+    cadence: "/from",
     description: "Flexible plan — pay only for the credits you need.",
-    creditPackages: [
-      { credits: 30, price: 30 },
-      { credits: 100, price: 85 },
-      { credits: 500, price: 380 },
-      { credits: 1000, price: 700 },
-      { credits: 3000, price: 1800 },
-    ],
     features: [
       "Advanced AI editing & plugins",
       "All formats (WAV, MIDI, MP3)",
@@ -357,8 +446,15 @@ export const plans: Plan[] = [
       "🤝 Collaborative Sessions",
       "🎯 Adaptive AI Model Selection",
     ],
-    cta: "Subscribe Now",
+    creditPackages: [
+      { credits: 30, price: 30 },
+      { credits: 100, price: 85 },
+      { credits: 500, price: 380 },
+      { credits: 1000, price: 700 },
+      { credits: 3000, price: 1800 },
+    ],
     pricingNote: "Prices adjust dynamically based on selected credits.",
+    cta: "Subscribe Now",
   },
   {
     id: "enterprise",
@@ -368,10 +464,10 @@ export const plans: Plan[] = [
     description:
       "AI infrastructure for studios, labels, and enterprise partners. Scalable. Secure. Customizable.",
     features: [
-      "Dedicated AI infrastructure",
-      "Custom model deployment",
-      "Enterprise compliance & SLAs",
-      "Named success manager",
+      "Dedicated AI cluster / private GPU node",
+      "Custom model deployment & training",
+      "Multi-user licensing & RBAC",
+      "Enterprise-grade security (SOC 2 / GDPR / ISO 27001)",
     ],
     extras: [
       "⚙️ Dedicated AI Cluster / Private GPU Node",
@@ -410,4 +506,16 @@ export const plans: Plan[] = [
     ],
     cta: "Contact sales",
   },
+];
+
+export interface UsageMetric {
+  label: string;
+  used: number;
+  total: number;
+}
+
+export const usageMetrics: UsageMetric[] = [
+  { label: "Generations this month", used: 87, total: 300 },
+  { label: "Storage", used: 2.4, total: 10 },
+  { label: "API calls", used: 512, total: 2000 },
 ];

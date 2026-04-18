@@ -1,12 +1,23 @@
-import AudioCard from "./AudioCard";
+import ResultCard, { toCardItem } from "./ResultCard";
 import type { AudioResult } from "../data/mock";
 
 interface ResultsListProps {
   items: AudioResult[];
   title?: string;
+  savedIds?: Set<string>;
+  onAddToLibrary?: (item: AudioResult) => void;
+  onExport?: (item: AudioResult) => void;
+  onRemix?: (item: AudioResult) => void;
 }
 
-export default function ResultsList({ items, title = "AudioResults" }: ResultsListProps) {
+export default function ResultsList({
+  items,
+  title = "AudioResults",
+  savedIds,
+  onAddToLibrary,
+  onExport,
+  onRemix,
+}: ResultsListProps) {
   return (
     <section className="rounded-card border border-primary/40 p-6">
       <header className="mb-4 flex items-center justify-between">
@@ -15,7 +26,14 @@ export default function ResultsList({ items, title = "AudioResults" }: ResultsLi
       </header>
       <div className="flex flex-col gap-3">
         {items.map((item) => (
-          <AudioCard key={item.id} item={item} />
+          <ResultCard
+            key={item.id}
+            item={toCardItem(item)}
+            savedToLibrary={savedIds?.has(item.id)}
+            onAddToLibrary={() => onAddToLibrary?.(item)}
+            onExport={() => onExport?.(item)}
+            onRemix={() => onRemix?.(item)}
+          />
         ))}
       </div>
     </section>

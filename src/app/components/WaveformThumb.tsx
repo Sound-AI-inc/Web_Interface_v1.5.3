@@ -4,28 +4,35 @@ interface WaveformThumbProps {
 }
 
 /**
- * Decorative waveform thumbnail rendered with CSS bars.
- * `hue` is a tailwind gradient class fragment like "from-[#...] via-[#...] to-[#...]".
+ * Static visual placeholder used for legacy thumbs (kept for compatibility).
+ * New result cards use AudioPreview / MidiPreview / PresetPreview instead.
  */
 export default function WaveformThumb({ hue, className = "" }: WaveformThumbProps) {
-  const bars = Array.from({ length: 48 });
   return (
     <div
-      className={`relative overflow-hidden rounded-card bg-gradient-to-r ${hue} ${className}`}
+      className={`relative overflow-hidden rounded-input bg-gradient-to-br ${hue} ${className}`}
+      aria-hidden
     >
-      <div className="absolute inset-0 flex items-center justify-center gap-[2px] px-3">
-        {bars.map((_, i) => {
-          const h = 20 + Math.abs(Math.sin(i * 0.45) * 70);
+      <svg
+        className="absolute inset-0 h-full w-full opacity-80"
+        viewBox="0 0 120 40"
+        preserveAspectRatio="none"
+      >
+        {Array.from({ length: 60 }).map((_, i) => {
+          const h = 6 + Math.abs(Math.sin(i * 0.42 + i * 0.11)) * 28;
           return (
-            <span
+            <rect
               key={i}
-              className="w-[2px] rounded-full bg-white/70"
-              style={{ height: `${h}%` }}
+              x={i * 2}
+              y={20 - h / 2}
+              width={1.2}
+              height={h}
+              fill="rgba(255,255,255,0.85)"
+              rx={0.5}
             />
           );
         })}
-      </div>
-      <div className="absolute inset-0 bg-black/10" />
+      </svg>
     </div>
   );
 }

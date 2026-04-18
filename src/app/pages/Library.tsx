@@ -1,23 +1,26 @@
 import { useMemo, useState } from "react";
-import { Grid3x3, List, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import PageContainer from "../components/PageContainer";
-import LibraryItem from "../components/LibraryItem";
+import ResultCard, { toCardItem } from "../components/ResultCard";
 import { library } from "../data/mock";
-import type { LibraryAsset } from "../data/mock";
+import type { LibraryAsset, ResultKind } from "../data/mock";
 
-type ViewMode = "grid" | "list";
-type TypeFilter = "All" | LibraryAsset["type"];
+type TypeFilter = "all" | ResultKind;
 
-const TYPE_FILTERS: TypeFilter[] = ["All", "Audio", "MIDI", "Preset"];
+const TYPE_FILTERS: { value: TypeFilter; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "audio", label: "Audio" },
+  { value: "midi", label: "MIDI" },
+  { value: "preset", label: "Preset" },
+];
 
 export default function Library() {
-  const [view, setView] = useState<ViewMode>("grid");
-  const [type, setType] = useState<TypeFilter>("All");
+  const [type, setType] = useState<TypeFilter>("all");
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
-    return library.filter((a) => {
-      if (type !== "All" && a.type !== type) return false;
+    return library.filter((a: LibraryAsset) => {
+      if (type !== "all" && a.kind !== type) return false;
       if (!query) return true;
       const q = query.toLowerCase();
       return (
@@ -33,15 +36,15 @@ export default function Library() {
         <div className="flex items-center gap-2">
           {TYPE_FILTERS.map((t) => (
             <button
-              key={t}
-              onClick={() => setType(t)}
-              className={`rounded-full px-3 py-1.5 font-codec text-xs transition-colors ${
-                t === type
+              key={t.value}
+              onClick={() => setType(t.value)}
+              className={`h-9 rounded-full px-3 font-codec text-xs transition-colors ${
+                t.value === type
                   ? "bg-primary/10 text-primary"
                   : "bg-surface-muted text-text/60 hover:bg-surface"
               }`}
             >
-              {t}
+              {t.label}
             </button>
           ))}
         </div>
@@ -55,42 +58,19 @@ export default function Library() {
               className="app-input pl-10"
             />
           </div>
-          <div className="flex items-center overflow-hidden rounded-button border border-surface bg-white">
-            <button
-              onClick={() => setView("grid")}
-              className={`flex h-10 w-10 items-center justify-center transition-colors ${
-                view === "grid" ? "bg-primary/10 text-primary" : "text-text/60 hover:bg-surface"
-              }`}
-              aria-label="Grid view"
-            >
-              <Grid3x3 className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setView("list")}
-              className={`flex h-10 w-10 items-center justify-center transition-colors ${
-                view === "list" ? "bg-primary/10 text-primary" : "text-text/60 hover:bg-surface"
-              }`}
-              aria-label="List view"
-            >
-              <List className="h-4 w-4" />
-            </button>
-          </div>
         </div>
       </div>
 
-      {view === "grid" ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((a) => (
-            <LibraryItem key={a.id} item={a} view="grid" />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {filtered.map((a) => (
-            <LibraryItem key={a.id} item={a} view="list" />
-          ))}
-        </div>
-      )}
+      <div className="flex flex-col gap-3">
+        {filtered.map((a) => (
+          <ResultCard key={a.id} item={toCardItem(a)} savedToLibrary />
+        ))}
+        {filtered.length === 0 && (
+          <div className="rounded-card border border-surface bg-surface-muted p-8 text-center font-codec text-sm text-text/60">
+            No assets match your filters.
+          </div>
+        )}
+      </div>
     </PageContainer>
   );
 }
