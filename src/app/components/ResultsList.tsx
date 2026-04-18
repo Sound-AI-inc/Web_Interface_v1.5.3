@@ -1,0 +1,23 @@
+import AudioCard from "./AudioCard";
+import type { AudioResult } from "../data/mock";
+
+interface ResultsListProps {
+  items: AudioResult[];
+  title?: string;
+}
+
+export default function ResultsList({ items, title = "AudioResults" }: ResultsListProps) {
+  return (
+    <section className="rounded-card border border-primary/40 p-6">
+      <header className="mb-4 flex items-center justify-between">
+        <h2 className="font-poppins text-sm font-semibold text-text">{title}</h2>
+        <span className="app-meta">Showing {items.length} results</span>
+      </header>
+      <div className="flex flex-col gap-3">
+        {items.map((item) => (
+          <AudioCard key={item.id} item={item} />
+        ))}
+      </div>
+    </section>
+  );
+}

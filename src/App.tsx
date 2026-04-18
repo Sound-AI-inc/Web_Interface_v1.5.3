@@ -1,5 +1,15 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
+import AppLayout from "./app/AppLayout";
+import AudioGenerator from "./app/pages/AudioGenerator";
+import Prompts from "./app/pages/Prompts";
+import Arrangement from "./app/pages/Arrangement";
+import EditorMode from "./app/pages/EditorMode";
+import Library from "./app/pages/Library";
+import Integrations from "./app/pages/Integrations";
+import Billing from "./app/pages/Billing";
+import Profile from "./app/pages/Profile";
+import Settings from "./app/pages/Settings";
 import Home from "./pages/Home";
 import About from "./pages/company/About";
 import Team from "./pages/company/Team";
@@ -48,6 +58,19 @@ function App() {
           <Route path="/legal/center" element={<LegalCenter />} />
           <Route path="/legal/licenses" element={<Licenses />} />
           <Route path="/legal/info" element={<LegalInfo />} />
+        </Route>
+        {/* Dashboard app */}
+        <Route path="/app" element={<AppLayout />}>
+          <Route index element={<Navigate to="/app/generator" replace />} />
+          <Route path="generator" element={<AudioGenerator />} />
+          <Route path="prompts" element={<Prompts />} />
+          <Route path="arrangement" element={<Arrangement />} />
+          <Route path="editor" element={<EditorMode />} />
+          <Route path="library" element={<Library />} />
+          <Route path="integrations" element={<Integrations />} />
+          <Route path="billing" element={<Billing />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </BrowserRouter>

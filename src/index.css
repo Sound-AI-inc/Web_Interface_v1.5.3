@@ -16,6 +16,43 @@
 }
 
 @layer components {
+  /* ---- Dashboard design system (app/*) ---- */
+  .app-card {
+    @apply bg-white border border-surface rounded-card shadow-flat-sm;
+  }
+  .app-card-muted {
+    @apply bg-surface-muted border border-surface rounded-card;
+  }
+  .app-input {
+    @apply w-full rounded-input border border-surface bg-white px-4 py-3 text-sm
+      font-codec text-text placeholder:text-text/40
+      focus:outline-none focus:border-primary/60 focus:ring-4 focus:ring-primary/10
+      transition-colors;
+  }
+  .app-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-button bg-primary px-4 py-2.5
+      font-poppins text-sm font-medium text-white
+      hover:bg-primary/90 active:bg-primary/95
+      disabled:opacity-40 disabled:pointer-events-none
+      transition-colors;
+  }
+  .app-btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-button border border-surface bg-white px-4 py-2.5
+      font-poppins text-sm font-medium text-text
+      hover:border-primary/40 hover:text-primary
+      transition-colors;
+  }
+  .app-chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-surface
+      bg-surface-muted px-2.5 py-1 font-codec text-[11px] text-text/70;
+  }
+  .app-section-title {
+    @apply font-poppins text-[13px] font-medium uppercase tracking-[0.08em] text-text/50;
+  }
+  .app-meta {
+    @apply font-codec text-xs text-text/60;
+  }
+
   .gradient-text {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-pink to-accent-cyan;
   }
