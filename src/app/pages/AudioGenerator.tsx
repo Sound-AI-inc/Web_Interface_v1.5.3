@@ -1,11 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { Upload, Lightbulb } from "lucide-react";
+import { Upload } from "lucide-react";
 import PageContainer from "../components/PageContainer";
 import PromptInput from "../components/PromptInput";
 import ControlDropdown from "../components/ControlDropdown";
 import ResultsList from "../components/ResultsList";
+import IdeasMenu from "../components/IdeasMenu";
 import { audioResults, type AudioResult } from "../data/mock";
 import { useInterfaceMode } from "../hooks/useInterfaceMode";
+import {
+  generateFromPrompt,
+  type GenerationType,
+} from "../lib/promptGeneration";
 
 // --- Lite mode ---------------------------------------------------------------
 // Single type (Audio Sample). Models come from Hugging Face. Output is MP3 only.
@@ -107,6 +112,26 @@ export default function AudioGenerator() {
     setPrompt((p) => (p ? `${p} · remix of ${item.title}` : `Remix of ${item.title}`));
   };
 
+  // Debounced prompt so we don't regenerate previews on every keystroke.
+  const [debouncedPrompt, setDebouncedPrompt] = useState(prompt);
+  useEffect(() => {
+    const handle = window.setTimeout(() => setDebouncedPrompt(prompt), 280);
+    return () => window.clearTimeout(handle);
+  }, [prompt]);
+
+  const livePreviews = useMemo<AudioResult[]>(() => {
+    return generateFromPrompt({
+      prompt: debouncedPrompt,
+      mode: isPro ? "pro" : "lite",
+      type: type as GenerationType,
+      model: resolvedModel,
+      format: resolvedFormat,
+      count: 3,
+    });
+  }, [debouncedPrompt, isPro, type, resolvedModel, resolvedFormat]);
+
+  const showLive = livePreviews.length > 0;
+
   return (
     <PageContainer
       title="Create audio with AI"
@@ -121,16 +146,14 @@ export default function AudioGenerator() {
       <section className="rounded-card border border-primary/40 p-6">
         <header className="mb-4 flex items-center justify-between">
           <h2 className="font-poppins text-sm font-semibold text-text">AdaptivePrompt</h2>
-          {isPro && (
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            {isPro && (
               <button className="app-btn-ghost h-9 px-3 text-xs">
                 <Upload className="h-3.5 w-3.5" /> Import
               </button>
-              <button className="app-btn-ghost h-9 px-3 text-xs">
-                Ideas <Lightbulb className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          )}
+            )}
+            <IdeasMenu onPick={setPrompt} />
+          </div>
         </header>
 
         <PromptInput
@@ -175,9 +198,22 @@ export default function AudioGenerator() {
         )}
       </section>
 
+      {showLive && (
+        <div className="mt-4">
+          <ResultsList
+            items={livePreviews}
+            title="Live preview"
+            savedIds={saved}
+            onAddToLibrary={handleAddToLibrary}
+            onRemix={handleRemix}
+          />
+        </div>
+      )}
+
       <div className="mt-4">
         <ResultsList
           items={audioResults}
+          title={showLive ? "Recent generations" : "AudioResults"}
           savedIds={saved}
           onAddToLibrary={handleAddToLibrary}
           onRemix={handleRemix}
