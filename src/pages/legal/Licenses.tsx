@@ -69,7 +69,7 @@ export default function Licenses() {
               <tbody>
                 {licenses.map((l) => (
                   <tr key={l.name} className="border-b border-gray-200 dark:border-white/5 hover:bg-white/2">
-                    <td className="py-3 px-4 text-light-bg/80 font-medium">{l.name}</td>
+                    <td className="py-3 px-4 text-gray-900 dark:text-light-bg/80 font-medium">{l.name}</td>
                     <td className="py-3 px-4 text-gray-500 dark:text-light-bg/50 font-mono text-xs">{l.version}</td>
                     <td className="py-3 px-4">
                       <span className="px-2 py-0.5 text-xs rounded-full bg-accent-cyan/10 text-accent-cyan">

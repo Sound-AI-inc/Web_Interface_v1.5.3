@@ -129,7 +129,7 @@ export default function Home() {
                     className="bg-gray-100 dark:bg-dark-bg/60 border border-accent-pink/10 rounded-lg p-3 text-center"
                   >
                     <Layers className="w-5 h-5 text-accent-pink mx-auto mb-2" />
-                    <p className="text-xs font-semibold text-gray-900 dark:text-gray-900 dark:text-light-bg">{item.label}</p>
+                    <p className="text-xs font-semibold text-gray-900 dark:text-light-bg">{item.label}</p>
                     <p className="text-xs text-gray-400 dark:text-light-bg/40 font-mono">{item.ext}</p>
                   </div>
                 ))}
