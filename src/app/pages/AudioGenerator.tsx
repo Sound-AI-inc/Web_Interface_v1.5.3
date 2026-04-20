@@ -112,25 +112,23 @@ export default function AudioGenerator() {
     setPrompt((p) => (p ? `${p} · remix of ${item.title}` : `Remix of ${item.title}`));
   };
 
-  // Debounced prompt so we don't regenerate previews on every keystroke.
-  const [debouncedPrompt, setDebouncedPrompt] = useState(prompt);
-  useEffect(() => {
-    const handle = window.setTimeout(() => setDebouncedPrompt(prompt), 280);
-    return () => window.clearTimeout(handle);
-  }, [prompt]);
+  // Generation only commits to the results panel when the user clicks
+  // Generate. Typing or picking an idea only fills the prompt field.
+  const [generated, setGenerated] = useState<AudioResult[]>([]);
 
-  const livePreviews = useMemo<AudioResult[]>(() => {
-    return generateFromPrompt({
-      prompt: debouncedPrompt,
+  const handleGenerate = () => {
+    const next = generateFromPrompt({
+      prompt,
       mode: isPro ? "pro" : "lite",
       type: type as GenerationType,
       model: resolvedModel,
       format: resolvedFormat,
       count: 3,
     });
-  }, [debouncedPrompt, isPro, type, resolvedModel, resolvedFormat]);
+    if (next.length > 0) setGenerated(next);
+  };
 
-  const showLive = livePreviews.length > 0;
+  const hasGenerated = generated.length > 0;
 
   return (
     <PageContainer
@@ -159,9 +157,7 @@ export default function AudioGenerator() {
         <PromptInput
           value={prompt}
           onChange={setPrompt}
-          onGenerate={() => {
-            /* stub */
-          }}
+          onGenerate={handleGenerate}
         />
 
         {isPro && (
@@ -198,27 +194,27 @@ export default function AudioGenerator() {
         )}
       </section>
 
-      {showLive && (
+      <div className="mt-4">
+        <ResultsList
+          items={hasGenerated ? generated : audioResults}
+          title="AudioResults"
+          savedIds={saved}
+          onAddToLibrary={handleAddToLibrary}
+          onRemix={handleRemix}
+        />
+      </div>
+
+      {hasGenerated && (
         <div className="mt-4">
           <ResultsList
-            items={livePreviews}
-            title="Live preview"
+            items={audioResults}
+            title="Recent generations"
             savedIds={saved}
             onAddToLibrary={handleAddToLibrary}
             onRemix={handleRemix}
           />
         </div>
       )}
-
-      <div className="mt-4">
-        <ResultsList
-          items={audioResults}
-          title={showLive ? "Recent generations" : "AudioResults"}
-          savedIds={saved}
-          onAddToLibrary={handleAddToLibrary}
-          onRemix={handleRemix}
-        />
-      </div>
     </PageContainer>
   );
 }

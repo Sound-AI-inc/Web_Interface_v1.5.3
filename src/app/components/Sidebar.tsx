@@ -296,7 +296,7 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`sticky top-0 flex h-screen ${width} shrink-0 flex-col self-start border-r border-surface bg-surface-muted/90 backdrop-blur-sm transition-[width] duration-200 ease-out`}
+      className={`sticky top-0 flex h-screen ${width} shrink-0 flex-col self-start border-r border-surface bg-surface-muted/90 backdrop-blur-sm transition-[width] duration-150 ease-linear`}
     >
       {/* Inject small menu-row utility */}
       <style>{`
