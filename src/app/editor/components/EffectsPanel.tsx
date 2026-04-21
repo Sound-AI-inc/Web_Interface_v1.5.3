@@ -60,24 +60,48 @@ interface EffectBlockProps {
 }
 function EffectBlock({ title, enabled, onToggle, children }: EffectBlockProps) {
   return (
-    <div className="rounded-card border border-surface p-3">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="font-poppins text-[11px] font-bold uppercase tracking-wider text-text">
+    <div
+      className={`rounded-card border bg-white p-3 transition-colors ${
+        enabled ? "border-primary/50" : "border-surface"
+      }`}
+    >
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <span
+          className={`font-poppins text-[11px] font-bold uppercase tracking-wider transition-colors ${
+            enabled ? "text-text" : "text-text/50"
+          }`}
+        >
           {title}
         </span>
         <button
           type="button"
           onClick={onToggle}
-          className={`relative h-5 w-9 rounded-full transition-colors ${
-            enabled ? "bg-primary" : "bg-surface"
-          }`}
           aria-pressed={enabled}
+          aria-label={`${title} ${enabled ? "on" : "off"}`}
+          className={`inline-flex items-center gap-2 rounded-full border py-1 pl-1 pr-2.5 transition-colors ${
+            enabled
+              ? "border-primary bg-primary/10"
+              : "border-surface bg-surface-muted"
+          }`}
         >
           <span
-            className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-              enabled ? "translate-x-[18px]" : "translate-x-0.5"
+            className={`relative h-4 w-8 rounded-full transition-colors ${
+              enabled ? "bg-primary" : "bg-text/20"
             }`}
-          />
+          >
+            <span
+              className={`absolute top-0.5 h-3 w-3 rounded-full bg-white shadow-flat transition-transform ${
+                enabled ? "translate-x-[18px]" : "translate-x-0.5"
+              }`}
+            />
+          </span>
+          <span
+            className={`font-poppins text-[10px] font-bold uppercase tracking-[0.1em] ${
+              enabled ? "text-primary" : "text-text/50"
+            }`}
+          >
+            {enabled ? "On" : "Off"}
+          </span>
         </button>
       </div>
       <div className={enabled ? "" : "pointer-events-none opacity-40"}>{children}</div>

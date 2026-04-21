@@ -85,6 +85,7 @@ export default function AudioGenerator() {
 
   const [model, setModel] = useState(modelOptions[0]);
   const [format, setFormat] = useState(formatOptions[0]);
+  const [generationCount, setGenerationCount] = useState<string>("3");
 
   const resolvedModel = modelOptions.includes(model) ? model : modelOptions[0];
   const resolvedFormat = formatOptions.includes(format) ? format : formatOptions[0];
@@ -115,6 +116,7 @@ export default function AudioGenerator() {
   // Generation only commits to the results panel when the user clicks
   // Generate. Typing or picking an idea only fills the prompt field.
   const [generated, setGenerated] = useState<AudioResult[]>([]);
+  const [history, setHistory] = useState<AudioResult[]>([]);
 
   const handleGenerate = () => {
     const next = generateFromPrompt({
@@ -123,9 +125,12 @@ export default function AudioGenerator() {
       type: type as GenerationType,
       model: resolvedModel,
       format: resolvedFormat,
-      count: 3,
+      count: Number(generationCount) || 1,
     });
-    if (next.length > 0) setGenerated(next);
+    if (next.length > 0) {
+      setGenerated(next);
+      setHistory((prev) => [...next, ...prev].slice(0, 30));
+    }
   };
 
   const hasGenerated = generated.length > 0;
@@ -166,7 +171,7 @@ export default function AudioGenerator() {
           </p>
         )}
 
-        <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <ControlDropdown
             label="Type"
             value={type}
@@ -178,6 +183,12 @@ export default function AudioGenerator() {
             value={resolvedModel}
             options={modelOptions}
             onChange={setModel}
+          />
+          <ControlDropdown
+            label="Generations"
+            value={generationCount}
+            options={["1", "2", "3", "4", "5"]}
+            onChange={setGenerationCount}
           />
           <ControlDropdown
             label="Output Format"
@@ -201,20 +212,21 @@ export default function AudioGenerator() {
           savedIds={saved}
           onAddToLibrary={handleAddToLibrary}
           onRemix={handleRemix}
+          previewLimit={3}
         />
       </div>
 
-      {hasGenerated && (
-        <div className="mt-4">
-          <ResultsList
-            items={audioResults}
-            title="Recent generations"
-            savedIds={saved}
-            onAddToLibrary={handleAddToLibrary}
-            onRemix={handleRemix}
-          />
-        </div>
-      )}
+      <div className="mt-4">
+        <ResultsList
+          items={history.length > 0 ? history : audioResults}
+          title="История Генераций"
+          savedIds={saved}
+          onAddToLibrary={handleAddToLibrary}
+          onRemix={handleRemix}
+          previewLimit={3}
+          emptyHint={history.length === 0 ? "Пока нет сохранённой истории — показан пример." : undefined}
+        />
+      </div>
     </PageContainer>
   );
 }
