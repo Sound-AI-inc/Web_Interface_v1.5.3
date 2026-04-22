@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.5rem;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  ::selection {
+    background-color: rgba(255, 60, 130, 0.3);
+    color: #fff;
+  }
+}
+
+@layer components {
+  /* ---- Dashboard design system (app/*) ---- */
+  .app-card {
+    @apply bg-white border border-surface rounded-card shadow-flat-sm;
+  }
+  .app-card-muted {
+    @apply bg-surface-muted border border-surface rounded-card;
+  }
+  .app-input {
+    @apply w-full rounded-input border border-surface bg-white px-4 py-3 text-sm
+      font-codec text-text placeholder:text-text/40
+      focus:outline-none focus:border-primary/60 focus:ring-4 focus:ring-primary/10
+      transition-colors;
+  }
+  .app-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-button bg-primary px-4 py-2.5
+      font-poppins text-sm font-medium text-white
+      hover:bg-primary/90 active:bg-primary/95
+      disabled:opacity-40 disabled:pointer-events-none
+      transition-colors;
+  }
+  .app-btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-button border border-surface bg-white px-4 py-2.5
+      font-poppins text-sm font-medium text-text
+      hover:border-primary/40 hover:text-primary
+      transition-colors;
+  }
+  .app-chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-surface
+      bg-surface-muted px-2.5 py-1 font-codec text-[11px] text-text/70;
+  }
+  .app-section-title {
+    @apply font-poppins text-[13px] font-medium uppercase tracking-[0.08em] text-text/50;
+  }
+  .app-meta {
+    @apply font-codec text-xs text-text/60;
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-pink to-accent-cyan;
+  }
+  .section-padding {
+    @apply px-4 sm:px-6 lg:px-8 py-16 md:py-24;
+  }
+  .container-max {
+    @apply max-w-7xl mx-auto;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-lg font-poppins font-semibold text-sm
+      bg-accent-pink text-white hover:bg-accent-pink/90 transition-all duration-300
+      shadow-lg shadow-accent-pink/25 hover:shadow-accent-pink/40;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-lg font-poppins font-semibold text-sm
+      bg-transparent border transition-all duration-300
+      text-gray-700 border-gray-300 hover:border-accent-cyan/60 hover:text-accent-cyan
+      dark:text-light-bg dark:border-light-bg/20 dark:hover:border-accent-cyan/60 dark:hover:text-accent-cyan;
+  }
+  .card {
+    @apply backdrop-blur-sm rounded-xl p-6 transition-all duration-300
+      bg-gray-50 border border-gray-200 hover:border-accent-pink/30
+      dark:bg-dark-bg/60 dark:border-white/5 dark:hover:border-accent-pink/20;
+  }
+  .waveform-bg {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ff3c82' fill-opacity='0.03'%3E%3Cpath d='M30 0v60M0 30h60'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+}
+
