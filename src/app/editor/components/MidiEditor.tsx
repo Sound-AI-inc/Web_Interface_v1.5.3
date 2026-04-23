@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import * as Tone from "tone";
 import {
   Play,
   Square,
@@ -18,6 +19,14 @@ import {
 } from "../midi/engine";
 import type { MidiNote } from "../core/types";
 import LibraryImportMenu from "./LibraryImportMenu";
+import BrandSelect from "../../components/BrandSelect";
+
+const GRID_OPTIONS = [
+  { value: "0.0625", label: "1/16" },
+  { value: "0.125", label: "1/8" },
+  { value: "0.25", label: "1/4" },
+  { value: "0.5", label: "1/2" },
+];
 
 // Full MIDI piano range C0 (24) — C8 (108). The viewport is scrollable so
 // pitches outside the visible window are reachable with the octave jump
@@ -39,6 +48,8 @@ export default function MidiEditor() {
   const engineRef = useRef<MidiEngine | null>(null);
   const [isPlaying, setPlaying] = useState(false);
   const [grid, setGrid] = useState(0.25);
+  const [playheadSec, setPlayheadSec] = useState(0);
+  const rafRef = useRef<number | null>(null);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -163,7 +174,40 @@ export default function MidiEditor() {
   const stop = () => {
     engineRef.current?.stop();
     setPlaying(false);
+    setPlayheadSec(0);
   };
+
+  // Drive the playhead from Tone.Transport.seconds while playing. When the
+  // transport reaches the last note we auto-stop so the cursor doesn't run
+  // off the end of the visible grid.
+  useEffect(() => {
+    if (!isPlaying) {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      return;
+    }
+    const endSec = notes.reduce((m, n) => Math.max(m, n.start + n.duration), 0);
+    const tick = () => {
+      const t = Tone.Transport.seconds;
+      setPlayheadSec(t);
+      if (endSec > 0 && t >= endSec + 0.05) {
+        engineRef.current?.stop();
+        setPlaying(false);
+        setPlayheadSec(0);
+        return;
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+  }, [isPlaying, notes]);
 
   const doQuantize = () => replaceNotes(quantizeNotes(notes, grid), "Quantize");
   const doTranspose = (n: number) =>
@@ -192,16 +236,13 @@ export default function MidiEditor() {
           {isPlaying ? <Square className="h-4 w-4" /> : <Play className="h-4 w-4" />}
         </button>
 
-        <select
-          value={grid}
-          onChange={(e) => setGrid(Number(e.target.value))}
-          className="app-input h-9 py-0 pr-7 text-[11px]"
-        >
-          <option value={0.0625}>1/16</option>
-          <option value={0.125}>1/8</option>
-          <option value={0.25}>1/4</option>
-          <option value={0.5}>1/2</option>
-        </select>
+        <div className="w-24">
+          <BrandSelect
+            value={String(grid)}
+            options={GRID_OPTIONS}
+            onChange={(v) => setGrid(Number(v))}
+          />
+        </div>
         <button type="button" onClick={doQuantize} className="app-btn-ghost h-9 px-2 text-[11px]">
           Quantize
         </button>
@@ -328,6 +369,17 @@ export default function MidiEditor() {
                   style={{ left: i * grid * PX_PER_SEC }}
                 />
               ))}
+
+              {/* playhead */}
+              {isPlaying && (
+                <div
+                  className="pointer-events-none absolute top-0 bottom-0 z-20 w-0.5 bg-primary shadow-[0_0_6px_rgba(255,60,130,0.6)]"
+                  style={{ left: playheadSec * PX_PER_SEC }}
+                  aria-hidden
+                >
+                  <span className="absolute -top-1 -left-[5px] h-3 w-3 rounded-full bg-primary" />
+                </div>
+              )}
 
               {/* notes */}
               {notes.map((n) => {
