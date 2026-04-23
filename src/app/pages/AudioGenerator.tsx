@@ -129,7 +129,16 @@ export default function AudioGenerator() {
     });
     if (next.length > 0) {
       setGenerated(next);
-      setHistory((prev) => [...next, ...prev].slice(0, 30));
+      setHistory((prev) => {
+        const seen = new Set<string>();
+        return [...next, ...prev]
+          .filter((item) => {
+            if (seen.has(item.id)) return false;
+            seen.add(item.id);
+            return true;
+          })
+          .slice(0, 30);
+      });
     }
   };
 
