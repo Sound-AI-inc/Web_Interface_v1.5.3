@@ -1,0 +1,129 @@
+import { useMemo } from "react";
+import { Music, Layers, ArrowUp, ArrowDown, Trash2 } from "lucide-react";
+import { useEditor } from "../core/store";
+import { midiToNoteName, quantizeNotes, transposeNotes } from "../midi/engine";
+
+/**
+ * Contextual side panel for the MIDI tab: surfaces grid selection,
+ * quantize / transpose, and a summary of the current pattern.
+ */
+export default function MidiToolsPanel() {
+  const notes = useEditor((s) => s.notes);
+  const replaceNotes = useEditor((s) => s.replaceNotes);
+
+  const stats = useMemo(() => {
+    if (notes.length === 0) {
+      return { count: 0, min: "—", max: "—", length: "0.00" };
+    }
+    const pitches = notes.map((n) => n.pitch);
+    const ends = notes.map((n) => n.start + n.duration);
+    return {
+      count: notes.length,
+      min: midiToNoteName(Math.min(...pitches)),
+      max: midiToNoteName(Math.max(...pitches)),
+      length: Math.max(...ends).toFixed(2),
+    };
+  }, [notes]);
+
+  const quantize = (grid: number, label: string) =>
+    replaceNotes(quantizeNotes(notes, grid), `Quantize · ${label}`);
+  const transpose = (delta: number, label: string) =>
+    replaceNotes(transposeNotes(notes, delta), `Transpose · ${label}`);
+
+  return (
+    <div className="flex min-w-0 flex-col gap-3">
+      <div className="flex min-w-0 items-center justify-between gap-2">
+        <h3 className="app-section-title truncate">MIDI tools</h3>
+        <span className="inline-flex shrink-0 items-center gap-1 font-codec text-[10px] text-text/50">
+          <Music className="h-3 w-3" />
+          {stats.count}
+        </span>
+      </div>
+
+      <div className="grid min-w-0 grid-cols-2 gap-2 rounded-card border border-surface p-2.5 font-codec text-xs text-text/70">
+        <div className="min-w-0">
+          <div className="truncate text-[9px] uppercase tracking-wider text-text/40">Range</div>
+          <div className="truncate font-poppins text-xs text-text">
+            {stats.min}–{stats.max}
+          </div>
+        </div>
+        <div className="min-w-0">
+          <div className="truncate text-[9px] uppercase tracking-wider text-text/40">Length</div>
+          <div className="truncate font-poppins text-xs text-text">{stats.length}s</div>
+        </div>
+      </div>
+
+      <div className="min-w-0 rounded-card border border-surface p-2.5">
+        <div className="mb-1.5 flex items-center gap-1.5 font-poppins text-[10px] font-bold uppercase tracking-wider text-text">
+          <Layers className="h-3 w-3" /> Quantize
+        </div>
+        <div className="grid grid-cols-4 gap-1">
+          {[
+            { g: 0.0625, l: "1/16" },
+            { g: 0.125, l: "1/8" },
+            { g: 0.25, l: "1/4" },
+            { g: 0.5, l: "1/2" },
+          ].map((q) => (
+            <button
+              key={q.l}
+              type="button"
+              onClick={() => quantize(q.g, q.l)}
+              className="app-btn-ghost h-7 min-w-0 !px-1 text-[10px]"
+            >
+              {q.l}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="min-w-0 rounded-card border border-surface p-2.5">
+        <div className="mb-1.5 font-poppins text-[10px] font-bold uppercase tracking-wider text-text">
+          Transpose
+        </div>
+        <div className="grid grid-cols-4 gap-1">
+          <button
+            type="button"
+            onClick={() => transpose(-12, "-1 oct")}
+            className="app-btn-ghost h-7 min-w-0 !px-1 text-[10px]"
+            title="Down one octave"
+          >
+            <ArrowDown className="h-3 w-3 shrink-0" />
+          </button>
+          <button
+            type="button"
+            onClick={() => transpose(-1, "-1 st")}
+            className="app-btn-ghost h-7 min-w-0 !px-1 text-[10px]"
+            title="Down one semitone"
+          >
+            −1
+          </button>
+          <button
+            type="button"
+            onClick={() => transpose(1, "+1 st")}
+            className="app-btn-ghost h-7 min-w-0 !px-1 text-[10px]"
+            title="Up one semitone"
+          >
+            +1
+          </button>
+          <button
+            type="button"
+            onClick={() => transpose(12, "+1 oct")}
+            className="app-btn-ghost h-7 min-w-0 !px-1 text-[10px]"
+            title="Up one octave"
+          >
+            <ArrowUp className="h-3 w-3 shrink-0" />
+          </button>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => replaceNotes([], "Clear notes")}
+        disabled={notes.length === 0}
+        className="app-btn-ghost h-8 w-full text-[11px]"
+      >
+        <Trash2 className="h-3.5 w-3.5" /> Clear pattern
+      </button>
+    </div>
+  );
+}
