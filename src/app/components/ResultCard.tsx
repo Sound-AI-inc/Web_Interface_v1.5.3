@@ -23,6 +23,9 @@ interface ResultCardProps {
   onAddToLibrary?: () => void;
   onRemix?: () => void;
   savedToLibrary?: boolean;
+  statusLabel?: string;
+  statusProgress?: number;
+  disableActions?: boolean;
 }
 
 const kindLabel: Record<ResultKind, string> = {
@@ -42,52 +45,68 @@ export default function ResultCard({
   onAddToLibrary,
   onRemix,
   savedToLibrary,
+  statusLabel,
+  statusProgress,
+  disableActions,
 }: ResultCardProps) {
   return (
     <div className="flex items-center gap-4 rounded-card border border-surface bg-white p-4 shadow-flat-sm">
-      {/* Left + Center: preview */}
       <div className="flex min-w-0 flex-1 items-center gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className={`shrink-0 rounded-full px-2 py-0.5 font-poppins text-[10px] font-semibold uppercase tracking-[0.08em] ${kindBadge[item.kind]}`}>
+            <span
+              className={`shrink-0 rounded-full px-2 py-0.5 font-poppins text-[10px] font-semibold uppercase tracking-[0.08em] ${kindBadge[item.kind]}`}
+            >
               {kindLabel[item.kind]}
             </span>
             <h3 className="truncate font-poppins text-sm font-semibold text-text">{item.title}</h3>
+            {statusLabel && (
+              <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 font-poppins text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
+                {statusLabel}
+              </span>
+            )}
           </div>
           <div className="app-meta mt-0.5 truncate">
             {(item.subtitle ?? `${item.format} · ${formatDuration(item.durationSeconds)}`) +
               (item.description ? ` · ${item.description}` : "")}
           </div>
+          {typeof statusProgress === "number" && statusProgress < 1 && (
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-muted">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-primary via-accent to-primary transition-[width] duration-300"
+                style={{ width: `${Math.max(8, Math.round(statusProgress * 100))}%` }}
+              />
+            </div>
+          )}
           <div className="mt-3">
             {item.kind === "audio" && (
-              <AudioPreview
-                seed={item.audioSeed ?? 1}
-                durationSeconds={item.durationSeconds}
-              />
+              <AudioPreview seed={item.audioSeed ?? 1} durationSeconds={item.durationSeconds} />
             )}
             {item.kind === "midi" && item.notes && (
               <MidiPreview notes={item.notes} durationSeconds={item.durationSeconds} />
             )}
-            {item.kind === "preset" && item.preset && (
-              <PresetPreview preset={item.preset} />
-            )}
+            {item.kind === "preset" && item.preset && <PresetPreview preset={item.preset} />}
           </div>
         </div>
       </div>
 
-      {/* Right: actions */}
       <div className="flex w-[148px] shrink-0 flex-col gap-2">
         <button
           type="button"
           onClick={onAddToLibrary}
           className="app-btn-ghost h-9 px-3"
-          disabled={savedToLibrary}
+          disabled={savedToLibrary || disableActions}
           title={savedToLibrary ? "Already in library" : "Add to library"}
         >
           <Heart className={`h-3.5 w-3.5 ${savedToLibrary ? "fill-primary text-primary" : ""}`} />
           <span>{savedToLibrary ? "In library" : "Add to library"}</span>
         </button>
-        <button type="button" onClick={onRemix} className="app-btn-ghost h-9 px-3">
+        <button
+          type="button"
+          onClick={onRemix}
+          className="app-btn-ghost h-9 px-3"
+          disabled={disableActions}
+        >
           <Repeat className="h-3.5 w-3.5" />
           <span>Remix</span>
         </button>

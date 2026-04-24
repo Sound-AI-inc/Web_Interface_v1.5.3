@@ -4,13 +4,14 @@ import PageContainer from "../components/PageContainer";
 import PromptInput from "../components/PromptInput";
 import ControlDropdown from "../components/ControlDropdown";
 import ResultsList from "../components/ResultsList";
+import type { GenerationPreviewEntry } from "../components/ResultsList";
 import IdeasMenu from "../components/IdeasMenu";
 import { audioResults, type AudioResult } from "../data/mock";
 import { useInterfaceMode } from "../hooks/useInterfaceMode";
 import {
-  generateFromPrompt,
   type GenerationType,
 } from "../lib/promptGeneration";
+import { generateResults } from "../lib/generationGateway";
 
 const LITE_TYPES = ["Audio Sample"] as const;
 const LITE_MODELS_BY_TYPE: Record<(typeof LITE_TYPES)[number], string[]> = {
@@ -42,6 +43,14 @@ const PRO_FORMATS_BY_TYPE: Record<(typeof PRO_TYPES)[number], string[]> = {
 };
 
 const GENERATION_COUNTS = ["1", "2", "3", "4", "5"];
+const GENERATION_STAGES = [
+  "Analyzing prompt",
+  "Learning pattern",
+  "Generating outputs",
+  "Finalizing results",
+] as const;
+const MIN_GENERATION_VISUAL_MS = 3200;
+const REVEAL_STEP_MS = 540;
 
 interface GenerationBatch {
   id: string;
@@ -61,6 +70,10 @@ function formatBatchTimestamp(date: Date) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
 export default function AudioGenerator() {
@@ -117,6 +130,12 @@ export default function AudioGenerator() {
   const [saved, setSaved] = useState<Set<string>>(new Set());
   const [history, setHistory] = useState<GenerationBatch[]>([]);
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
+  const [generationWarning, setGenerationWarning] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(0);
+  const [generationStage, setGenerationStage] = useState<string>(GENERATION_STAGES[0]);
+  const [activeGenerationPrompt, setActiveGenerationPrompt] = useState("");
+  const [generationEntries, setGenerationEntries] = useState<GenerationPreviewEntry[] | null>(null);
 
   const handleAddToLibrary = (item: AudioResult) => {
     setSaved((prev) => {
@@ -133,32 +152,149 @@ export default function AudioGenerator() {
     );
   };
 
-  const handleGenerate = () => {
-    const next = generateFromPrompt({
-      prompt,
-      mode: isPro ? "pro" : "lite",
-      type: type as GenerationType,
-      model: resolvedModel,
-      format: resolvedFormat,
-      count: generationCount,
-    });
+  const handleGenerate = async () => {
+    if (isGenerating || prompt.trim().length < 3) return;
 
-    if (next.length === 0) return;
+    const promptValue = prompt.trim();
+    const previewEntries: GenerationPreviewEntry[] = Array.from(
+      { length: generationCount },
+      (_, index) => ({
+        id: `pending-${Date.now()}-${index}`,
+        status: index === 0 ? "Analyzing prompt" : index === 1 ? "Learning pattern" : "Queued",
+        progress: index === 0 ? 0.12 : index === 1 ? 0.06 : 0.03,
+      }),
+    );
 
-    const createdAt = new Date();
-    const batch: GenerationBatch = {
-      id: `${createdAt.getTime()}`,
-      prompt: prompt.trim(),
-      count: generationCount,
-      type,
-      model: resolvedModel,
-      format: resolvedFormat,
-      createdAt: formatBatchTimestamp(createdAt),
-      items: next,
-    };
+    setIsGenerating(true);
+    setGenerationProgress(0.06);
+    setGenerationStage(GENERATION_STAGES[0]);
+    setActiveGenerationPrompt(promptValue);
+    setGenerationWarning(null);
+    setGenerationEntries(previewEntries);
 
-    setHistory((prev) => [batch, ...prev]);
-    setSelectedBatchId(batch.id);
+    const startedAt = Date.now();
+    const progressTimer = window.setInterval(() => {
+      const elapsed = Date.now() - startedAt;
+      const nextProgress = Math.min(0.94, elapsed / MIN_GENERATION_VISUAL_MS);
+      const nextStageIndex = Math.min(
+        GENERATION_STAGES.length - 1,
+        Math.floor(nextProgress * GENERATION_STAGES.length),
+      );
+      setGenerationProgress(nextProgress);
+      setGenerationStage(GENERATION_STAGES[nextStageIndex]);
+      setGenerationEntries((current) =>
+        current?.map((entry, index) => {
+          if (entry.item) return entry;
+
+          const shiftedProgress = Math.max(0.04, nextProgress - index * 0.18);
+          const shiftedStageIndex = Math.min(
+            GENERATION_STAGES.length - 1,
+            Math.max(0, Math.floor(shiftedProgress * GENERATION_STAGES.length)),
+          );
+
+          return {
+            ...entry,
+            status:
+              shiftedProgress < 0.12
+                ? "Queued"
+                : GENERATION_STAGES[shiftedStageIndex],
+            progress: Math.min(0.86, Math.max(entry.progress, shiftedProgress)),
+          };
+        }) ?? null,
+      );
+    }, 120);
+
+    try {
+      const response = await generateResults({
+        prompt: promptValue,
+        mode: isPro ? "pro" : "lite",
+        type: type as GenerationType,
+        model: resolvedModel,
+        format: resolvedFormat,
+        count: generationCount,
+      });
+      const next = response.items;
+
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < MIN_GENERATION_VISUAL_MS) {
+        await sleep(MIN_GENERATION_VISUAL_MS - elapsed);
+      }
+
+      window.clearInterval(progressTimer);
+      setGenerationProgress(0.92);
+      setGenerationStage(GENERATION_STAGES[GENERATION_STAGES.length - 1]);
+
+      if (next.length === 0) return;
+
+      setGenerationWarning(response.warning ?? null);
+
+      for (let index = 0; index < next.length; index++) {
+        setGenerationStage(`Revealing result ${index + 1}/${next.length}`);
+        setGenerationProgress(Math.min(0.96, 0.92 + ((index + 1) / next.length) * 0.04));
+        setGenerationEntries((current) =>
+          current?.map((entry, entryIndex) => {
+            if (entryIndex < index) return entry;
+            if (entryIndex === index) {
+              return {
+                ...entry,
+                status: "Finalizing result",
+                progress: 0.96,
+              };
+            }
+            if (entryIndex === index + 1) {
+              return {
+                ...entry,
+                status: "Learning pattern",
+                progress: Math.max(entry.progress, 0.42),
+              };
+            }
+            return entry;
+          }) ?? null,
+        );
+        await sleep(REVEAL_STEP_MS * 0.55);
+        setGenerationEntries((current) =>
+          current?.map((entry, entryIndex) =>
+            entryIndex === index
+              ? {
+                  ...entry,
+                  item: next[index],
+                  status: "Ready",
+                  progress: 1,
+                }
+              : entry,
+          ) ?? null,
+        );
+        await sleep(REVEAL_STEP_MS * 0.45);
+      }
+
+      setGenerationProgress(1);
+      setGenerationStage("Results ready");
+
+      const createdAt = new Date();
+      const batch: GenerationBatch = {
+        id: `${createdAt.getTime()}`,
+        prompt: promptValue,
+        count: generationCount,
+        type,
+        model: resolvedModel,
+        format: resolvedFormat,
+        createdAt: formatBatchTimestamp(createdAt),
+        items: next,
+      };
+
+      setHistory((prev) => [batch, ...prev]);
+      setSelectedBatchId(batch.id);
+      await sleep(220);
+      setGenerationEntries(null);
+    } catch (error) {
+      setGenerationWarning(
+        error instanceof Error ? error.message : "Generation failed unexpectedly.",
+      );
+      setGenerationEntries(null);
+    } finally {
+      window.clearInterval(progressTimer);
+      setIsGenerating(false);
+    }
   };
 
   const activeBatch = useMemo(() => {
@@ -191,7 +327,7 @@ export default function AudioGenerator() {
                 <Upload className="h-3.5 w-3.5" /> Import
               </button>
             )}
-            <IdeasMenu onPick={setPrompt} />
+            <IdeasMenu onPick={setPrompt} type={type as GenerationType} />
           </div>
         </header>
 
@@ -199,7 +335,16 @@ export default function AudioGenerator() {
           value={prompt}
           onChange={setPrompt}
           onGenerate={handleGenerate}
+          disabled={isGenerating}
+          loading={isGenerating}
+          generateLabel={isGenerating ? generationStage : "Generate"}
         />
+
+        {generationWarning && (
+          <p className="mt-2 font-codec text-[11px] italic text-text/55">
+            {generationWarning}
+          </p>
+        )}
 
         {isPro && (
           <p className="mt-2 font-codec text-xs italic text-text/50">
@@ -249,6 +394,12 @@ export default function AudioGenerator() {
           onAddToLibrary={handleAddToLibrary}
           onRemix={handleRemix}
           initialVisible={3}
+          isGenerating={isGenerating}
+          generationProgress={generationProgress}
+          generationStage={generationStage}
+          generationPrompt={activeGenerationPrompt}
+          generationType={type}
+          generationEntries={generationEntries}
         />
       </div>
 

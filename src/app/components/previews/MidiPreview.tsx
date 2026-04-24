@@ -115,11 +115,11 @@ export default function MidiPreview({ notes, durationSeconds, className = "" }: 
           className="absolute inset-0 h-full w-full"
         >
           {Array.from({ length: pitchRange }).map((_, i) => (
-            <line
-              key={i}
-              x1={0}
-              x2={100}
-              y1={i}
+              <line
+                key={i}
+                x1={0}
+                x2={100}
+                y1={i}
               y2={i}
               stroke="#EFF3F6"
               strokeWidth={0.05}
@@ -140,7 +140,7 @@ export default function MidiPreview({ notes, durationSeconds, className = "" }: 
                 height={0.8}
                 rx={0.2}
                 ry={0.2}
-                fill={active ? "#FF3C82" : "#FF98A8"}
+                fill={active ? "rgb(var(--color-primary))" : "rgb(var(--color-primary-soft))"}
               />
             );
           })}

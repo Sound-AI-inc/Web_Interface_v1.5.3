@@ -7,6 +7,9 @@ interface AudioPreviewProps {
   className?: string;
 }
 
+const PRIMARY = "rgb(var(--color-primary))";
+const PRIMARY_SOFT = "rgb(var(--color-primary-soft))";
+
 /**
  * Synthesizes a short deterministic audio snippet from a seed and renders a
  * playable waveform. Used for audio-type result cards (samples) until real
@@ -45,7 +48,7 @@ export default function AudioPreview({ seed = 1, durationSeconds, className = ""
       const barH = Math.max(2, p * h * 0.9);
       const y = (h - barH) / 2;
       const played = x / w <= progressRef.current;
-      ctx.fillStyle = played ? "#FF3C82" : "#FF98A8";
+      ctx.fillStyle = played ? PRIMARY : PRIMARY_SOFT;
       ctx.fillRect(x, y, barW, barH);
     });
   }, [peaks]);

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   Mic2,
   Lightbulb,
@@ -63,6 +63,9 @@ const assetsSystem: NavItem[] = [
 
 const NAV_ITEM_BASE =
   "group flex items-center gap-3 rounded-button px-3 py-2 font-poppins text-[10px] font-bold uppercase tracking-[0.08em] transition-colors";
+const WEBSITE_BASE =
+  (import.meta.env.VITE_WEBSITE_URL as string | undefined)?.replace(/\/$/, "") ??
+  "http://127.0.0.1:4174";
 
 function Item({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
   const { t } = useLanguage();
@@ -123,17 +126,20 @@ function SectionSeparator({ collapsed }: { collapsed: boolean }) {
 }
 
 /**
- * Bottom-docked user profile control with a rich dropdown menu.
- * Hovering "Get Help" reveals the "Learn More" sub-menu to the right.
+ * Bottom-docked user profile control with a compact account menu.
  */
 function UserMenu({
   collapsed,
   open,
   onClose,
+  onOpenSettings,
+  onOpenUpgrade,
 }: {
   collapsed: boolean;
   open: boolean;
   onClose: () => void;
+  onOpenSettings: () => void;
+  onOpenUpgrade: () => void;
 }) {
   const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
@@ -152,17 +158,15 @@ function UserMenu({
     setLanguage(code);
   };
 
+  const websiteHref = (path: string) => `${WEBSITE_BASE}${path}`;
+
   return (
     <div
       className={`absolute bottom-full z-40 mb-2 w-[240px] rounded-card border border-surface bg-white p-1.5 shadow-lg ${
         collapsed ? "left-full ml-2" : "left-3 right-3 w-auto"
       }`}
     >
-      <button
-        type="button"
-        className="menu-row"
-        onClick={() => handleNav("/app/settings")}
-      >
+      <button type="button" className="menu-row" onClick={() => { onOpenSettings(); onClose(); }}>
         <SettingsIcon className="h-4 w-4 text-text/60" />
         <span className="flex-1 text-left">{t("menu.settings")}</span>
       </button>
@@ -211,35 +215,35 @@ function UserMenu({
             <div className="px-2 py-1 font-poppins text-[9px] font-bold uppercase tracking-wider text-text/40">
               {t("menu.learnMore")}
             </div>
-            <Link to="/api" className="menu-row" onClick={onClose}>
+            <a href={websiteHref("/api")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
               <Terminal className="h-4 w-4 text-text/60" />
               <span className="flex-1 text-left">{t("menu.apiConsole")}</span>
-            </Link>
-            <Link to="/about" className="menu-row" onClick={onClose}>
+            </a>
+            <a href={websiteHref("/about")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
               <Info className="h-4 w-4 text-text/60" />
               <span className="flex-1 text-left">{t("menu.aboutSoundAI")}</span>
-            </Link>
-            <Link to="/docs" className="menu-row" onClick={onClose}>
+            </a>
+            <a href={websiteHref("/docs")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
               <BookOpen className="h-4 w-4 text-text/60" />
               <span className="flex-1 text-left">{t("menu.tutorials")}</span>
-            </Link>
-            <Link to="/faq" className="menu-row" onClick={onClose}>
+            </a>
+            <a href={websiteHref("/faq")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
               <GraduationCap className="h-4 w-4 text-text/60" />
               <span className="flex-1 text-left">{t("menu.courses")}</span>
-            </Link>
+            </a>
             <div className="my-1 mx-1 h-px bg-surface" aria-hidden />
-            <Link to="/legal/terms" className="menu-row" onClick={onClose}>
+            <a href={websiteHref("/legal/terms")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
               <FileText className="h-4 w-4 text-text/60" />
               <span className="flex-1 text-left">{t("menu.usagePolicy")}</span>
-            </Link>
-            <Link to="/legal/privacy" className="menu-row" onClick={onClose}>
+            </a>
+            <a href={websiteHref("/legal/privacy")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
               <Shield className="h-4 w-4 text-text/60" />
               <span className="flex-1 text-left">{t("menu.privacyPolicy")}</span>
-            </Link>
-            <Link to="/legal/info" className="menu-row" onClick={onClose}>
+            </a>
+            <a href={websiteHref("/legal/info")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
               <Shield className="h-4 w-4 text-text/60" />
               <span className="flex-1 text-left">{t("menu.privacyChoices")}</span>
-            </Link>
+            </a>
           </div>
         )}
       </div>
@@ -249,7 +253,7 @@ function UserMenu({
       <button
         type="button"
         className="menu-row text-primary"
-        onClick={() => handleNav("/app/billing")}
+        onClick={() => { onOpenUpgrade(); onClose(); }}
       >
         <Sparkles className="h-4 w-4" />
         <span className="flex-1 text-left">{t("menu.upgradePlan")}</span>
@@ -273,7 +277,13 @@ function UserMenu({
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({
+  onOpenSettings,
+  onOpenUpgrade,
+}: {
+  onOpenSettings: () => void;
+  onOpenUpgrade: () => void;
+}) {
   const { mode, toggle } = useInterfaceMode();
   const { t } = useLanguage();
   const [collapsed, setCollapsed] = useState(false);
@@ -313,7 +323,7 @@ export default function Sidebar() {
           width: 100%;
           cursor: pointer;
         }
-        .menu-row:hover { background-color: #EFF3F6; }
+        .menu-row:hover { background-color: rgb(var(--color-surface)); }
       `}</style>
 
       {/* Top: brand + collapse toggle */}
@@ -426,6 +436,8 @@ export default function Sidebar() {
           collapsed={collapsed}
           open={userMenuOpen}
           onClose={() => setUserMenuOpen(false)}
+          onOpenSettings={onOpenSettings}
+          onOpenUpgrade={onOpenUpgrade}
         />
         <button
           type="button"

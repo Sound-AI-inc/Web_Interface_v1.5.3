@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Lightbulb, Shuffle } from "lucide-react";
-import { randomIdeas, type PromptIdea } from "../lib/promptGeneration";
+import { randomIdeas, type GenerationType, type PromptIdea } from "../lib/promptGeneration";
 
 interface IdeasMenuProps {
   onPick: (text: string) => void;
+  type: GenerationType;
 }
 
 /**
@@ -11,9 +12,9 @@ interface IdeasMenuProps {
  * the user can click to populate the main prompt field. A shuffle button
  * reshuffles the selection without closing the menu.
  */
-export default function IdeasMenu({ onPick }: IdeasMenuProps) {
+export default function IdeasMenu({ onPick, type }: IdeasMenuProps) {
   const [open, setOpen] = useState(false);
-  const [ideas, setIdeas] = useState<PromptIdea[]>(() => randomIdeas(5));
+  const [ideas, setIdeas] = useState<PromptIdea[]>(() => randomIdeas(type, 5));
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -25,8 +26,12 @@ export default function IdeasMenu({ onPick }: IdeasMenuProps) {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [open]);
 
+  useEffect(() => {
+    setIdeas(randomIdeas(type, 5));
+  }, [type]);
+
   const handleOpen = () => {
-    setIdeas(randomIdeas(5));
+    setIdeas(randomIdeas(type, 5));
     setOpen((v) => !v);
   };
 
@@ -57,7 +62,7 @@ export default function IdeasMenu({ onPick }: IdeasMenuProps) {
             </span>
             <button
               type="button"
-              onClick={() => setIdeas(randomIdeas(5))}
+              onClick={() => setIdeas(randomIdeas(type, 5))}
               className="flex items-center gap-1 rounded-button px-1.5 py-0.5 font-poppins text-[10px] font-medium text-text/60 transition-colors hover:bg-surface hover:text-primary"
             >
               <Shuffle className="h-3 w-3" /> Shuffle

@@ -43,7 +43,7 @@ function Param({ label, value, min, max, step = 0.01, unit, onChange }: ParamKno
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-[#FF3C82]"
+        className="app-range w-full"
       />
     </div>
   );
@@ -70,10 +70,10 @@ function EnvelopeGraph({
   const points = `0,100 ${ax},0 ${dx},${sY} ${sx},${sY} ${rx},100`;
   return (
     <svg viewBox="0 0 100 100" className="h-24 w-full rounded-card bg-surface-muted" preserveAspectRatio="none">
-      <polyline points={points} fill="none" stroke="#FF3C82" strokeWidth={2} />
+      <polyline points={points} fill="none" stroke="rgb(var(--color-primary))" strokeWidth={2} />
       <polyline
         points={`0,100 ${points.split(" ").slice(1).join(" ")}`}
-        fill="rgba(255, 60, 130, 0.12)"
+        fill="rgba(var(--color-primary-rgb), 0.12)"
       />
     </svg>
   );

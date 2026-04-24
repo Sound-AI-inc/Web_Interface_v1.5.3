@@ -21,6 +21,10 @@ interface Props {
   onPlayStateChange?: (playing: boolean) => void;
 }
 
+const PRIMARY = "rgb(var(--color-primary))";
+const PRIMARY_SOFT = "rgb(var(--color-primary-soft))";
+const PRIMARY_TINT = "rgba(var(--color-primary-rgb), 0.18)";
+
 export default function WaveformEditor({ onReady, onPlayStateChange }: Props) {
   const ref = useRef<HTMLDivElement | null>(null);
   const wsRef = useRef<WaveSurfer | null>(null);
@@ -40,8 +44,8 @@ export default function WaveformEditor({ onReady, onPlayStateChange }: Props) {
     regionsRef.current = regions;
     const ws = WaveSurfer.create({
       container: ref.current,
-      waveColor: "#FF98A8",
-      progressColor: "#FF3C82",
+      waveColor: PRIMARY_SOFT,
+      progressColor: PRIMARY,
       cursorColor: "#1D1D1D",
       barWidth: 2,
       barGap: 2,
@@ -54,7 +58,7 @@ export default function WaveformEditor({ onReady, onPlayStateChange }: Props) {
 
     const enableDragSelection = () => {
       regions.clearRegions();
-      regions.enableDragSelection({ color: "rgba(255, 60, 130, 0.18)" });
+      regions.enableDragSelection({ color: PRIMARY_TINT });
     };
 
     ws.on("ready", () => {
@@ -248,7 +252,7 @@ export default function WaveformEditor({ onReady, onPlayStateChange }: Props) {
             max={400}
             value={zoom}
             onChange={(e) => setZoom(Number(e.target.value))}
-            className="w-32 accent-[#FF3C82]"
+            className="app-range w-32"
           />
         </div>
       </div>

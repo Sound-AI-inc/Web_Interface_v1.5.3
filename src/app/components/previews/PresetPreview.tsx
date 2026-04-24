@@ -121,7 +121,7 @@ function EnvGlance({ preset }: { preset: PresetGlance }) {
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-5 w-full">
         <polyline
           fill="none"
-          stroke="#FF3C82"
+          stroke="rgb(var(--color-primary))"
           strokeWidth={3}
           points={`0,100 ${ax},0 ${dx},${sy} ${sx},${sy} 100,100`}
           vectorEffect="non-scaling-stroke"

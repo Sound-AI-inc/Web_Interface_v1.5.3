@@ -46,7 +46,7 @@ function Slider({ label, value, min, max, step = 0.01, onChange, unit }: SliderP
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-[#FF3C82]"
+        className="app-range w-full"
       />
     </div>
   );

@@ -14,11 +14,14 @@ export default function ProBadge() {
     return (
       <span
         className="relative inline-flex items-center gap-1.5 rounded-full px-3 py-1
-          bg-[linear-gradient(110deg,#FF3C82_0%,#FF98A8_30%,#A1E7EE_60%,#FF3C82_100%)]
           bg-size-200 animate-pro-shimmer
           font-poppins text-[10px] font-bold uppercase tracking-[0.16em] text-white
           shadow-flat-sm animate-pro-pulse"
         aria-label="Pro mode active"
+        style={{
+          backgroundImage:
+            "linear-gradient(110deg, rgb(var(--color-primary)) 0%, rgb(var(--color-primary-soft)) 52%, rgb(var(--color-surface)) 100%)",
+        }}
       >
         <Sparkles className="h-3 w-3" />
         Pro

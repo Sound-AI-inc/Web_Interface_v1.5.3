@@ -5,13 +5,47 @@
 @layer base {
   :root {
     --radius: 0.5rem;
+    --color-primary: 255 60 130;
+    --color-primary-rgb: 255, 60, 130;
+    --color-primary-soft: 255 152 168;
+    --color-primary-soft-rgb: 255, 152, 168;
+    --color-accent-light: 255 152 168;
+    --color-surface: 239 243 246;
+    --color-surface-muted: 247 249 251;
+    --color-text: 29 29 29;
+  }
+  .theme-pro {
+    --color-primary: 255 60 130;
+    --color-primary-rgb: 255, 60, 130;
+    --color-primary-soft: 255 152 168;
+    --color-primary-soft-rgb: 255, 152, 168;
+    --color-accent-light: 255 152 168;
+    --color-surface: 239 243 246;
+    --color-surface-muted: 247 249 251;
+    --color-text: 29 29 29;
+  }
+  .theme-lite {
+    --color-primary: 161 231 238;
+    --color-primary-rgb: 161, 231, 238;
+    --color-primary-soft: 255 152 168;
+    --color-primary-soft-rgb: 255, 152, 168;
+    --color-accent-light: 161 231 238;
+    --color-surface: 239 243 246;
+    --color-surface-muted: 247 249 251;
+    --color-text: 29 29 29;
   }
   html {
     scroll-behavior: smooth;
+    background-color: rgb(var(--color-surface));
+  }
+  body,
+  #root {
+    min-height: 100%;
+    background-color: rgb(var(--color-surface));
   }
   ::selection {
-    background-color: rgba(255, 60, 130, 0.3);
-    color: #fff;
+    background-color: rgb(var(--color-primary) / 0.22);
+    color: rgb(var(--color-text));
   }
 }
 
@@ -52,6 +86,9 @@
   .app-meta {
     @apply font-codec text-xs text-text/60;
   }
+  .app-range {
+    accent-color: rgb(var(--color-primary));
+  }
 
   .gradient-text {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-pink to-accent-cyan;
@@ -83,3 +120,40 @@
   }
 }
 
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-blob {
+  animation: blob 12s infinite ease-in-out;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
