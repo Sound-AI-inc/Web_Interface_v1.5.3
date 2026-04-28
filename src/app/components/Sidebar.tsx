@@ -335,11 +335,15 @@ export default function Sidebar({
         {!collapsed && (
           <div className="flex items-center gap-2">
             <div
-              className={`flex h-7 w-7 items-center justify-center rounded-md bg-primary ${
+              className={`flex h-8 w-8 items-center justify-center rounded-xl border border-surface bg-white p-1 shadow-flat-sm ${
                 isPro ? "animate-pro-pulse" : ""
               }`}
             >
-              <span className="font-poppins text-xs font-bold text-white">S</span>
+              <img
+                src="/logo SoundAI v1.5 (1).svg"
+                alt="SoundAI"
+                className="h-full w-full object-contain"
+              />
             </div>
             <span className="font-poppins text-[15px] font-semibold text-text">SoundAI</span>
           </div>

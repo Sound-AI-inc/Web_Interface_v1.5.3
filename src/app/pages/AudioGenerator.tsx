@@ -408,7 +408,7 @@ export default function AudioGenerator() {
           <div className="flex items-center gap-2">
             <Clock3 className="h-4 w-4 text-primary" />
             <h2 className="font-poppins text-sm font-semibold text-text">
-              История генераций
+              Generation History
             </h2>
           </div>
           {activeBatch && (
