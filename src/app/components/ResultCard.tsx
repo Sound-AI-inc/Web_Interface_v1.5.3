@@ -12,6 +12,7 @@ export interface ResultCardItem {
   durationSeconds: number;
   description?: string;
   audioSeed?: number;
+  previewUrl?: string | null;
   notes?: AudioResult["notes"];
   preset?: AudioResult["preset"];
   tags?: string[];
@@ -80,7 +81,11 @@ export default function ResultCard({
           )}
           <div className="mt-3">
             {item.kind === "audio" && (
-              <AudioPreview seed={item.audioSeed ?? 1} durationSeconds={item.durationSeconds} />
+              <AudioPreview
+                seed={item.audioSeed ?? 1}
+                audioUrl={item.previewUrl ?? undefined}
+                durationSeconds={item.durationSeconds}
+              />
             )}
             {item.kind === "midi" && item.notes && (
               <MidiPreview notes={item.notes} durationSeconds={item.durationSeconds} />
@@ -130,6 +135,7 @@ export function toCardItem(item: AudioResult | LibraryAsset): ResultCardItem {
     format: item.format,
     durationSeconds: item.durationSeconds,
     audioSeed: item.audioSeed,
+    previewUrl: item.metadata?.previewUrl ?? item.metadata?.assetUrl ?? undefined,
     notes: item.notes,
     preset: item.preset,
     tags: item.tags,

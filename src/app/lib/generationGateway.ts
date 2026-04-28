@@ -22,10 +22,16 @@ const MIDICRAFT_API_URL = import.meta.env.VITE_MIDICRAFT_API_URL as string | und
 const VSTCRAFT_API_URL = import.meta.env.VITE_VSTCRAFT_API_URL as string | undefined;
 
 function toDemo(request: GenerationGatewayRequest, warning?: string): GenerationGatewayResponse {
+  const fallbackWarning =
+    warning ??
+    (request.type === "Audio Sample"
+      ? "Preview is running in metadata-guided demo mode until backend audio assets are connected."
+      : undefined);
+
   return {
     items: generateFromPrompt(request),
     source: "demo",
-    warning,
+    warning: fallbackWarning,
   };
 }
 

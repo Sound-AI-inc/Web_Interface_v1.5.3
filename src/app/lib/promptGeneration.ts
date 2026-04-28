@@ -437,3 +437,25 @@ export function randomIdeas(type: GenerationType, count = 5): PromptIdea[] {
   const shuffled = [...ideasForType(type)].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count);
 }
+
+function promptFromTemplate(template: DemoGenerationTemplate): string {
+  const head = template.promptHints.slice(0, 4).join(", ");
+  const key = template.metadata?.key ? ` in ${template.metadata.key}` : "";
+  const bpm = template.metadata?.bpm ? ` at ${template.metadata.bpm} BPM` : "";
+  return `${head}${key}${bpm}`.trim();
+}
+
+export function datasetPromptSuggestions(
+  type: GenerationType,
+  prompt: string,
+  count = 4,
+): string[] {
+  const ranked = matchGenerationTemplates(type, prompt || type);
+  if (ranked.length === 0) {
+    return ideasForType(type)
+      .slice(0, count)
+      .map((idea) => idea.text);
+  }
+
+  return Array.from(new Set(ranked.map(promptFromTemplate))).slice(0, count);
+}

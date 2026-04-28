@@ -9,6 +9,7 @@ import IdeasMenu from "../components/IdeasMenu";
 import { audioResults, type AudioResult } from "../data/mock";
 import { useInterfaceMode } from "../hooks/useInterfaceMode";
 import {
+  datasetPromptSuggestions,
   type GenerationType,
 } from "../lib/promptGeneration";
 import { generateResults } from "../lib/generationGateway";
@@ -305,6 +306,11 @@ export default function AudioGenerator() {
     );
   }, [history, selectedBatchId]);
 
+  const datasetSuggestions = useMemo(
+    () => datasetPromptSuggestions(type as GenerationType, prompt.trim(), 4),
+    [prompt, type],
+  );
+
   const activeItems = activeBatch?.items ?? audioResults;
 
   return (
@@ -384,6 +390,25 @@ export default function AudioGenerator() {
             Lite mode: Audio Sample only, Hugging Face models, MP3 output. Switch to Pro to unlock MIDI and VST generation.
           </p>
         )}
+
+        <div className="mt-4 rounded-card border border-primary/15 bg-white/75 px-4 py-3">
+          <div className="mb-2 font-poppins text-[10px] font-semibold uppercase tracking-[0.12em] text-text/55">
+            Dataset-guided prompt ideas
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {datasetSuggestions.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                disabled={isGenerating}
+                onClick={() => setPrompt(suggestion)}
+                className="rounded-full border border-surface bg-surface-muted px-3 py-1.5 text-left font-codec text-[11px] text-text/75 transition-colors hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        </div>
       </section>
 
       <div className="mt-4">

@@ -101,32 +101,37 @@ export default function ResultsList({
             </div>
           </div>
 
-          {liveGenerationEntries.map((entry, index) =>
-            entry.item ? (
+          {liveGenerationEntries.map((entry, index) => {
+            if (!entry.item) {
+              return (
+                <PendingResultCard
+                  key={entry.id}
+                  index={index}
+                  progress={entry.progress}
+                  stage={entry.status}
+                />
+              );
+            }
+
+            const item = entry.item;
+            return (
               <div
                 key={entry.id}
                 className="animate-[fadeInUp_420ms_ease-out]"
                 style={{ animationDelay: `${index * 90}ms` }}
               >
                 <ResultCard
-                  item={toCardItem(entry.item)}
-                  savedToLibrary={savedIds?.has(entry.item.id)}
-                  onAddToLibrary={() => onAddToLibrary?.(entry.item!)}
-                  onRemix={() => onRemix?.(entry.item!)}
+                  item={toCardItem(item)}
+                  savedToLibrary={savedIds?.has(item.id)}
+                  onAddToLibrary={() => onAddToLibrary?.(item)}
+                  onRemix={() => onRemix?.(item)}
                   statusLabel={entry.status}
                   statusProgress={entry.progress}
                   disableActions={isGenerating}
                 />
               </div>
-            ) : (
-              <PendingResultCard
-                key={entry.id}
-                index={index}
-                progress={entry.progress}
-                stage={entry.status}
-              />
-            ),
-          )}
+            );
+          })}
         </div>
       ) : (
         <div className="flex flex-col gap-3">

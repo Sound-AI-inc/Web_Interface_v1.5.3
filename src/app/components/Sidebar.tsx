@@ -335,7 +335,7 @@ export default function Sidebar({
         {!collapsed && (
           <div className="flex items-center gap-2">
             <div
-              className={`flex h-8 w-8 items-center justify-center rounded-xl border border-surface bg-white p-1 shadow-flat-sm ${
+              className={`flex h-8 w-8 items-center justify-center rounded-xl border border-surface/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.96),rgba(239,243,246,0.92))] p-1 shadow-flat-sm ${
                 isPro ? "animate-pro-pulse" : ""
               }`}
             >
@@ -345,7 +345,7 @@ export default function Sidebar({
                 className="h-full w-full object-contain"
               />
             </div>
-            <span className="font-poppins text-[15px] font-semibold text-text">SoundAI</span>
+            <span className="translate-y-[1px] font-poppins text-[15px] font-semibold text-text">SoundAI</span>
           </div>
         )}
         <button

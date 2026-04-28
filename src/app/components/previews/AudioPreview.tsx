@@ -3,6 +3,7 @@ import { Play, Pause } from "lucide-react";
 
 interface AudioPreviewProps {
   seed?: number;
+  audioUrl?: string;
   durationSeconds: number;
   className?: string;
 }
@@ -11,11 +12,16 @@ const PRIMARY = "rgb(var(--color-primary))";
 const PRIMARY_SOFT = "rgb(var(--color-primary-soft))";
 
 /**
- * Synthesizes a short deterministic audio snippet from a seed and renders a
- * playable waveform. Used for audio-type result cards (samples) until real
- * backend assets are wired up via Supabase storage.
+ * Plays real demo assets when a preview URL is available. If not, it falls back
+ * to a deterministic synthesized loop so audio result cards still feel alive
+ * before the full backend media pipeline is connected.
  */
-export default function AudioPreview({ seed = 1, durationSeconds, className = "" }: AudioPreviewProps) {
+export default function AudioPreview({
+  seed = 1,
+  audioUrl,
+  durationSeconds,
+  className = "",
+}: AudioPreviewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -23,6 +29,7 @@ export default function AudioPreview({ seed = 1, durationSeconds, className = ""
   const progressRef = useRef(0);
   const ctxRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const startedAtRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const bufferRef = useRef<AudioBuffer | null>(null);
@@ -43,9 +50,9 @@ export default function AudioPreview({ seed = 1, durationSeconds, className = ""
     const gap = 2;
     const step = (w - (peaks.length - 1) * gap) / peaks.length;
 
-    peaks.forEach((p, i) => {
-      const x = i * (step + gap);
-      const barH = Math.max(2, p * h * 0.9);
+    peaks.forEach((peak, index) => {
+      const x = index * (step + gap);
+      const barH = Math.max(2, peak * h * 0.9);
       const y = (h - barH) / 2;
       const played = x / w <= progressRef.current;
       ctx.fillStyle = played ? PRIMARY : PRIMARY_SOFT;
@@ -79,15 +86,7 @@ export default function AudioPreview({ seed = 1, durationSeconds, className = ""
     drawWaveform();
   }, [drawWaveform, progress]);
 
-  useEffect(() => {
-    return () => {
-      stopSource();
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      ctxRef.current?.close().catch(() => undefined);
-    };
-  }, []);
-
-  const stopSource = () => {
+  const stopPlayback = useCallback(() => {
     const src = sourceRef.current;
     if (src) {
       try {
@@ -98,27 +97,96 @@ export default function AudioPreview({ seed = 1, durationSeconds, className = ""
       }
       sourceRef.current = null;
     }
+
+    const audio = audioRef.current;
+    if (audio) {
+      audio.onended = null;
+      audio.pause();
+      audio.currentTime = 0;
+    }
+
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
-  };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      stopPlayback();
+      ctxRef.current?.close().catch(() => undefined);
+    };
+  }, [stopPlayback]);
+
+  useEffect(() => {
+    stopPlayback();
+    setPlaying(false);
+    setProgress(0);
+    bufferRef.current = null;
+    audioRef.current = null;
+  }, [audioUrl, durationSeconds, seed, stopPlayback]);
 
   const ensureBuffer = async (ctx: AudioContext) => {
     if (bufferRef.current) return bufferRef.current;
-    const buf = synthesizeBuffer(ctx, seed, durationSeconds);
-    bufferRef.current = buf;
-    return buf;
+    const buffer = synthesizeBuffer(ctx, seed, durationSeconds);
+    bufferRef.current = buffer;
+    return buffer;
+  };
+
+  const tickPlayback = () => {
+    const audio = audioRef.current;
+    if (audio) {
+      const safeDuration = audio.duration || durationSeconds || 1;
+      setProgress(Math.min(1, Math.max(0, audio.currentTime / safeDuration)));
+      if (!audio.paused) {
+        rafRef.current = requestAnimationFrame(tickPlayback);
+      }
+      return;
+    }
+
+    if (!sourceRef.current || !ctxRef.current) return;
+    const t = (ctxRef.current.currentTime - startedAtRef.current) / durationSeconds;
+    setProgress(Math.min(1, Math.max(0, t)));
+    rafRef.current = requestAnimationFrame(tickPlayback);
   };
 
   const toggle = async () => {
     if (playing) {
-      stopSource();
+      stopPlayback();
       setPlaying(false);
       setProgress(0);
       return;
     }
+
+    if (audioUrl) {
+      try {
+        const absoluteUrl = new URL(audioUrl, window.location.href).href;
+        let audio = audioRef.current;
+        if (!audio || audio.src !== absoluteUrl) {
+          audio = new Audio(absoluteUrl);
+          audio.preload = "auto";
+          audioRef.current = audio;
+        }
+
+        audio.currentTime = 0;
+        audio.onended = () => {
+          setPlaying(false);
+          setProgress(0);
+          if (rafRef.current) cancelAnimationFrame(rafRef.current);
+          rafRef.current = null;
+        };
+
+        await audio.play();
+        setPlaying(true);
+        rafRef.current = requestAnimationFrame(tickPlayback);
+        return;
+      } catch {
+        audioRef.current = null;
+      }
+    }
+
     if (!ctxRef.current) {
       ctxRef.current = new AudioContext();
     }
+
     const ctx = ctxRef.current;
     if (ctx.state === "suspended") await ctx.resume();
     const buffer = await ensureBuffer(ctx);
@@ -134,13 +202,7 @@ export default function AudioPreview({ seed = 1, durationSeconds, className = ""
     startedAtRef.current = ctx.currentTime;
     src.start();
     setPlaying(true);
-    const tick = () => {
-      if (!sourceRef.current || !ctxRef.current) return;
-      const t = (ctxRef.current.currentTime - startedAtRef.current) / durationSeconds;
-      setProgress(Math.min(1, Math.max(0, t)));
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
+    rafRef.current = requestAnimationFrame(tickPlayback);
   };
 
   return (
@@ -168,7 +230,7 @@ function synthesizePeaks(seed: number, count: number, duration: number): number[
   const base = 0.2 + ((seed * 17) % 30) / 100;
   for (let i = 0; i < count; i++) {
     const t = i / count;
-    const env = Math.sin(Math.PI * t) ** 0.6; // arch envelope
+    const env = Math.sin(Math.PI * t) ** 0.6;
     const osc =
       Math.sin((seed + 1) * t * 11) * 0.5 +
       Math.sin((seed + 3) * t * 23 + 1.2) * 0.35 +
@@ -176,9 +238,8 @@ function synthesizePeaks(seed: number, count: number, duration: number): number[
     const rnd = pseudoRandom(seed + i) - 0.5;
     peaks.push(Math.min(1, Math.max(0.1, base + env * Math.abs(osc) + rnd * 0.12)));
   }
-  // Slight deterministic variation by duration so 30s vs 5s reads differently.
   const spread = Math.min(1, duration / 20);
-  return peaks.map((p) => p * (0.7 + spread * 0.3));
+  return peaks.map((peak) => peak * (0.7 + spread * 0.3));
 }
 
 function pseudoRandom(seed: number): number {
@@ -190,21 +251,46 @@ function synthesizeBuffer(ctx: AudioContext, seed: number, durationSeconds: numb
   const sampleRate = ctx.sampleRate;
   const length = Math.floor(sampleRate * Math.min(durationSeconds, 12));
   const buffer = ctx.createBuffer(2, length, sampleRate);
-  const freqA = 120 + (seed * 37) % 180;
-  const freqB = 180 + (seed * 61) % 260;
-  const freqC = 240 + (seed * 97) % 400;
-  for (let ch = 0; ch < 2; ch++) {
-    const data = buffer.getChannelData(ch);
+  const baseFreq = 72 + (seed * 19) % 96;
+  const harmonicFreq = baseFreq * (1.5 + ((seed * 7) % 5) * 0.12);
+  const airFreq = baseFreq * (2.4 + ((seed * 11) % 7) * 0.08);
+  const tempo = 82 + (seed % 6) * 11;
+  const beatLength = 60 / tempo;
+  const stepLength = beatLength / 2;
+
+  for (let channel = 0; channel < 2; channel++) {
+    const data = buffer.getChannelData(channel);
+    let noiseState = (seed * 9301 + channel * 49297 + 233280) >>> 0;
+
     for (let i = 0; i < length; i++) {
       const t = i / sampleRate;
-      const env = Math.sin((Math.PI * i) / length) ** 0.8;
-      const detune = ch === 0 ? 1 : 1.005;
+      const arc = Math.sin((Math.PI * i) / length) ** 0.72;
+      const detune = channel === 0 ? 0.997 : 1.003;
+      const stepPhase = (t % stepLength) / stepLength;
+      const beatPhase = (t % beatLength) / beatLength;
+      const gate = 0.35 + Math.exp(-stepPhase * (7 + (seed % 4))) * 0.95;
+      const kickEnv = Math.exp(-beatPhase * 11);
+      const slowDrift = 0.72 + 0.28 * Math.sin(2 * Math.PI * 0.17 * t + channel * 0.9);
+
+      noiseState = (noiseState * 1664525 + 1013904223) >>> 0;
+      const noise = (noiseState / 4294967296 - 0.5) * 2;
+
+      const sub =
+        Math.sin(2 * Math.PI * baseFreq * detune * t) * 0.24 +
+        Math.sin(2 * Math.PI * (baseFreq * 0.5) * detune * t) * 0.12;
+      const body =
+        Math.sin(2 * Math.PI * harmonicFreq * detune * t + 0.4) * 0.2 +
+        Math.sin(2 * Math.PI * airFreq * detune * t + 1.1) * 0.08;
+      const transient = noise * 0.11 * Math.exp(-stepPhase * 18);
+      const kick = Math.sin(2 * Math.PI * (42 + kickEnv * 54) * t) * kickEnv * 0.18;
+      const shimmer = Math.sin(2 * Math.PI * (airFreq * 1.7) * detune * t + 1.8) * 0.04 * slowDrift;
+
       const sample =
-        Math.sin(2 * Math.PI * freqA * detune * t) * 0.38 +
-        Math.sin(2 * Math.PI * freqB * detune * t + 0.7) * 0.22 +
-        Math.sin(2 * Math.PI * freqC * detune * t + 1.3) * 0.14;
-      data[i] = sample * env * 0.6;
+        (sub * (0.62 + gate * 0.18) + body * gate + transient + kick + shimmer) * arc * 0.82;
+
+      data[i] = Math.tanh(sample * 1.45) * 0.78;
     }
   }
+
   return buffer;
 }

@@ -27,7 +27,7 @@ export default function PromptInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        placeholder={placeholder ?? "Describe the mood, instruments and length…"}
+        placeholder={placeholder ?? "Describe the mood, instruments and length..."}
         className="flex-1 bg-transparent px-2 py-2 font-codec text-sm text-text placeholder:text-text/40 focus:outline-none disabled:cursor-not-allowed disabled:text-text/60"
       />
       <GenerateButton
