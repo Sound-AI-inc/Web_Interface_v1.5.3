@@ -349,7 +349,7 @@ export default function AudioGenerator() {
           modeLabel={isPro ? "Pro" : "Lite"}
           mode={isPro ? "pro" : "lite"}
           controls={
-            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 relative z-50">
               <PromptControl
                 label="Type"
                 value={type}
@@ -374,7 +374,9 @@ export default function AudioGenerator() {
                 options={formatOptions}
                 onChange={setFormat}
               />
-              <IdeasMenu onPick={setPrompt} type={type as GenerationType} />
+              <div className="min-w-[132px] rounded-[20px] border border-black/8 bg-white/78 px-3 py-2 flex items-center justify-center">
+                <IdeasMenu onPick={setPrompt} type={type as GenerationType} />
+              </div>
             </div>
           }
         />
