@@ -13,6 +13,7 @@ interface PromptInputProps {
   modeLabel?: string;
   mode?: "pro" | "lite";
   controls?: ReactNode;
+  onAdd?: () => void;
 }
 
 export default function PromptInput({
@@ -26,6 +27,7 @@ export default function PromptInput({
   modeLabel = "Create",
   mode = "pro",
   controls,
+  onAdd,
 }: PromptInputProps) {
   const modeShell =
     mode === "lite"
@@ -64,8 +66,9 @@ export default function PromptInput({
             <button
               type="button"
               disabled={disabled}
+              onClick={() => onAdd?.()}
               className="flex h-12 w-12 items-center justify-center rounded-full border border-black/8 bg-white/75 text-text/65 transition-colors hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-              aria-label="Add prompt context"
+              aria-label="Add audio or components"
             >
               <span className="text-2xl leading-none">+</span>
             </button>

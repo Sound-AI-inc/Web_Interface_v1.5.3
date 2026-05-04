@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Clock3, Plus, Sparkles } from "lucide-react";
+import { Clock3, Sparkles } from "lucide-react";
 import PageContainer from "../components/PageContainer";
 import PromptInput from "../components/PromptInput";
 import ResultsList from "../components/ResultsList";
@@ -311,6 +311,10 @@ export default function AudioGenerator() {
   const activeItems = activeBatch?.items ?? audioResults;
   const hasWorkspace = isGenerating || Boolean(generationEntries) || history.length > 0;
 
+  const handleAddResource = () => {
+    console.log("Open add audio/components flow");
+  };
+
   return (
     <PageContainer
       title="Audio Generator"
@@ -330,13 +334,7 @@ export default function AudioGenerator() {
               Live prompt surface
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {isPro && (
-              <button className="app-btn-ghost h-10 rounded-full bg-white/68 px-4 text-xs">
-                <Plus className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
+          <div className="flex items-center gap-2" />
         </header>
 
         <PromptInput
@@ -348,6 +346,7 @@ export default function AudioGenerator() {
           generateLabel={isGenerating ? generationStage : "Create"}
           modeLabel={isPro ? "Pro" : "Lite"}
           mode={isPro ? "pro" : "lite"}
+          onAdd={handleAddResource}
           controls={
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 relative z-50">
               <PromptControl
