@@ -54,7 +54,7 @@ export default function IdeasMenu({ onPick, type }: IdeasMenuProps) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-30 mt-2 w-[320px] rounded-card border border-surface bg-white p-2 shadow-lg"
+          className="absolute right-0 top-full z-50 mt-2 w-[320px] rounded-card border border-surface bg-white p-2 shadow-lg"
         >
           <div className="flex items-center justify-between px-2 pb-1.5">
             <span className="font-poppins text-[10px] font-bold uppercase tracking-[0.12em] text-text/60">

@@ -77,7 +77,7 @@ export default function BrandSelect({
       {open && (
         <ul
           role="listbox"
-          className={`absolute z-30 mt-1.5 max-h-72 w-full overflow-auto rounded-card border border-surface bg-white p-1 shadow-lg ${menuClassName}`}
+          className={`absolute z-50 mt-1.5 max-h-72 w-full overflow-auto rounded-card border border-surface bg-white p-1 shadow-lg ${menuClassName}`}
         >
           {normalized.map((o) => {
             const active = o.value === value;

@@ -36,7 +36,7 @@ export default function PromptInput({
       ? "border-[rgba(161,231,238,0.38)] bg-[rgba(161,231,238,0.18)] text-[#2f6a71]"
       : "border-[rgba(255,60,130,0.2)] bg-[rgba(255,60,130,0.12)] text-[#c22b64]";
   return (
-    <div className={`prompt-shell rounded-[34px] border px-4 py-4 transition-colors focus-within:border-primary/45 md:px-6 md:py-5 ${modeShell}`}>
+    <div className={`prompt-shell overflow-visible rounded-[34px] border px-4 py-4 transition-colors focus-within:border-primary/45 md:px-6 md:py-5 ${modeShell}`}>
       <div className="relative z-[1]">
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>
