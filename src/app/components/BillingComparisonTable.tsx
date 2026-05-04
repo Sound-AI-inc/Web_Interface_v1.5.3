@@ -24,7 +24,12 @@ const GROUPS: Group[] = [
       },
       {
         label: "Credits included",
-        values: ["20", "30 + auto 3× throttled refills", "50 – 3000 / month", "Custom"],
+        values: [
+          "20 + timed refills over 7-day trial",
+          "30 + auto-recharge after full spend",
+          "50 – 3000 / month",
+          "Custom",
+        ],
       },
       { label: "Billing cadence", values: ["7-day trial", "One-time or $84 / year", "$50+ / month", "Custom"] },
       { label: "Priority GPU queue", values: [false, false, true, "Dedicated GPU node"] },

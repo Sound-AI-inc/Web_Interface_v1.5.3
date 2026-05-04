@@ -335,9 +335,10 @@ export const plans: Plan[] = [
     price: "$0",
     cadence: "/7 days",
     description:
-      "Get started with 20 free credits for 7 days. Try AI sound generation and explore the Sound Library.",
+      "Get started with 20 free credits for 7 days. Spent credits are restored over the trial period while the subscription is active.",
     features: [
       "20 free credits",
+      "Credits restore over 7 days while trial is active",
       "Basic audio generation",
       "MP3 exports",
       "Community support",
@@ -356,9 +357,10 @@ export const plans: Plan[] = [
     price: "$7",
     cadence: "/one-time",
     description:
-      "Perfect for new creators. Includes 30 credits, advanced audio generation, WAV exports, and basic library access.",
+      "Perfect for new creators. Includes 30 credits, advanced audio generation, WAV exports, and basic library access. Credits reload with timed refills after spend events.",
     features: [
       "30 generation credits",
+      "Auto-recharge 30 credits after full spend",
       "Advanced audio editing",
       "WAV exports",
       "Basic sound library access",
@@ -371,7 +373,7 @@ export const plans: Plan[] = [
       "⚙️ Prompt-to-Preset Conversion (beta)",
       "🔍 Searchable Sound Library by Tags",
       "💾 Cloud Storage (up to 500 MB)",
-      "♻️ When credits run out, the next 30 auto-recharge with 3× usage throttle",
+      "♻️ 30 credits auto-recharge: after full spend in 24h, after two full spend cycles in 48h.",
     ],
     highlight: true,
     pricingOptions: [
