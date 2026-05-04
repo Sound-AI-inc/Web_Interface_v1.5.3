@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Clock3, Sparkles, Upload } from "lucide-react";
+import { Clock3, Plus, Sparkles } from "lucide-react";
 import PageContainer from "../components/PageContainer";
 import PromptInput from "../components/PromptInput";
 import ResultsList from "../components/ResultsList";
@@ -329,34 +329,13 @@ export default function AudioGenerator() {
               <Sparkles className="h-3.5 w-3.5 text-primary" />
               Live prompt surface
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {typeOptions.map((option) => {
-                const active = option === type;
-                return (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => setType(option)}
-                    disabled={isGenerating}
-                    className={`rounded-full border px-4 py-2 font-poppins text-xs font-semibold uppercase tracking-[0.12em] transition-colors ${
-                      active
-                        ? "border-primary/35 bg-primary/12 text-primary"
-                        : "border-white/45 bg-white/16 text-text/68 hover:border-primary/30 hover:text-primary"
-                    } disabled:cursor-not-allowed disabled:opacity-60`}
-                  >
-                    {option}
-                  </button>
-                );
-              })}
-            </div>
           </div>
           <div className="flex items-center gap-2">
             {isPro && (
               <button className="app-btn-ghost h-10 rounded-full bg-white/68 px-4 text-xs">
-                <Upload className="h-3.5 w-3.5" /> Import
+                <Plus className="h-3.5 w-3.5" />
               </button>
             )}
-            <IdeasMenu onPick={setPrompt} type={type as GenerationType} />
           </div>
         </header>
 
@@ -395,6 +374,7 @@ export default function AudioGenerator() {
                 options={formatOptions}
                 onChange={setFormat}
               />
+              <IdeasMenu onPick={setPrompt} type={type as GenerationType} />
             </div>
           }
         />
@@ -542,7 +522,7 @@ function PromptControl({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="min-w-[132px] rounded-[20px] border border-black/8 bg-white/78 px-3 py-2">
+    <div className="min-w-[132px] rounded-[20px] border border-black/8 bg-white/78 px-3 py-2 relative z-50">
       <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-text/42">
         {label}
       </div>
