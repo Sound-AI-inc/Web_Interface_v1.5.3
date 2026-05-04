@@ -87,7 +87,7 @@ export default function ResultsList({
                   </p>
                 </div>
                 <p className="app-meta mt-1 truncate">
-                  {generationType ?? "Audio"} · {generationPrompt?.trim() || "Preparing your prompt"} · {liveGenerationEntries.length} result{liveGenerationEntries.length > 1 ? "s" : ""}
+                  {generationType ?? "Audio"} - {generationPrompt?.trim() || "Preparing your prompt"} - {liveGenerationEntries.length} result{liveGenerationEntries.length > 1 ? "s" : ""}
                 </p>
               </div>
               <div className="w-32 shrink-0">

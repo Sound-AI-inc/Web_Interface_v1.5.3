@@ -334,18 +334,16 @@ export default function Sidebar({
       >
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <div
-              className={`flex h-8 w-8 items-center justify-center rounded-xl border border-surface/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.96),rgba(239,243,246,0.92))] p-1 shadow-flat-sm ${
-                isPro ? "animate-pro-pulse" : ""
-              }`}
-            >
+            <div className="flex h-10 w-10 items-center justify-center">
               <img
                 src="/logo SoundAI v1.5 (1).svg"
                 alt="SoundAI"
-                className="h-full w-full object-contain"
+                className={`soundai-logo-mark h-full w-full object-contain ${
+                  isPro ? "brightness-0 invert" : "brightness-0"
+                }`}
               />
             </div>
-            <span className="translate-y-[1px] font-poppins text-[15px] font-semibold text-text">SoundAI</span>
+            <span className="translate-y-[1px] font-poppins text-[17px] font-semibold text-text">SoundAI</span>
           </div>
         )}
         <button

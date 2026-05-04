@@ -18,7 +18,7 @@ export default function GenerateButton({
       type="button"
       onClick={onClick}
       disabled={disabled || loading}
-      className="app-btn-primary h-10 min-w-[136px] px-4 disabled:cursor-not-allowed disabled:opacity-80"
+      className="inline-flex h-12 min-w-[152px] items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#ff5e6e,#ff7b57,#ff9448)] px-5 font-poppins text-sm font-semibold text-white shadow-[0_16px_36px_rgba(255,106,92,0.26)] transition-transform duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-80"
     >
       {label}
       {loading ? (

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Clock3, Upload } from "lucide-react";
+import { Clock3, Sparkles, Upload } from "lucide-react";
 import PageContainer from "../components/PageContainer";
 import PromptInput from "../components/PromptInput";
 import ControlDropdown from "../components/ControlDropdown";
@@ -300,10 +300,7 @@ export default function AudioGenerator() {
 
   const activeBatch = useMemo(() => {
     if (history.length === 0) return null;
-    return (
-      history.find((batch) => batch.id === selectedBatchId) ??
-      history[0]
-    );
+    return history.find((batch) => batch.id === selectedBatchId) ?? history[0];
   }, [history, selectedBatchId]);
 
   const datasetSuggestions = useMemo(
@@ -312,11 +309,12 @@ export default function AudioGenerator() {
   );
 
   const activeItems = activeBatch?.items ?? audioResults;
+  const hasWorkspace = isGenerating || Boolean(generationEntries) || history.length > 0;
 
   return (
     <PageContainer
-      title="Create audio with AI"
-      subtitle="Audio Generator"
+      title="Audio Generator"
+      subtitle={hasWorkspace ? "Prompt-driven generation workspace" : "Start with a single prompt"}
       actions={
         <div className="rounded-card border-2 border-primary px-4 py-2 text-center">
           <div className="font-poppins text-[11px] font-medium text-text/60">Credits</div>
@@ -324,12 +322,37 @@ export default function AudioGenerator() {
         </div>
       }
     >
-      <section className="rounded-card border border-primary/40 p-6">
-        <header className="mb-4 flex items-center justify-between">
-          <h2 className="font-poppins text-sm font-semibold text-text">AdaptivePrompt</h2>
+      <section className="rounded-[40px] border border-white/45 bg-white/14 p-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl md:p-7">
+        <header className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/45 bg-white/18 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-text/72">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              Live prompt surface
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {typeOptions.map((option) => {
+                const active = option === type;
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setType(option)}
+                    disabled={isGenerating}
+                    className={`rounded-full border px-4 py-2 font-poppins text-xs font-semibold uppercase tracking-[0.12em] transition-colors ${
+                      active
+                        ? "border-primary/35 bg-primary/12 text-primary"
+                        : "border-white/45 bg-white/16 text-text/68 hover:border-primary/30 hover:text-primary"
+                    } disabled:cursor-not-allowed disabled:opacity-60`}
+                  >
+                    {option}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <div className="flex items-center gap-2">
             {isPro && (
-              <button className="app-btn-ghost h-9 px-3 text-xs">
+              <button className="app-btn-ghost h-10 rounded-full bg-white/68 px-4 text-xs">
                 <Upload className="h-3.5 w-3.5" /> Import
               </button>
             )}
@@ -343,7 +366,8 @@ export default function AudioGenerator() {
           onGenerate={handleGenerate}
           disabled={isGenerating}
           loading={isGenerating}
-          generateLabel={isGenerating ? generationStage : "Generate"}
+          generateLabel={isGenerating ? generationStage : "Create"}
+          modeLabel={isPro ? "Pro" : "Lite"}
         />
 
         {generationWarning && (
@@ -353,45 +377,12 @@ export default function AudioGenerator() {
         )}
 
         {isPro && (
-          <p className="mt-2 font-codec text-xs italic text-text/50">
+          <p className="mt-3 font-codec text-xs italic text-text/50">
             Smart suggestions adapt as you type. Type, model and output format stay in sync.
           </p>
         )}
 
-        <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-4">
-          <ControlDropdown
-            label="Type"
-            value={type}
-            options={typeOptions}
-            onChange={setType}
-          />
-          <ControlDropdown
-            label="Model"
-            value={resolvedModel}
-            options={modelOptions}
-            onChange={setModel}
-          />
-          <ControlDropdown
-            label="Generations"
-            value={String(generationCount)}
-            options={GENERATION_COUNTS}
-            onChange={(value) => setGenerationCount(Number(value))}
-          />
-          <ControlDropdown
-            label="Output Format"
-            value={resolvedFormat}
-            options={formatOptions}
-            onChange={setFormat}
-          />
-        </div>
-
-        {!isPro && (
-          <p className="mt-3 font-codec text-[11px] italic text-text/50">
-            Lite mode: Audio Sample only, Hugging Face models, MP3 output. Switch to Pro to unlock MIDI and VST generation.
-          </p>
-        )}
-
-        <div className="mt-4 rounded-card border border-primary/15 bg-white/75 px-4 py-3">
+        <div className="mt-4 rounded-[26px] border border-white/45 bg-white/22 px-4 py-3 backdrop-blur-xl">
           <div className="mb-2 font-poppins text-[10px] font-semibold uppercase tracking-[0.12em] text-text/55">
             Dataset-guided prompt ideas
           </div>
@@ -409,84 +400,134 @@ export default function AudioGenerator() {
             ))}
           </div>
         </div>
-      </section>
 
-      <div className="mt-4">
-        <ResultsList
-          items={activeItems}
-          title="Results"
-          savedIds={saved}
-          onAddToLibrary={handleAddToLibrary}
-          onRemix={handleRemix}
-          initialVisible={3}
-          isGenerating={isGenerating}
-          generationProgress={generationProgress}
-          generationStage={generationStage}
-          generationPrompt={activeGenerationPrompt}
-          generationType={type}
-          generationEntries={generationEntries}
-        />
-      </div>
+        {hasWorkspace && (
+          <>
+            <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-4">
+              <ControlDropdown
+                label="Type"
+                value={type}
+                options={typeOptions}
+                onChange={setType}
+              />
+              <ControlDropdown
+                label="Model"
+                value={resolvedModel}
+                options={modelOptions}
+                onChange={setModel}
+              />
+              <ControlDropdown
+                label="Generations"
+                value={String(generationCount)}
+                options={GENERATION_COUNTS}
+                onChange={(value) => setGenerationCount(Number(value))}
+              />
+              <ControlDropdown
+                label="Output Format"
+                value={resolvedFormat}
+                options={formatOptions}
+                onChange={setFormat}
+              />
+            </div>
 
-      <section className="mt-4 rounded-card border border-primary/20 bg-white/80 p-6">
-        <header className="mb-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Clock3 className="h-4 w-4 text-primary" />
-            <h2 className="font-poppins text-sm font-semibold text-text">
-              Generation History
-            </h2>
-          </div>
-          {activeBatch && (
-            <span className="app-meta">
-              {activeBatch.createdAt} - {activeBatch.count} result{activeBatch.count > 1 ? "s" : ""}
-            </span>
-          )}
-        </header>
-
-        {history.length > 0 ? (
-          <div className="flex flex-col gap-2">
-            {history.map((batch) => {
-              const selected = batch.id === activeBatch?.id;
-              return (
-                <button
-                  key={batch.id}
-                  type="button"
-                  onClick={() => setSelectedBatchId(batch.id)}
-                  className={`flex items-start justify-between gap-4 rounded-input border px-4 py-3 text-left transition-colors ${
-                    selected
-                      ? "border-primary/40 bg-primary/5"
-                      : "border-surface bg-white hover:border-primary/30"
-                  }`}
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="font-poppins text-xs font-semibold text-text">
-                      {batch.prompt || "Untitled prompt"}
-                    </div>
-                    <div className="app-meta mt-1">
-                      {batch.type} - {batch.model} - {batch.format}
-                    </div>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <div className="app-meta">{batch.createdAt}</div>
-                    <div className="mt-1 font-poppins text-[11px] font-medium text-text/70">
-                      {batch.count} generation{batch.count > 1 ? "s" : ""}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="rounded-card border border-dashed border-surface bg-surface-muted p-8 text-center">
-            <p className="font-poppins text-sm font-medium text-text/70">
-              Your generation history will appear here.
-            </p>
-            <p className="app-meta mt-1">
-              Run a prompt once to keep reusable result batches below the main results panel.
-            </p>
-          </div>
+            {!isPro && (
+              <p className="mt-3 font-codec text-[11px] italic text-text/50">
+                Lite mode: Audio Sample only, Hugging Face models, MP3 output. Switch to Pro to unlock MIDI and VST generation.
+              </p>
+            )}
+          </>
         )}
       </section>
+
+      {hasWorkspace ? (
+        <>
+          <div className="mt-4">
+            <ResultsList
+              items={activeItems}
+              title="Results"
+              savedIds={saved}
+              onAddToLibrary={handleAddToLibrary}
+              onRemix={handleRemix}
+              initialVisible={3}
+              isGenerating={isGenerating}
+              generationProgress={generationProgress}
+              generationStage={generationStage}
+              generationPrompt={activeGenerationPrompt}
+              generationType={type}
+              generationEntries={generationEntries}
+            />
+          </div>
+
+          <section className="mt-4 rounded-card border border-primary/20 bg-white/80 p-6">
+            <header className="mb-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Clock3 className="h-4 w-4 text-primary" />
+                <h2 className="font-poppins text-sm font-semibold text-text">
+                  Generation History
+                </h2>
+              </div>
+              {activeBatch && (
+                <span className="app-meta">
+                  {activeBatch.createdAt} - {activeBatch.count} result{activeBatch.count > 1 ? "s" : ""}
+                </span>
+              )}
+            </header>
+
+            {history.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                {history.map((batch) => {
+                  const selected = batch.id === activeBatch?.id;
+                  return (
+                    <button
+                      key={batch.id}
+                      type="button"
+                      onClick={() => setSelectedBatchId(batch.id)}
+                      className={`flex items-start justify-between gap-4 rounded-input border px-4 py-3 text-left transition-colors ${
+                        selected
+                          ? "border-primary/40 bg-primary/5"
+                          : "border-surface bg-white hover:border-primary/30"
+                      }`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="font-poppins text-xs font-semibold text-text">
+                          {batch.prompt || "Untitled prompt"}
+                        </div>
+                        <div className="app-meta mt-1">
+                          {batch.type} - {batch.model} - {batch.format}
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <div className="app-meta">{batch.createdAt}</div>
+                        <div className="mt-1 font-poppins text-[11px] font-medium text-text/70">
+                          {batch.count} generation{batch.count > 1 ? "s" : ""}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-card border border-dashed border-surface bg-surface-muted p-8 text-center">
+                <p className="font-poppins text-sm font-medium text-text/70">
+                  Your generation history will appear here.
+                </p>
+                <p className="app-meta mt-1">
+                  Run a prompt once to keep reusable result batches below the main results panel.
+                </p>
+              </div>
+            )}
+          </section>
+        </>
+      ) : (
+        <section className="mt-4 rounded-[32px] border border-dashed border-white/50 bg-white/12 px-6 py-10 text-center backdrop-blur-xl">
+          <p className="font-poppins text-base font-semibold text-text">
+            Start with a prompt and SoundAI will open the generation workspace below.
+          </p>
+          <p className="mt-2 font-codec text-sm text-text/58">
+            Results, staged generation progress, and reusable history appear after the first run.
+          </p>
+        </section>
+      )}
     </PageContainer>
   );
 }
