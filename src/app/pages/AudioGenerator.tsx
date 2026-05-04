@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Clock3, Sparkles, Upload } from "lucide-react";
 import PageContainer from "../components/PageContainer";
 import PromptInput from "../components/PromptInput";
-import ControlDropdown from "../components/ControlDropdown";
 import ResultsList from "../components/ResultsList";
 import type { GenerationPreviewEntry } from "../components/ResultsList";
 import IdeasMenu from "../components/IdeasMenu";
+import BrandSelect from "../components/BrandSelect";
 import { audioResults, type AudioResult } from "../data/mock";
 import { useInterfaceMode } from "../hooks/useInterfaceMode";
 import {
@@ -368,6 +368,35 @@ export default function AudioGenerator() {
           loading={isGenerating}
           generateLabel={isGenerating ? generationStage : "Create"}
           modeLabel={isPro ? "Pro" : "Lite"}
+          mode={isPro ? "pro" : "lite"}
+          controls={
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+              <PromptControl
+                label="Type"
+                value={type}
+                options={typeOptions}
+                onChange={setType}
+              />
+              <PromptControl
+                label="Model"
+                value={resolvedModel}
+                options={modelOptions}
+                onChange={setModel}
+              />
+              <PromptControl
+                label="Generations"
+                value={String(generationCount)}
+                options={GENERATION_COUNTS}
+                onChange={(value) => setGenerationCount(Number(value))}
+              />
+              <PromptControl
+                label="Output"
+                value={resolvedFormat}
+                options={formatOptions}
+                onChange={setFormat}
+              />
+            </div>
+          }
         />
 
         {generationWarning && (
@@ -401,41 +430,10 @@ export default function AudioGenerator() {
           </div>
         </div>
 
-        {hasWorkspace && (
-          <>
-            <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-4">
-              <ControlDropdown
-                label="Type"
-                value={type}
-                options={typeOptions}
-                onChange={setType}
-              />
-              <ControlDropdown
-                label="Model"
-                value={resolvedModel}
-                options={modelOptions}
-                onChange={setModel}
-              />
-              <ControlDropdown
-                label="Generations"
-                value={String(generationCount)}
-                options={GENERATION_COUNTS}
-                onChange={(value) => setGenerationCount(Number(value))}
-              />
-              <ControlDropdown
-                label="Output Format"
-                value={resolvedFormat}
-                options={formatOptions}
-                onChange={setFormat}
-              />
-            </div>
-
-            {!isPro && (
-              <p className="mt-3 font-codec text-[11px] italic text-text/50">
-                Lite mode: Audio Sample only, Hugging Face models, MP3 output. Switch to Pro to unlock MIDI and VST generation.
-              </p>
-            )}
-          </>
+        {!isPro && (
+          <p className="mt-3 font-codec text-[11px] italic text-text/50">
+            Lite mode: Audio Sample only, Hugging Face models, MP3 output. Switch to Pro to unlock MIDI and VST generation.
+          </p>
         )}
       </section>
 
@@ -529,5 +527,31 @@ export default function AudioGenerator() {
         </section>
       )}
     </PageContainer>
+  );
+}
+
+function PromptControl({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="min-w-[132px] rounded-[20px] border border-black/8 bg-white/78 px-3 py-2">
+      <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-text/42">
+        {label}
+      </div>
+      <BrandSelect
+        value={value}
+        options={options}
+        onChange={onChange}
+        className="min-w-[126px]"
+      />
+    </div>
   );
 }

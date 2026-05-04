@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Mic } from "lucide-react";
 import GenerateButton from "./GenerateButton";
 
@@ -10,6 +11,8 @@ interface PromptInputProps {
   loading?: boolean;
   generateLabel?: string;
   modeLabel?: string;
+  mode?: "pro" | "lite";
+  controls?: ReactNode;
 }
 
 export default function PromptInput({
@@ -21,13 +24,28 @@ export default function PromptInput({
   loading = false,
   generateLabel,
   modeLabel = "Create",
+  mode = "pro",
+  controls,
 }: PromptInputProps) {
+  const modeShell =
+    mode === "lite"
+      ? "border-[rgba(161,231,238,0.42)] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(239,243,246,0.88))] shadow-[0_26px_80px_rgba(161,231,238,0.18)]"
+      : "border-[rgba(255,152,168,0.42)] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(250,240,244,0.9))] shadow-[0_26px_80px_rgba(255,60,130,0.16)]";
+  const modeBadge =
+    mode === "lite"
+      ? "border-[rgba(161,231,238,0.38)] bg-[rgba(161,231,238,0.18)] text-[#2f6a71]"
+      : "border-[rgba(255,60,130,0.2)] bg-[rgba(255,60,130,0.12)] text-[#c22b64]";
   return (
-    <div className="prompt-shell rounded-[30px] border border-white/55 bg-[linear-gradient(180deg,rgba(64,35,18,0.88),rgba(52,29,16,0.92))] px-4 py-4 shadow-[0_24px_80px_rgba(62,27,11,0.22)] transition-colors focus-within:border-primary/45 md:px-6 md:py-5">
+    <div className={`prompt-shell rounded-[34px] border px-4 py-4 transition-colors focus-within:border-primary/45 md:px-6 md:py-5 ${modeShell}`}>
       <div className="relative z-[1]">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <div className="text-sm font-medium text-white/76">Chat to make music</div>
-          <div className="rounded-full border border-white/10 bg-white/6 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/52">
+          <div>
+            <div className="text-sm font-medium text-text/72">Describe your next sound</div>
+            <div className="mt-1 text-[12px] font-codec text-text/46">
+              Prompt once and shape results by format, model, and output mode.
+            </div>
+          </div>
+          <div className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${modeBadge}`}>
             {modeLabel}
           </div>
         </div>
@@ -38,26 +56,20 @@ export default function PromptInput({
           disabled={disabled}
           rows={3}
           placeholder={placeholder ?? "Describe the mood, instruments, texture and output you want..."}
-          className="min-h-[96px] w-full resize-none bg-transparent px-1 py-1 font-codec text-[15px] leading-7 text-white placeholder:text-white/38 focus:outline-none disabled:cursor-not-allowed disabled:text-white/60"
+          className="min-h-[96px] w-full resize-none bg-transparent px-1 py-1 font-codec text-[15px] leading-7 text-text placeholder:text-text/38 focus:outline-none disabled:cursor-not-allowed disabled:text-text/60"
         />
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
             <button
               type="button"
               disabled={disabled}
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/6 text-white/76 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-black/8 bg-white/75 text-text/65 transition-colors hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="Add prompt context"
             >
               <span className="text-2xl leading-none">+</span>
             </button>
-            <button
-              type="button"
-              disabled={disabled}
-              className="rounded-full border border-white/10 bg-white/6 px-4 py-3 font-poppins text-sm font-medium text-white/76 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Advanced
-            </button>
+            {controls}
           </div>
 
           <div className="flex items-center gap-2">
@@ -65,7 +77,7 @@ export default function PromptInput({
               type="button"
               aria-label="Voice prompt"
               disabled={disabled}
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/6 text-white/76 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-black/8 bg-white/75 text-text/65 transition-colors hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Mic className="h-4 w-4" />
             </button>
@@ -74,6 +86,7 @@ export default function PromptInput({
               disabled={disabled}
               loading={loading}
               label={generateLabel ?? "Create"}
+              mode={mode}
             />
           </div>
         </div>

@@ -338,9 +338,7 @@ export default function Sidebar({
               <img
                 src="/logo SoundAI v1.5 (1).svg"
                 alt="SoundAI"
-                className={`soundai-logo-mark h-full w-full object-contain ${
-                  isPro ? "brightness-0 invert" : "brightness-0"
-                }`}
+                className="soundai-logo-mark logo-drift h-full w-full object-contain brightness-0"
               />
             </div>
             <span className="translate-y-[1px] font-poppins text-[17px] font-semibold text-text">SoundAI</span>

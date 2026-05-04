@@ -101,9 +101,13 @@
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(70% 120% at 0% 100%, rgba(255, 164, 96, 0.18) 0%, rgba(255, 164, 96, 0) 52%),
-      radial-gradient(58% 86% at 100% 0%, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 62%);
+      radial-gradient(70% 120% at 0% 100%, rgba(255, 152, 168, 0.12) 0%, rgba(255, 152, 168, 0) 52%),
+      radial-gradient(58% 86% at 100% 0%, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0) 62%);
     pointer-events: none;
+  }
+  .logo-drift {
+    animation: logoDrift 4.8s ease-in-out infinite;
+    transform-origin: 50% 50%;
   }
 
   .gradient-text {
@@ -144,5 +148,15 @@
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes logoDrift {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translateY(-1px) rotate(-2deg) scale(1.02);
   }
 }
