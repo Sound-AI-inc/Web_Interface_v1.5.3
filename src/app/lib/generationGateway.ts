@@ -1,5 +1,7 @@
 import type { AudioResult, DemoAssetMetadata } from "../data/contracts";
 import { generateFromPrompt, matchGenerationTemplates, type GenerationType } from "./promptGeneration";
+import type { GenerationRequest, RoutedGenerationResponse, SoundAIComponent } from "./ai/router";
+import { getSupabase } from "./supabase";
 
 export interface GenerationGatewayRequest {
   prompt: string;
@@ -20,6 +22,7 @@ export interface GenerationGatewayResponse {
 const SOUNDCRAFT_API_URL = import.meta.env.VITE_SOUNDCRAFT_API_URL as string | undefined;
 const MIDICRAFT_API_URL = import.meta.env.VITE_MIDICRAFT_API_URL as string | undefined;
 const VSTCRAFT_API_URL = import.meta.env.VITE_VSTCRAFT_API_URL as string | undefined;
+const AI_GENERATION_API_URL = (import.meta.env.VITE_AI_GENERATION_API_URL as string | undefined) ?? "/api/generate";
 
 function toDemo(request: GenerationGatewayRequest, warning?: string): GenerationGatewayResponse {
   const fallbackWarning =
@@ -56,6 +59,49 @@ async function postJson<TResponse>(url: string, payload: object): Promise<TRespo
   return (await response.json()) as TResponse;
 }
 
+async function postAuthenticatedJson<TResponse>(url: string, payload: object): Promise<TResponse> {
+  const supabase = getSupabase();
+  const session = supabase ? (await supabase.auth.getSession()).data.session : null;
+  if (!session?.access_token) {
+    throw new Error("AUTH_REQUIRED");
+  }
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `HTTP ${response.status}`);
+  }
+
+  return (await response.json()) as TResponse;
+}
+
+function requestComponent(type: GenerationType): SoundAIComponent {
+  if (type === "Audio Sample") return "SoundCraft";
+  if (type === "MIDI Melody") return "MidiCraft";
+  return "VSTCraft";
+}
+
+function requestOutputType(type: GenerationType): GenerationRequest["output_type"] {
+  if (type === "Audio Sample") return "audio";
+  if (type === "MIDI Melody") return "midi";
+  return "preset";
+}
+
+function modelIdForRequest(request: GenerationGatewayRequest): string | undefined {
+  if (request.mode === "pro") return requestComponent(request.type);
+  if (request.type === "Audio Sample") return "stabilityai/stable-audio-open-small";
+  if (request.type === "MIDI Melody") return "Magenta Music Transformer";
+  return undefined;
+}
+
 function buildPromptContext(prompt: string, type: GenerationType) {
   const template = matchGenerationTemplates(type, prompt)[0];
   const metadata = template?.metadata;
@@ -78,6 +124,67 @@ function backendMetadata(
     assetId: metadata?.assetId ?? fallbackId,
     ...metadata,
     ...overrides,
+  };
+}
+
+function orchestrationResultToAudioResult(
+  request: GenerationGatewayRequest,
+  routed: RoutedGenerationResponse,
+): AudioResult {
+  const context = buildPromptContext(request.prompt, request.type);
+  const demo = generateFromPrompt({ ...request, count: 1 })[0];
+  const result = routed.result;
+  const id = `${result.metadata.model_used}-${Date.now()}`.replace(/[^a-zA-Z0-9_-]/g, "-");
+
+  return {
+    id,
+    title: `${routed.model.component} ${routed.model.tier === "pro" ? "Pro" : "Lite"} generation`,
+    model: result.metadata.model_used,
+    kind: result.type,
+    durationSeconds: result.metadata.duration ?? context.template?.durationSeconds ?? demo?.durationSeconds ?? 6,
+    format: request.format,
+    description: `${routed.model.provider} generation for "${request.prompt}" - ${routed.compliance.output_label}`,
+    tags: [
+      routed.model.component,
+      routed.model.tier,
+      routed.compliance.output_label,
+      routed.dataset?.name,
+    ].filter((tag): tag is string => Boolean(tag)),
+    audioSeed: demo?.audioSeed ?? Date.now(),
+    notes: result.type === "midi" ? demo?.notes : undefined,
+    preset: result.type === "preset" ? demo?.preset : undefined,
+    waveformHue: context.template?.waveformHue ?? demo?.waveformHue,
+    metadata: backendMetadata(id, context.template?.metadata ?? demo?.metadata, {
+      assetUrl: result.data,
+      previewUrl: result.type === "audio" ? result.data : null,
+      bpm: result.metadata.bpm,
+      key: result.metadata.key,
+      format: request.format,
+      generatedFrom: "ai-orchestration-api",
+      source: routed.compliance.output_label,
+    }),
+  };
+}
+
+async function requestAIOrchestration(request: GenerationGatewayRequest): Promise<GenerationGatewayResponse | null> {
+  const component = requestComponent(request.type);
+  const response = await postAuthenticatedJson<RoutedGenerationResponse>(AI_GENERATION_API_URL, {
+    request: {
+      prompt: request.prompt,
+      component,
+      mode: request.mode,
+      model_id: modelIdForRequest(request),
+      input_type: "text",
+      output_type: requestOutputType(request.type),
+      commercial_intent: request.mode === "pro",
+    },
+  });
+
+  return {
+    items: [orchestrationResultToAudioResult(request, response)],
+    source: "backend",
+    backendTarget: component === "SoundCraft" ? "soundcraft" : component === "MidiCraft" ? "midicraft" : "vstcraft",
+    warning: response.fallback_used ? "Pro route unavailable; Lite fallback was used." : undefined,
   };
 }
 
@@ -257,6 +364,13 @@ async function requestVSTCraft(request: GenerationGatewayRequest): Promise<Gener
 }
 
 export async function generateResults(request: GenerationGatewayRequest): Promise<GenerationGatewayResponse> {
+  try {
+    const orchestrated = await requestAIOrchestration(request);
+    if (orchestrated) return orchestrated;
+  } catch {
+    // Keep the existing backend/demo fallback path if the orchestration API is not deployed yet.
+  }
+
   if (request.type === "Audio Sample") return requestSoundCraft(request);
   if (request.type === "MIDI Melody") return requestMidiCraft(request);
   return requestVSTCraft(request);
