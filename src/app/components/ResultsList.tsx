@@ -49,7 +49,7 @@ export default function ResultsList({
   const liveGenerationEntries = generationEntries ?? [];
 
   return (
-    <section className="rounded-card border border-primary/40 p-6">
+    <section className="ui-surface-2 ui-premium-border rounded-card p-6">
       <header className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h2 className="font-poppins text-sm font-semibold text-text">{title}</h2>
@@ -77,7 +77,7 @@ export default function ResultsList({
 
       {usingGenerationEntries ? (
         <div className="flex flex-col gap-3">
-          <div className="rounded-card border border-primary/20 bg-primary/5 px-4 py-3">
+          <div className="ui-surface-1 rounded-card border-primary/20 bg-primary/5 px-4 py-3">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
@@ -91,7 +91,7 @@ export default function ResultsList({
                 </p>
               </div>
               <div className="w-32 shrink-0">
-                <div className="h-2 overflow-hidden rounded-full bg-white/70">
+                <div className="h-2 overflow-hidden rounded-full bg-white/70 shadow-[inset_0_1px_2px_rgba(15,23,42,0.06)]">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-primary via-accent to-primary transition-[width] duration-300"
                     style={{ width: `${Math.max(8, Math.round(generationProgress * 100))}%` }}
@@ -158,7 +158,7 @@ interface PendingResultCardProps {
 
 function PendingResultCard({ index, progress, stage }: PendingResultCardProps) {
   return (
-    <div className="flex items-center gap-4 rounded-card border border-primary/15 bg-white/85 p-4 shadow-flat-sm">
+    <div className="ui-surface-1 flex items-center gap-4 rounded-card border-primary/15 bg-white/85 p-4">
       <div className="flex min-w-0 flex-1 items-center gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -171,7 +171,7 @@ function PendingResultCard({ index, progress, stage }: PendingResultCardProps) {
             <LoaderCircle className="h-3.5 w-3.5 animate-spin text-primary" />
             <span className="font-codec text-xs italic text-text/55">{stage}</span>
           </div>
-          <div className="mt-3 overflow-hidden rounded-card border border-surface bg-surface-muted/80 p-3">
+          <div className="ui-surface-1 mt-3 overflow-hidden rounded-card bg-surface-muted/80 p-3">
             <div className="mb-3 flex gap-1">
               {Array.from({ length: 28 }, (_, barIndex) => (
                 <div
@@ -195,7 +195,7 @@ function PendingResultCard({ index, progress, stage }: PendingResultCardProps) {
       </div>
 
       <div className="flex w-[148px] shrink-0 flex-col gap-2">
-        <div className="rounded-button border border-primary/20 bg-primary/5 px-3 py-2 text-center">
+        <div className="ui-surface-1 rounded-button border-primary/20 bg-primary/5 px-3 py-2 text-center">
           <div className="font-poppins text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
             Training
           </div>
@@ -203,7 +203,7 @@ function PendingResultCard({ index, progress, stage }: PendingResultCardProps) {
             {Math.round(progress * 100)}%
           </div>
         </div>
-        <div className="rounded-button border border-surface bg-surface-muted px-3 py-2 text-center font-codec text-[11px] text-text/50">
+        <div className="ui-surface-1 rounded-button bg-surface-muted px-3 py-2 text-center font-codec text-[11px] text-text/50">
           Actions unlock after render
         </div>
       </div>

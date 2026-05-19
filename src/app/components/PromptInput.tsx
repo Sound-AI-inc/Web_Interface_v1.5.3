@@ -31,14 +31,14 @@ export default function PromptInput({
 }: PromptInputProps) {
   const modeShell =
     mode === "lite"
-      ? "border-[rgba(161,231,238,0.42)] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(239,243,246,0.88))] shadow-[0_26px_80px_rgba(161,231,238,0.18)]"
-      : "border-[rgba(255,152,168,0.42)] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(250,240,244,0.9))] shadow-[0_26px_80px_rgba(255,60,130,0.16)]";
+      ? "ui-premium-border"
+      : "ui-premium-border";
   const modeBadge =
     mode === "lite"
       ? "border-[rgba(161,231,238,0.38)] bg-[rgba(161,231,238,0.18)] text-[#2f6a71]"
       : "border-[rgba(255,60,130,0.2)] bg-[rgba(255,60,130,0.12)] text-[#c22b64]";
   return (
-    <div className={`prompt-shell overflow-visible rounded-[34px] border px-4 py-4 transition-colors focus-within:border-primary/45 md:px-6 md:py-5 ${modeShell}`}>
+    <div className={`prompt-shell ui-surface-3 overflow-visible rounded-[34px] px-4 py-4 transition-colors focus-within:border-primary/45 md:px-6 md:py-5 ${modeShell}`}>
       <div className="relative z-[1]">
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>
@@ -67,7 +67,7 @@ export default function PromptInput({
               type="button"
               disabled={disabled}
               onClick={() => onAdd?.()}
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-black/8 bg-white/75 text-text/65 transition-colors hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+              className="ui-surface-1 ui-interactive flex h-12 w-12 items-center justify-center rounded-full text-text/65 transition-colors hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="Add audio or components"
             >
               <span className="text-2xl leading-none">+</span>
@@ -80,7 +80,7 @@ export default function PromptInput({
               type="button"
               aria-label="Voice prompt"
               disabled={disabled}
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-black/8 bg-white/75 text-text/65 transition-colors hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+              className="ui-surface-1 ui-interactive flex h-12 w-12 items-center justify-center rounded-full text-text/65 transition-colors hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Mic className="h-4 w-4" />
             </button>

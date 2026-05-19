@@ -24,7 +24,7 @@ export default function GenerateButton({
       type="button"
       onClick={onClick}
       disabled={disabled || loading}
-      className={`inline-flex h-12 min-w-[152px] items-center justify-center gap-2 rounded-full px-5 font-poppins text-sm font-semibold transition-transform duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-80 ${palette}`}
+      className={`ui-cta-glow ui-interactive inline-flex h-12 min-w-[152px] items-center justify-center gap-2 rounded-full border border-white/45 px-5 font-poppins text-sm font-semibold transition-transform duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-80 ${palette}`}
     >
       {label}
       {loading ? (

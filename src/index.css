@@ -13,6 +13,17 @@
     --color-surface: 239 243 246;
     --color-surface-muted: 247 249 251;
     --color-text: 29 29 29;
+    --ui-shadow-ambient: 0 24px 80px rgba(31, 41, 55, 0.08), 0 8px 30px rgba(255, 255, 255, 0.34);
+    --ui-shadow-soft: 0 18px 48px rgba(31, 41, 55, 0.06), 0 2px 12px rgba(255, 255, 255, 0.3);
+    --ui-shadow-floating: 0 28px 90px rgba(31, 41, 55, 0.1), 0 6px 24px rgba(255, 255, 255, 0.34);
+    --ui-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.68);
+    --ui-border-soft: rgba(255, 255, 255, 0.46);
+    --ui-border-strong: rgba(255, 255, 255, 0.72);
+    --ui-panel: rgba(255, 255, 255, 0.72);
+    --ui-panel-strong: rgba(255, 255, 255, 0.84);
+    --ui-panel-muted: rgba(255, 255, 255, 0.54);
+    --ui-glow: rgba(var(--color-primary-rgb), 0.16);
+    --ui-glow-soft: rgba(var(--color-primary-soft-rgb), 0.12);
   }
   .theme-pro {
     --color-primary: 255 60 130;
@@ -23,6 +34,8 @@
     --color-surface: 239 243 246;
     --color-surface-muted: 247 249 251;
     --color-text: 29 29 29;
+    --ui-glow: rgba(255, 60, 130, 0.18);
+    --ui-glow-soft: rgba(255, 152, 168, 0.14);
   }
   .theme-lite {
     --color-primary: 161 231 238;
@@ -33,6 +46,8 @@
     --color-surface: 239 243 246;
     --color-surface-muted: 247 249 251;
     --color-text: 29 29 29;
+    --ui-glow: rgba(161, 231, 238, 0.18);
+    --ui-glow-soft: rgba(255, 152, 168, 0.12);
   }
   html {
     scroll-behavior: smooth;
@@ -53,15 +68,24 @@
   /* ---- Dashboard design system (app/*) ---- */
   .app-card {
     @apply bg-white border border-surface rounded-card shadow-flat-sm;
+    background: linear-gradient(180deg, var(--ui-panel-strong), rgba(255, 255, 255, 0.76));
+    border-color: rgba(255, 255, 255, 0.58);
+    box-shadow: var(--ui-shadow-soft);
   }
   .app-card-muted {
     @apply bg-surface-muted border border-surface rounded-card;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.48));
+    border-color: rgba(255, 255, 255, 0.45);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
   }
   .app-input {
     @apply w-full rounded-input border border-surface bg-white px-4 py-3 text-sm
       font-codec text-text placeholder:text-text/40
       focus:outline-none focus:border-primary/60 focus:ring-4 focus:ring-primary/10
       transition-colors;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.72));
+    border-color: rgba(255, 255, 255, 0.56);
+    box-shadow: var(--ui-shadow-soft), var(--ui-shadow-inset);
   }
   .app-btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-button bg-primary px-4 py-2.5
@@ -108,6 +132,118 @@
   .logo-drift {
     animation: logoDrift 4.8s ease-in-out infinite;
     transform-origin: 50% 50%;
+  }
+  .ui-surface-1,
+  .ui-surface-2,
+  .ui-surface-3,
+  .ui-floating-menu,
+  .ui-modal-surface {
+    position: relative;
+    isolation: isolate;
+  }
+  .ui-surface-1 {
+    background: linear-gradient(180deg, var(--ui-panel-strong), rgba(255, 255, 255, 0.76));
+    border: 1px solid var(--ui-border-soft);
+    box-shadow: var(--ui-shadow-soft), var(--ui-shadow-inset);
+    backdrop-filter: blur(14px);
+  }
+  .ui-surface-2 {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.42));
+    border: 1px solid var(--ui-border-soft);
+    box-shadow: var(--ui-shadow-ambient), var(--ui-shadow-inset);
+    backdrop-filter: blur(18px);
+  }
+  .ui-surface-3 {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.58));
+    border: 1px solid var(--ui-border-strong);
+    box-shadow: var(--ui-shadow-floating), var(--ui-shadow-inset);
+    backdrop-filter: blur(20px);
+  }
+  .ui-surface-1::before,
+  .ui-surface-2::before,
+  .ui-surface-3::before,
+  .ui-floating-menu::before,
+  .ui-modal-surface::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.36), rgba(255, 255, 255, 0)),
+      radial-gradient(120% 80% at 50% 0%, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 52%);
+    opacity: 0.9;
+  }
+  .ui-floating-menu {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(252, 252, 253, 0.82));
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: var(--ui-shadow-floating), var(--ui-shadow-inset);
+    backdrop-filter: blur(18px);
+  }
+  .ui-modal-surface {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 249, 251, 0.84));
+    border: 1px solid rgba(255, 255, 255, 0.86);
+    box-shadow: 0 36px 120px rgba(17, 24, 39, 0.16), 0 12px 42px rgba(255, 255, 255, 0.28);
+    backdrop-filter: blur(22px);
+  }
+  .ui-premium-border {
+    border-color: rgba(var(--color-primary-rgb), 0.18) !important;
+    box-shadow:
+      0 0 0 1px rgba(var(--color-primary-rgb), 0.06),
+      0 0 28px rgba(var(--color-primary-rgb), 0.1),
+      var(--ui-shadow-soft),
+      var(--ui-shadow-inset);
+  }
+  .ui-focus-glow:focus,
+  .ui-focus-glow:focus-visible,
+  .ui-focus-glow[data-open="true"] {
+    border-color: rgba(var(--color-primary-rgb), 0.34) !important;
+    box-shadow:
+      0 0 0 1px rgba(var(--color-primary-rgb), 0.12),
+      0 0 0 4px rgba(var(--color-primary-rgb), 0.08),
+      0 12px 34px rgba(var(--color-primary-rgb), 0.12),
+      var(--ui-shadow-soft);
+  }
+  .ui-interactive {
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease,
+      border-color 180ms ease,
+      background-color 180ms ease,
+      opacity 180ms ease;
+  }
+  .ui-interactive:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 22px 52px rgba(31, 41, 55, 0.08), 0 6px 18px rgba(255, 255, 255, 0.24);
+  }
+  .ui-cta-glow {
+    position: relative;
+    overflow: visible;
+  }
+  .ui-cta-glow::after {
+    content: "";
+    position: absolute;
+    inset: -10px -14px;
+    z-index: -1;
+    border-radius: 999px;
+    background:
+      radial-gradient(70% 80% at 50% 50%, var(--ui-glow) 0%, rgba(255, 255, 255, 0) 72%),
+      radial-gradient(65% 70% at 50% 100%, var(--ui-glow-soft) 0%, rgba(255, 255, 255, 0) 76%);
+    opacity: 0.92;
+    transition: opacity 180ms ease, transform 180ms ease;
+  }
+  .ui-cta-glow:hover::after {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+  .ui-vignette::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(140% 80% at 50% 0%, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 56%),
+      radial-gradient(120% 100% at 50% 100%, rgba(17, 24, 39, 0.08), rgba(17, 24, 39, 0) 48%);
   }
 
   .gradient-text {

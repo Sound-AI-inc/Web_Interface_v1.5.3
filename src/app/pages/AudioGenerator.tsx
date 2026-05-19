@@ -326,10 +326,10 @@ export default function AudioGenerator() {
         </div>
       }
     >
-      <section className="rounded-[40px] border border-white/45 bg-white/14 p-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl md:p-7">
+      <section className="ui-surface-2 rounded-[40px] p-5 md:p-7">
         <header className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/45 bg-white/18 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-text/72">
+            <div className="ui-surface-1 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-text/72">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
               Live prompt surface
             </div>
@@ -373,7 +373,7 @@ export default function AudioGenerator() {
                 options={formatOptions}
                 onChange={setFormat}
               />
-              <div className="min-w-[132px] rounded-[20px] border border-black/8 bg-white/78 px-3 py-2 flex items-center justify-center">
+              <div className="ui-surface-1 flex min-w-[132px] items-center justify-center rounded-[20px] px-3 py-2">
                 <IdeasMenu onPick={setPrompt} type={type as GenerationType} />
               </div>
             </div>
@@ -392,7 +392,7 @@ export default function AudioGenerator() {
           </p>
         )}
 
-        <div className="mt-4 rounded-[26px] border border-white/45 bg-white/22 px-4 py-3 backdrop-blur-xl">
+        <div className="ui-surface-1 mt-4 rounded-[26px] px-4 py-3">
           <div className="mb-2 font-poppins text-[10px] font-semibold uppercase tracking-[0.12em] text-text/55">
             Dataset-guided prompt ideas
           </div>
@@ -403,7 +403,7 @@ export default function AudioGenerator() {
                 type="button"
                 disabled={isGenerating}
                 onClick={() => setPrompt(suggestion)}
-                className="rounded-full border border-surface bg-surface-muted px-3 py-1.5 text-left font-codec text-[11px] text-text/75 transition-colors hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                className="ui-surface-1 ui-interactive rounded-full px-3 py-1.5 text-left font-codec text-[11px] text-text/75 transition-colors hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {suggestion}
               </button>
@@ -437,7 +437,7 @@ export default function AudioGenerator() {
             />
           </div>
 
-          <section className="mt-4 rounded-card border border-primary/20 bg-white/80 p-6">
+          <section className="ui-surface-2 ui-premium-border mt-4 rounded-card p-6">
             <header className="mb-4 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Clock3 className="h-4 w-4 text-primary" />
@@ -463,8 +463,8 @@ export default function AudioGenerator() {
                       onClick={() => setSelectedBatchId(batch.id)}
                       className={`flex items-start justify-between gap-4 rounded-input border px-4 py-3 text-left transition-colors ${
                         selected
-                          ? "border-primary/40 bg-primary/5"
-                          : "border-surface bg-white hover:border-primary/30"
+                          ? "ui-premium-border bg-primary/5"
+                          : "ui-surface-1 hover:border-primary/30"
                       }`}
                     >
                       <div className="min-w-0 flex-1">
@@ -486,7 +486,7 @@ export default function AudioGenerator() {
                 })}
               </div>
             ) : (
-              <div className="rounded-card border border-dashed border-surface bg-surface-muted p-8 text-center">
+              <div className="ui-surface-1 rounded-card border-dashed p-8 text-center">
                 <p className="font-poppins text-sm font-medium text-text/70">
                   Your generation history will appear here.
                 </p>
@@ -498,7 +498,7 @@ export default function AudioGenerator() {
           </section>
         </>
       ) : (
-        <section className="mt-4 rounded-[32px] border border-dashed border-white/50 bg-white/12 px-6 py-10 text-center backdrop-blur-xl">
+        <section className="ui-surface-2 mt-4 rounded-[32px] border-dashed px-6 py-10 text-center">
           <p className="font-poppins text-base font-semibold text-text">
             Start with a prompt and SoundAI will open the generation workspace below.
           </p>
@@ -523,7 +523,7 @@ function PromptControl({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="min-w-[132px] rounded-[20px] border border-black/8 bg-white/78 px-3 py-2 relative z-50">
+    <div className="ui-surface-1 relative z-50 min-w-[132px] rounded-[20px] px-3 py-2">
       <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-text/42">
         {label}
       </div>

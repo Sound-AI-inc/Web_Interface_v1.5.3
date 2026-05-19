@@ -32,8 +32,8 @@ export default function BillingCard({ plan, current }: BillingCardProps) {
       <div
         className={`relative flex h-full flex-col gap-4 rounded-card p-6 ${
           isHighlight
-            ? "border-2 border-primary bg-white shadow-flat"
-            : "border border-surface bg-white shadow-flat-sm"
+            ? "ui-surface-2 ui-premium-border"
+            : "ui-surface-1"
         }`}
       >
         {isHighlight && (

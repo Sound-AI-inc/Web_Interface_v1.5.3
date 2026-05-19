@@ -61,7 +61,8 @@ export default function BrandSelect({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`flex h-9 w-full items-center justify-between gap-2 rounded-input border bg-white px-3 font-codec text-xs text-text transition-colors hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20 ${
+        data-open={open ? "true" : "false"}
+        className={`ui-surface-1 ui-focus-glow ui-interactive flex h-9 w-full items-center justify-between gap-2 rounded-input px-3 font-codec text-xs text-text transition-colors hover:border-primary/40 focus:outline-none focus:ring-0 ${
           open ? "border-primary/60" : "border-surface"
         }`}
         aria-haspopup="listbox"
@@ -77,7 +78,7 @@ export default function BrandSelect({
       {open && (
         <ul
           role="listbox"
-          className={`absolute z-50 mt-1.5 max-h-72 w-full overflow-auto rounded-card border border-surface bg-white p-1 shadow-lg ${menuClassName}`}
+          className={`ui-floating-menu absolute z-50 mt-1.5 max-h-72 w-full overflow-auto rounded-card p-1 ${menuClassName}`}
         >
           {normalized.map((o) => {
             const active = o.value === value;

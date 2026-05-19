@@ -64,18 +64,18 @@ function ShellModal({
       <button
         type="button"
         aria-label="Close modal"
-        className="absolute inset-0 bg-[rgba(18,18,18,0.28)] backdrop-blur-[2px]"
+        className="absolute inset-0 bg-[rgba(18,18,18,0.22)] backdrop-blur-[3px]"
         onClick={onClose}
       />
       <div className={`relative z-10 max-h-[88vh] w-full overflow-hidden ${widthClassName}`}>
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-surface bg-white/95 text-text/60 shadow-flat-sm transition-colors hover:text-primary"
+          className="ui-surface-1 ui-interactive absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full text-text/60 transition-colors hover:text-primary"
         >
           <X className="h-4 w-4" />
         </button>
-        <div className="max-h-[88vh] overflow-y-auto rounded-[24px] border border-white/70 bg-[rgba(255,255,255,0.92)] p-2 shadow-[0_24px_80px_rgba(29,29,29,0.18)] backdrop-blur-md">
+        <div className="ui-modal-surface max-h-[88vh] overflow-y-auto rounded-[24px] p-2">
           {children}
         </div>
       </div>

@@ -162,7 +162,7 @@ function UserMenu({
 
   return (
     <div
-      className={`absolute bottom-full z-40 mb-2 w-[240px] rounded-card border border-surface bg-white p-1.5 shadow-lg ${
+      className={`ui-floating-menu absolute bottom-full z-40 mb-2 w-[240px] rounded-card p-1.5 ${
         collapsed ? "left-full ml-2" : "left-3 right-3 w-auto"
       }`}
     >
@@ -182,7 +182,7 @@ function UserMenu({
           <ChevronRight className="h-3 w-3 text-text/40" />
         </button>
         {subOpen === "language" && (
-          <div className="absolute bottom-0 left-full ml-1 w-[200px] rounded-card border border-surface bg-white p-1.5 shadow-lg">
+          <div className="ui-floating-menu absolute bottom-0 left-full ml-1 w-[200px] rounded-card p-1.5">
             {LANGUAGES.map((l) => (
               <button
                 key={l.code}
@@ -211,7 +211,7 @@ function UserMenu({
           <ChevronRight className="h-3 w-3 text-text/40" />
         </button>
         {subOpen === "help" && (
-          <div className="absolute bottom-0 left-full ml-1 w-[220px] rounded-card border border-surface bg-white p-1.5 shadow-lg">
+          <div className="ui-floating-menu absolute bottom-0 left-full ml-1 w-[220px] rounded-card p-1.5">
             <div className="px-2 py-1 font-poppins text-[9px] font-bold uppercase tracking-wider text-text/40">
               {t("menu.learnMore")}
             </div>
@@ -306,7 +306,7 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`sticky top-0 flex h-screen ${width} shrink-0 flex-col self-start border-r border-surface bg-surface-muted/90 backdrop-blur-sm transition-[width] duration-150 ease-linear`}
+      className={`sticky top-0 flex h-screen ${width} shrink-0 flex-col self-start border-r border-white/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.62),rgba(247,249,251,0.84))] shadow-[8px_0_40px_rgba(15,23,42,0.04)] backdrop-blur-xl transition-[width] duration-150 ease-linear`}
     >
       {/* Inject small menu-row utility */}
       <style>{`
