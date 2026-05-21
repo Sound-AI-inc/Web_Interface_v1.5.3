@@ -23,6 +23,12 @@ const SOUNDCRAFT_API_URL = import.meta.env.VITE_SOUNDCRAFT_API_URL as string | u
 const MIDICRAFT_API_URL = import.meta.env.VITE_MIDICRAFT_API_URL as string | undefined;
 const VSTCRAFT_API_URL = import.meta.env.VITE_VSTCRAFT_API_URL as string | undefined;
 const AI_GENERATION_API_URL = (import.meta.env.VITE_AI_GENERATION_API_URL as string | undefined) ?? "/api/generate";
+const APPROVED_LITE_AUDIO_MODELS = new Set([
+  "facebook/musicgen-small",
+  "facebook/audiogen-medium",
+  "stabilityai/stable-audio-open-small",
+  "chinedudave06/musicgen-small-onnx",
+]);
 
 function toDemo(request: GenerationGatewayRequest, warning?: string): GenerationGatewayResponse {
   const fallbackWarning =
@@ -97,7 +103,11 @@ function requestOutputType(type: GenerationType): GenerationRequest["output_type
 
 function modelIdForRequest(request: GenerationGatewayRequest): string | undefined {
   if (request.mode === "pro") return requestComponent(request.type);
-  if (request.type === "Audio Sample") return "stabilityai/stable-audio-open-small";
+  if (request.type === "Audio Sample") {
+    return APPROVED_LITE_AUDIO_MODELS.has(request.model)
+      ? request.model
+      : "stabilityai/stable-audio-open-small";
+  }
   if (request.type === "MIDI Melody") return "Magenta Music Transformer";
   return undefined;
 }

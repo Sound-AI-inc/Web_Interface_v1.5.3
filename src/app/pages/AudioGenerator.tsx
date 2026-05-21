@@ -16,7 +16,12 @@ import { generateResults } from "../lib/generationGateway";
 
 const LITE_TYPES = ["Audio Sample"] as const;
 const LITE_MODELS_BY_TYPE: Record<(typeof LITE_TYPES)[number], string[]> = {
-  "Audio Sample": ["ACE-STEP", "Mus Meta", "Diffusion"],
+  "Audio Sample": [
+    "facebook/musicgen-small",
+    "facebook/audiogen-medium",
+    "stabilityai/stable-audio-open-small",
+    "chinedudave06/musicgen-small-onnx",
+  ],
 };
 const LITE_FORMATS_BY_TYPE: Record<(typeof LITE_TYPES)[number], string[]> = {
   "Audio Sample": ["MP3"],
@@ -348,7 +353,7 @@ export default function AudioGenerator() {
           mode={isPro ? "pro" : "lite"}
           onAdd={handleAddResource}
           controls={
-            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 relative z-50">
+            <div className="relative z-[900] flex min-w-0 flex-1 flex-wrap items-center gap-2">
               <PromptControl
                 label="Type"
                 value={type}
@@ -523,7 +528,7 @@ function PromptControl({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="ui-surface-1 relative z-50 min-w-[132px] rounded-[20px] px-3 py-2">
+    <div className="ui-surface-1 relative z-[900] min-w-[132px] rounded-[20px] px-3 py-2">
       <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-text/42">
         {label}
       </div>

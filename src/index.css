@@ -13,9 +13,9 @@
     --color-surface: 239 243 246;
     --color-surface-muted: 247 249 251;
     --color-text: 29 29 29;
-    --ui-shadow-ambient: 0 24px 80px rgba(31, 41, 55, 0.08), 0 8px 30px rgba(255, 255, 255, 0.34);
-    --ui-shadow-soft: 0 18px 48px rgba(31, 41, 55, 0.06), 0 2px 12px rgba(255, 255, 255, 0.3);
-    --ui-shadow-floating: 0 28px 90px rgba(31, 41, 55, 0.1), 0 6px 24px rgba(255, 255, 255, 0.34);
+    --ui-shadow-ambient: 0 34px 110px rgba(31, 41, 55, 0.09), 0 10px 34px rgba(255, 255, 255, 0.38);
+    --ui-shadow-soft: 0 24px 70px rgba(31, 41, 55, 0.065), 0 3px 16px rgba(255, 255, 255, 0.34);
+    --ui-shadow-floating: 0 38px 130px rgba(31, 41, 55, 0.12), 0 10px 32px rgba(255, 255, 255, 0.38);
     --ui-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.68);
     --ui-border-soft: rgba(255, 255, 255, 0.46);
     --ui-border-strong: rgba(255, 255, 255, 0.72);
@@ -129,6 +129,18 @@
       radial-gradient(58% 86% at 100% 0%, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0) 62%);
     pointer-events: none;
   }
+  .prompt-shell::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+      linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.16), rgba(255, 255, 255, 0) 36%),
+      radial-gradient(72% 120% at 80% 100%, rgba(var(--color-primary-soft-rgb), 0.14), rgba(255, 255, 255, 0) 68%);
+    opacity: 0.72;
+    mix-blend-mode: screen;
+  }
   .logo-drift {
     animation: logoDrift 4.8s ease-in-out infinite;
     transform-origin: 50% 50%;
@@ -150,13 +162,20 @@
   .ui-surface-2 {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.42));
     border: 1px solid var(--ui-border-soft);
-    box-shadow: var(--ui-shadow-ambient), var(--ui-shadow-inset);
+    box-shadow:
+      0 0 0 1px rgba(var(--color-primary-rgb), 0.025),
+      var(--ui-shadow-ambient),
+      var(--ui-shadow-inset);
     backdrop-filter: blur(18px);
   }
   .ui-surface-3 {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.58));
     border: 1px solid var(--ui-border-strong);
-    box-shadow: var(--ui-shadow-floating), var(--ui-shadow-inset);
+    box-shadow:
+      0 0 0 1px rgba(var(--color-primary-rgb), 0.04),
+      0 0 42px rgba(var(--color-primary-rgb), 0.08),
+      var(--ui-shadow-floating),
+      var(--ui-shadow-inset);
     backdrop-filter: blur(20px);
   }
   .ui-surface-1::before,
@@ -175,10 +194,17 @@
     opacity: 0.9;
   }
   .ui-floating-menu {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(252, 252, 253, 0.82));
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    box-shadow: var(--ui-shadow-floating), var(--ui-shadow-inset);
-    backdrop-filter: blur(18px);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(252, 252, 253, 0.84)),
+      radial-gradient(120% 120% at 12% 0%, rgba(var(--color-primary-rgb), 0.08), rgba(255, 255, 255, 0) 54%);
+    border: 1px solid rgba(255, 255, 255, 0.86);
+    box-shadow:
+      0 0 0 1px rgba(var(--color-primary-rgb), 0.06),
+      0 22px 80px rgba(17, 24, 39, 0.13),
+      0 0 42px rgba(var(--color-primary-rgb), 0.1),
+      var(--ui-shadow-inset);
+    backdrop-filter: blur(24px) saturate(132%);
+    -webkit-backdrop-filter: blur(24px) saturate(132%);
   }
   .ui-modal-surface {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 249, 251, 0.84));
@@ -223,13 +249,14 @@
   .ui-cta-glow::after {
     content: "";
     position: absolute;
-    inset: -10px -14px;
+    inset: -14px -18px;
     z-index: -1;
     border-radius: 999px;
     background:
       radial-gradient(70% 80% at 50% 50%, var(--ui-glow) 0%, rgba(255, 255, 255, 0) 72%),
       radial-gradient(65% 70% at 50% 100%, var(--ui-glow-soft) 0%, rgba(255, 255, 255, 0) 76%);
     opacity: 0.92;
+    filter: blur(2px);
     transition: opacity 180ms ease, transform 180ms ease;
   }
   .ui-cta-glow:hover::after {

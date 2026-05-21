@@ -57,7 +57,7 @@ export default function BrandSelect({
   }, [open]);
 
   return (
-    <div ref={wrapRef} className={`relative ${className}`}>
+    <div ref={wrapRef} className={`relative z-[920] ${className}`}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -78,7 +78,7 @@ export default function BrandSelect({
       {open && (
         <ul
           role="listbox"
-          className={`ui-floating-menu absolute z-50 mt-1.5 max-h-72 w-full overflow-auto rounded-card p-1 ${menuClassName}`}
+          className={`ui-floating-menu absolute z-[1100] mt-1.5 max-h-72 w-full overflow-auto rounded-card p-1 ${menuClassName}`}
         >
           {normalized.map((o) => {
             const active = o.value === value;
