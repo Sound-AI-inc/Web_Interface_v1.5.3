@@ -14,6 +14,8 @@ interface PromptInputProps {
   mode?: "pro" | "lite";
   controls?: ReactNode;
   onAdd?: () => void;
+  intelligenceHint?: string;
+  activityChips?: ReactNode;
 }
 
 export default function PromptInput({
@@ -28,6 +30,8 @@ export default function PromptInput({
   mode = "pro",
   controls,
   onAdd,
+  intelligenceHint,
+  activityChips,
 }: PromptInputProps) {
   const modeShell =
     mode === "lite"
@@ -52,14 +56,28 @@ export default function PromptInput({
           </div>
         </div>
 
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={disabled}
-          rows={3}
-          placeholder={placeholder ?? "Describe the mood, instruments, texture and output you want..."}
-          className="min-h-[96px] w-full resize-none bg-transparent px-1 py-1 font-codec text-[15px] leading-7 text-text placeholder:text-text/38 focus:outline-none disabled:cursor-not-allowed disabled:text-text/60"
-        />
+        {activityChips && <div className="mb-3 flex flex-wrap gap-2">{activityChips}</div>}
+
+        <div
+          className="ui-prompt-pulse"
+          data-active={value.trim().length > 0 || loading ? "true" : "false"}
+        >
+          <textarea
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            disabled={disabled}
+            rows={3}
+            placeholder={placeholder ?? "Describe the mood, instruments, texture and output you want..."}
+            className="min-h-[96px] w-full resize-none bg-transparent px-1 py-1 font-codec text-[15px] leading-7 text-text placeholder:text-text/38 focus:outline-none disabled:cursor-not-allowed disabled:text-text/60"
+          />
+        </div>
+
+        <div
+          className="ui-compute-line relative mt-2 overflow-hidden rounded-full px-1 py-1 font-codec text-[11px] text-text/50"
+          data-active={value.trim().length > 0 || loading ? "true" : "false"}
+        >
+          {intelligenceHint ?? "Prompt interpreter idle. Add musical intent, arrangement cues, or timbral language to activate live orchestration."}
+        </div>
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">

@@ -272,6 +272,112 @@
       radial-gradient(140% 80% at 50% 0%, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 56%),
       radial-gradient(120% 100% at 50% 100%, rgba(17, 24, 39, 0.08), rgba(17, 24, 39, 0) 48%);
   }
+  .ui-status-chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-poppins text-[10px] font-semibold uppercase tracking-[0.12em] text-text/60;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.5));
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow: var(--ui-shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.52);
+  }
+  .ui-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(var(--color-primary-rgb), 0.92), rgba(var(--color-primary-soft-rgb), 0.84));
+    box-shadow: 0 0 10px rgba(var(--color-primary-rgb), 0.2);
+  }
+  .ui-orchestration-rail {
+    position: relative;
+    overflow: hidden;
+  }
+  .ui-orchestration-rail::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(var(--color-primary-rgb), 0) 0%, rgba(var(--color-primary-rgb), 0.18) 22%, rgba(var(--color-primary-soft-rgb), 0.22) 50%, rgba(var(--color-primary-rgb), 0.18) 78%, rgba(var(--color-primary-rgb), 0) 100%);
+    transform: translateY(-50%);
+  }
+  .ui-orchestration-rail::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -18%;
+    width: 26%;
+    height: 10px;
+    transform: translateY(-50%);
+    background: linear-gradient(90deg, rgba(255,255,255,0), rgba(var(--color-primary-rgb),0.16), rgba(var(--color-primary-soft-rgb),0.08), rgba(255,255,255,0));
+    filter: blur(8px);
+    animation: signalSweep 9s linear infinite;
+  }
+  .ui-audio-bars {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 3px;
+    align-items: end;
+  }
+  .ui-audio-bars span {
+    display: block;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(var(--color-primary-rgb), 0.62), rgba(var(--color-primary-soft-rgb), 0.28));
+    animation: signalBreath 3.8s ease-in-out infinite;
+    transform-origin: bottom center;
+  }
+  .ui-track-grid {
+    position: relative;
+    background-image:
+      linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .ui-track-grid::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(var(--color-primary-rgb), 0.08) 50%, rgba(255,255,255,0) 100%);
+    opacity: 0.55;
+    animation: signalDrift 10s ease-in-out infinite;
+  }
+  .ui-compute-line {
+    position: relative;
+    overflow: hidden;
+  }
+  .ui-compute-line::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(255,255,255,0), rgba(var(--color-primary-rgb), 0.14), rgba(var(--color-primary-soft-rgb), 0.08), rgba(255,255,255,0));
+    transform: translateX(-120%);
+    animation: signalSweepFlat 7s linear infinite;
+  }
+  .ui-prompt-pulse {
+    position: relative;
+  }
+  .ui-prompt-pulse::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(var(--color-primary-rgb), 0), rgba(var(--color-primary-rgb), 0.3), rgba(var(--color-primary-soft-rgb), 0.22), rgba(var(--color-primary-rgb), 0));
+    opacity: 0;
+    transition: opacity 180ms ease;
+  }
+  .ui-prompt-pulse[data-active="true"]::after {
+    opacity: 1;
+    animation: signalSweepFlat 6s linear infinite;
+  }
+  .ui-ambient-particle {
+    position: absolute;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(255,255,255,0.42) 0%, rgba(var(--color-primary-rgb), 0.16) 42%, rgba(255,255,255,0) 78%);
+    filter: blur(1px);
+    animation: particleFloat 16s ease-in-out infinite;
+  }
 
   .gradient-text {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-pink to-accent-cyan;
@@ -321,5 +427,59 @@
   }
   50% {
     transform: translateY(-1px) rotate(-2deg) scale(1.02);
+  }
+}
+
+@keyframes signalSweep {
+  0% {
+    transform: translateX(-120%) translateY(-50%);
+  }
+  100% {
+    transform: translateX(460%) translateY(-50%);
+  }
+}
+
+@keyframes signalBreath {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: scaleY(0.88);
+  }
+  50% {
+    opacity: 0.88;
+    transform: scaleY(1.04);
+  }
+}
+
+@keyframes signalSweepFlat {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(460%);
+  }
+}
+
+@keyframes signalDrift {
+  0%,
+  100% {
+    transform: translateX(-8%);
+    opacity: 0.32;
+  }
+  50% {
+    transform: translateX(8%);
+    opacity: 0.62;
+  }
+}
+
+@keyframes particleFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(0.96);
+    opacity: 0.18;
+  }
+  50% {
+    transform: translate3d(12px, -18px, 0) scale(1.04);
+    opacity: 0.34;
   }
 }

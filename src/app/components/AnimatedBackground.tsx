@@ -7,6 +7,7 @@ export default function AnimatedBackground() {
     <div className="ui-vignette pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden>
       <BackgroundLayer mode="pro" active={mode === "pro"} />
       <BackgroundLayer mode="lite" active={mode === "lite"} />
+      <ActivityLayer />
       <div className="absolute inset-0 bg-[radial-gradient(52%_42%_at_50%_16%,rgba(255,255,255,0.28)_0%,rgba(255,255,255,0)_74%),radial-gradient(72%_56%_at_50%_72%,rgba(255,255,255,0.08)_0%,rgba(255,255,255,0)_76%),linear-gradient(180deg,rgba(255,255,255,0.08)_0%,rgba(255,255,255,0)_24%,rgba(255,255,255,0.06)_100%)]" />
     </div>
   );
@@ -49,5 +50,18 @@ function BackgroundLayer({
         background,
       }}
     />
+  );
+}
+
+function ActivityLayer() {
+  return (
+    <>
+      <div className="absolute left-[12%] top-[22%] h-px w-[30%] bg-[linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,0.22),rgba(255,255,255,0))] opacity-60" />
+      <div className="absolute right-[10%] top-[34%] h-px w-[24%] bg-[linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,0.16),rgba(255,255,255,0))] opacity-45" />
+      <div className="ui-ambient-particle left-[16%] top-[18%] h-14 w-14" />
+      <div className="ui-ambient-particle right-[18%] top-[26%] h-10 w-10 [animation-delay:2s]" />
+      <div className="ui-ambient-particle left-[58%] top-[62%] h-12 w-12 [animation-delay:4s]" />
+      <div className="absolute left-[24%] top-[50%] h-[1px] w-[46%] bg-[linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,0.12),rgba(255,255,255,0))] opacity-45" />
+    </>
   );
 }

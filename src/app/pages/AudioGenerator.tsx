@@ -82,6 +82,16 @@ function sleep(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
+const PIPELINE_STEPS = ["Prompt", "Audio", "MIDI", "Presets"] as const;
+const MICRO_SYSTEMS = [
+  "Model Ready",
+  "Sync Enabled",
+  "Metadata Aware",
+  "Live Orchestration",
+  "Prompt Optimized",
+  "Multi-Format Active",
+] as const;
+
 export default function AudioGenerator() {
   const { mode } = useInterfaceMode();
   const isPro = mode === "pro";
@@ -312,6 +322,15 @@ export default function AudioGenerator() {
     () => datasetPromptSuggestions(type as GenerationType, prompt.trim(), 4),
     [prompt, type],
   );
+  const intelligenceHint = useMemo(() => {
+    if (isGenerating) {
+      return `${generationStage} across ${type.toLowerCase()} routing with ${resolvedModel} in ${resolvedFormat}.`;
+    }
+    if (prompt.trim().length > 0) {
+      return `Interpreting prompt language for ${type.toLowerCase()} generation, model routing, and ${resolvedFormat} output packaging.`;
+    }
+    return `Prompt interpreter idle. Describe style, mood, tempo, instrumentation, or output intent to wake the orchestration system.`;
+  }, [format, generationStage, isGenerating, prompt, resolvedFormat, resolvedModel, type]);
 
   const activeItems = activeBatch?.items ?? audioResults;
   const hasWorkspace = isGenerating || Boolean(generationEntries) || history.length > 0;
@@ -351,6 +370,17 @@ export default function AudioGenerator() {
           generateLabel={isGenerating ? generationStage : "Create"}
           modeLabel={isPro ? "Pro" : "Lite"}
           mode={isPro ? "pro" : "lite"}
+          intelligenceHint={intelligenceHint}
+          activityChips={
+            <>
+              {MICRO_SYSTEMS.map((chip, index) => (
+                <span key={chip} className="ui-status-chip" style={{ animationDelay: `${index * 90}ms` }}>
+                  <span className="ui-status-dot" />
+                  {chip}
+                </span>
+              ))}
+            </>
+          }
           onAdd={handleAddResource}
           controls={
             <div className="relative z-[900] flex min-w-0 flex-1 flex-wrap items-center gap-2">
@@ -396,6 +426,59 @@ export default function AudioGenerator() {
             Smart suggestions adapt as you type. Type, model and output format stay in sync.
           </p>
         )}
+
+        <div className="ui-surface-1 mt-4 rounded-[28px] px-4 py-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <div className="font-poppins text-[10px] font-semibold uppercase tracking-[0.14em] text-text/52">
+                Workflow pipeline
+              </div>
+              <div className="mt-1 font-codec text-[12px] text-text/64">
+                Input is routed through orchestration layers and synchronized into staged outputs.
+              </div>
+            </div>
+            <div className="hidden items-center gap-2 md:flex">
+              <span className="ui-status-chip"><span className="ui-status-dot" />{resolvedModel}</span>
+              <span className="ui-status-chip"><span className="ui-status-dot" />{resolvedFormat}</span>
+            </div>
+          </div>
+          <div className="ui-orchestration-rail relative rounded-[20px] px-2 py-3">
+            <div className="relative z-[1] grid gap-2 md:grid-cols-4">
+              {PIPELINE_STEPS.map((step, index) => {
+                const active =
+                  step === "Prompt" ||
+                  step === type.split(" ")[0] ||
+                  (isPro && (step === "MIDI" || step === "Presets"));
+                return (
+                  <div
+                    key={step}
+                    className={`ui-surface-1 flex items-center justify-between rounded-[16px] px-3 py-2 ${
+                      active ? "ui-premium-border" : "opacity-72"
+                    }`}
+                  >
+                    <div>
+                      <div className="font-poppins text-[10px] font-semibold uppercase tracking-[0.1em] text-text/46">
+                        Module {index + 1}
+                      </div>
+                      <div className="font-codec text-[12px] text-text/76">{step}</div>
+                    </div>
+                    <div className="ui-audio-bars h-7 w-10">
+                      {Array.from({ length: 5 }, (_, barIndex) => (
+                        <span
+                          key={barIndex}
+                          style={{
+                            height: `${12 + ((barIndex + index * 2) % 4) * 4}px`,
+                            animationDelay: `${(index + barIndex) * 120}ms`,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
 
         <div className="ui-surface-1 mt-4 rounded-[26px] px-4 py-3">
           <div className="mb-2 font-poppins text-[10px] font-semibold uppercase tracking-[0.12em] text-text/55">

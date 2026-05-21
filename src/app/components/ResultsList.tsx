@@ -47,6 +47,7 @@ export default function ResultsList({
 
   const usingGenerationEntries = Boolean(generationEntries && generationEntries.length > 0);
   const liveGenerationEntries = generationEntries ?? [];
+  const stageItems = ["Prompt", "Routing", "Drafts", "Outputs"];
 
   return (
     <section className="ui-surface-2 ui-premium-border rounded-card p-6">
@@ -74,6 +75,33 @@ export default function ResultsList({
           <span className="app-meta">{items.length} results</span>
         )}
       </header>
+
+      <div className="ui-orchestration-rail relative mb-4 rounded-[20px] px-3 py-3">
+        <div className="relative z-[1] grid grid-cols-4 gap-2">
+          {stageItems.map((stage, index) => {
+            const activeIndex = usingGenerationEntries
+              ? Math.min(stageItems.length - 1, Math.floor(generationProgress * stageItems.length))
+              : stageItems.length - 1;
+            const active = index <= activeIndex;
+            return (
+              <div
+                key={stage}
+                className={`ui-surface-1 flex items-center gap-2 rounded-[16px] px-3 py-2 ${
+                  active ? "border-primary/25 bg-white/88" : "opacity-70"
+                }`}
+              >
+                <span className="ui-status-dot" />
+                <div className="min-w-0">
+                  <div className="font-poppins text-[10px] font-semibold uppercase tracking-[0.1em] text-text/52">
+                    Stage {index + 1}
+                  </div>
+                  <div className="truncate font-codec text-[11px] text-text/74">{stage}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       {usingGenerationEntries ? (
         <div className="flex flex-col gap-3">
@@ -135,6 +163,11 @@ export default function ResultsList({
         </div>
       ) : (
         <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap gap-2">
+            <span className="ui-status-chip"><span className="ui-status-dot" />Live Orchestration</span>
+            <span className="ui-status-chip"><span className="ui-status-dot" />Generation Synced</span>
+            <span className="ui-status-chip"><span className="ui-status-dot" />Reusable Assets</span>
+          </div>
           {visibleItems.map((item) => (
             <ResultCard
               key={item.id}
@@ -171,8 +204,14 @@ function PendingResultCard({ index, progress, stage }: PendingResultCardProps) {
             <LoaderCircle className="h-3.5 w-3.5 animate-spin text-primary" />
             <span className="font-codec text-xs italic text-text/55">{stage}</span>
           </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <span className="ui-status-chip"><span className="ui-status-dot" />Queue Active</span>
+            <span className="ui-status-chip"><span className="ui-status-dot" />Metadata Aware</span>
+            <span className="ui-status-chip"><span className="ui-status-dot" />Output Sync</span>
+          </div>
           <div className="ui-surface-1 mt-3 overflow-hidden rounded-card bg-surface-muted/80 p-3">
-            <div className="mb-3 flex gap-1">
+            <div className="ui-track-grid mb-3 rounded-[14px] p-2">
+              <div className="flex gap-1">
               {Array.from({ length: 28 }, (_, barIndex) => (
                 <div
                   key={barIndex}
@@ -183,6 +222,7 @@ function PendingResultCard({ index, progress, stage }: PendingResultCardProps) {
                   }}
                 />
               ))}
+              </div>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-white">
               <div

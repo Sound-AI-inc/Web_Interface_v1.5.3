@@ -50,8 +50,10 @@ export default function ResultCard({
   statusProgress,
   disableActions,
 }: ResultCardProps) {
+  const tags = item.tags?.slice(0, 3) ?? [];
+
   return (
-    <div className="flex items-center gap-4 rounded-card border border-surface bg-white p-4 shadow-flat-sm">
+    <div className="ui-surface-1 flex items-center gap-4 rounded-card p-4">
       <div className="flex min-w-0 flex-1 items-center gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -79,6 +81,11 @@ export default function ResultCard({
               />
             </div>
           )}
+          <div className="mt-2 flex flex-wrap gap-2">
+            <span className="ui-status-chip"><span className="ui-status-dot" />Model Ready</span>
+            <span className="ui-status-chip"><span className="ui-status-dot" />Multi-Format Active</span>
+            {item.kind !== "audio" && <span className="ui-status-chip"><span className="ui-status-dot" />Cross-Asset Linked</span>}
+          </div>
           <div className="mt-3">
             {item.kind === "audio" && (
               <AudioPreview
@@ -91,6 +98,18 @@ export default function ResultCard({
               <MidiPreview notes={item.notes} durationSeconds={item.durationSeconds} />
             )}
             {item.kind === "preset" && item.preset && <PresetPreview preset={item.preset} />}
+          </div>
+          <div className="ui-orchestration-rail mt-3 rounded-[16px] px-2 py-2">
+            <div className="relative z-[1] flex flex-wrap items-center gap-2">
+              <span className="font-poppins text-[10px] font-semibold uppercase tracking-[0.08em] text-text/48">
+                Output sync
+              </span>
+              {tags.map((tag) => (
+                <span key={tag} className="rounded-full border border-white/50 bg-white/62 px-2 py-0.5 font-codec text-[10px] text-text/62">
+                  {tag}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </div>
