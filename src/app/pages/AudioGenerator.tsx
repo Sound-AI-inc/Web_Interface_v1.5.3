@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Clock3, Sparkles } from "lucide-react";
+import { Clock3 } from "lucide-react";
 import PageContainer from "../components/PageContainer";
 import PromptInput from "../components/PromptInput";
 import ResultsList from "../components/ResultsList";
@@ -8,10 +8,7 @@ import IdeasMenu from "../components/IdeasMenu";
 import BrandSelect from "../components/BrandSelect";
 import { audioResults, type AudioResult } from "../data/mock";
 import { useInterfaceMode } from "../hooks/useInterfaceMode";
-import {
-  datasetPromptSuggestions,
-  type GenerationType,
-} from "../lib/promptGeneration";
+import { type GenerationType } from "../lib/promptGeneration";
 import { generateResults } from "../lib/generationGateway";
 
 const LITE_TYPES = ["Audio Sample"] as const;
@@ -81,16 +78,6 @@ function formatBatchTimestamp(date: Date) {
 function sleep(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
-
-const PIPELINE_STEPS = ["Prompt", "Audio", "MIDI", "Presets"] as const;
-const MICRO_SYSTEMS = [
-  "Model Ready",
-  "Sync Enabled",
-  "Metadata Aware",
-  "Live Orchestration",
-  "Prompt Optimized",
-  "Multi-Format Active",
-] as const;
 
 export default function AudioGenerator() {
   const { mode } = useInterfaceMode();
@@ -318,20 +305,6 @@ export default function AudioGenerator() {
     return history.find((batch) => batch.id === selectedBatchId) ?? history[0];
   }, [history, selectedBatchId]);
 
-  const datasetSuggestions = useMemo(
-    () => datasetPromptSuggestions(type as GenerationType, prompt.trim(), 4),
-    [prompt, type],
-  );
-  const intelligenceHint = useMemo(() => {
-    if (isGenerating) {
-      return `${generationStage} across ${type.toLowerCase()} routing with ${resolvedModel} in ${resolvedFormat}.`;
-    }
-    if (prompt.trim().length > 0) {
-      return `Interpreting prompt language for ${type.toLowerCase()} generation, model routing, and ${resolvedFormat} output packaging.`;
-    }
-    return `Prompt interpreter idle. Describe style, mood, tempo, instrumentation, or output intent to wake the orchestration system.`;
-  }, [format, generationStage, isGenerating, prompt, resolvedFormat, resolvedModel, type]);
-
   const activeItems = activeBatch?.items ?? audioResults;
   const hasWorkspace = isGenerating || Boolean(generationEntries) || history.length > 0;
 
@@ -342,7 +315,7 @@ export default function AudioGenerator() {
   return (
     <PageContainer
       title="Audio Generator"
-      subtitle={hasWorkspace ? "Prompt-driven generation workspace" : "Start with a single prompt"}
+      subtitle={hasWorkspace ? "Prompt-driven generation workspace" : ""}
       actions={
         <div className="rounded-card border-2 border-primary px-4 py-2 text-center">
           <div className="font-poppins text-[11px] font-medium text-text/60">Credits</div>
@@ -350,162 +323,6 @@ export default function AudioGenerator() {
         </div>
       }
     >
-      <section className="ui-surface-2 rounded-[40px] p-5 md:p-7">
-        <header className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="ui-surface-1 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-text/72">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              Live prompt surface
-            </div>
-          </div>
-          <div className="flex items-center gap-2" />
-        </header>
-
-        <PromptInput
-          value={prompt}
-          onChange={setPrompt}
-          onGenerate={handleGenerate}
-          disabled={isGenerating}
-          loading={isGenerating}
-          generateLabel={isGenerating ? generationStage : "Create"}
-          modeLabel={isPro ? "Pro" : "Lite"}
-          mode={isPro ? "pro" : "lite"}
-          intelligenceHint={intelligenceHint}
-          activityChips={
-            <>
-              {MICRO_SYSTEMS.map((chip, index) => (
-                <span key={chip} className="ui-status-chip" style={{ animationDelay: `${index * 90}ms` }}>
-                  <span className="ui-status-dot" />
-                  {chip}
-                </span>
-              ))}
-            </>
-          }
-          onAdd={handleAddResource}
-          controls={
-            <div className="relative z-[900] flex min-w-0 flex-1 flex-wrap items-center gap-2">
-              <PromptControl
-                label="Type"
-                value={type}
-                options={typeOptions}
-                onChange={setType}
-              />
-              <PromptControl
-                label="Model"
-                value={resolvedModel}
-                options={modelOptions}
-                onChange={setModel}
-              />
-              <PromptControl
-                label="Generations"
-                value={String(generationCount)}
-                options={GENERATION_COUNTS}
-                onChange={(value) => setGenerationCount(Number(value))}
-              />
-              <PromptControl
-                label="Output"
-                value={resolvedFormat}
-                options={formatOptions}
-                onChange={setFormat}
-              />
-              <div className="ui-surface-1 flex min-w-[132px] items-center justify-center rounded-[20px] px-3 py-2">
-                <IdeasMenu onPick={setPrompt} type={type as GenerationType} />
-              </div>
-            </div>
-          }
-        />
-
-        {generationWarning && (
-          <p className="mt-2 font-codec text-[11px] italic text-text/55">
-            {generationWarning}
-          </p>
-        )}
-
-        {isPro && (
-          <p className="mt-3 font-codec text-xs italic text-text/50">
-            Smart suggestions adapt as you type. Type, model and output format stay in sync.
-          </p>
-        )}
-
-        <div className="ui-surface-1 mt-4 rounded-[28px] px-4 py-4">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div>
-              <div className="font-poppins text-[10px] font-semibold uppercase tracking-[0.14em] text-text/52">
-                Workflow pipeline
-              </div>
-              <div className="mt-1 font-codec text-[12px] text-text/64">
-                Input is routed through orchestration layers and synchronized into staged outputs.
-              </div>
-            </div>
-            <div className="hidden items-center gap-2 md:flex">
-              <span className="ui-status-chip"><span className="ui-status-dot" />{resolvedModel}</span>
-              <span className="ui-status-chip"><span className="ui-status-dot" />{resolvedFormat}</span>
-            </div>
-          </div>
-          <div className="ui-orchestration-rail relative rounded-[20px] px-2 py-3">
-            <div className="relative z-[1] grid gap-2 md:grid-cols-4">
-              {PIPELINE_STEPS.map((step, index) => {
-                const active =
-                  step === "Prompt" ||
-                  step === type.split(" ")[0] ||
-                  (isPro && (step === "MIDI" || step === "Presets"));
-                return (
-                  <div
-                    key={step}
-                    className={`ui-surface-1 flex items-center justify-between rounded-[16px] px-3 py-2 ${
-                      active ? "ui-premium-border" : "opacity-72"
-                    }`}
-                  >
-                    <div>
-                      <div className="font-poppins text-[10px] font-semibold uppercase tracking-[0.1em] text-text/46">
-                        Module {index + 1}
-                      </div>
-                      <div className="font-codec text-[12px] text-text/76">{step}</div>
-                    </div>
-                    <div className="ui-audio-bars h-7 w-10">
-                      {Array.from({ length: 5 }, (_, barIndex) => (
-                        <span
-                          key={barIndex}
-                          style={{
-                            height: `${12 + ((barIndex + index * 2) % 4) * 4}px`,
-                            animationDelay: `${(index + barIndex) * 120}ms`,
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        <div className="ui-surface-1 mt-4 rounded-[26px] px-4 py-3">
-          <div className="mb-2 font-poppins text-[10px] font-semibold uppercase tracking-[0.12em] text-text/55">
-            Dataset-guided prompt ideas
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {datasetSuggestions.map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                disabled={isGenerating}
-                onClick={() => setPrompt(suggestion)}
-                className="ui-surface-1 ui-interactive rounded-full px-3 py-1.5 text-left font-codec text-[11px] text-text/75 transition-colors hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {!isPro && (
-          <p className="mt-3 font-codec text-[11px] italic text-text/50">
-            Lite mode: Audio Sample only, Hugging Face models, MP3 output. Switch to Pro to unlock MIDI and VST generation.
-          </p>
-        )}
-      </section>
-
       {hasWorkspace ? (
         <>
           <div className="mt-4">
@@ -574,26 +391,85 @@ export default function AudioGenerator() {
                 })}
               </div>
             ) : (
-              <div className="ui-surface-1 rounded-card border-dashed p-8 text-center">
+              <div className="ui-surface-1 rounded-card border border-dashed p-8 text-center">
                 <p className="font-poppins text-sm font-medium text-text/70">
                   Your generation history will appear here.
                 </p>
                 <p className="app-meta mt-1">
-                  Run a prompt once to keep reusable result batches below the main results panel.
+                  Run a prompt once to keep reusable result batches.
                 </p>
               </div>
             )}
           </section>
         </>
       ) : (
-        <section className="ui-surface-2 mt-4 rounded-[32px] border-dashed px-6 py-10 text-center">
-          <p className="font-poppins text-base font-semibold text-text">
-            Start with a prompt and SoundAI will open the generation workspace below.
-          </p>
-          <p className="mt-2 font-codec text-sm text-text/58">
-            Results, staged generation progress, and reusable history appear after the first run.
-          </p>
-        </section>
+        <div className="flex h-full min-h-[70vh] flex-col items-center justify-center">
+          <div className="w-full max-w-2xl px-4">
+            <h1 className="text-center font-poppins text-4xl font-bold text-text">
+              Create your next sound
+            </h1>
+            <p className="mt-4 text-center font-codec text-text/64">
+              Describe your next audio, MIDI, or preset idea
+            </p>
+
+            <div className="mt-12 rounded-[40px] ui-surface-2 p-6 shadow-lg">
+              <PromptInput
+                value={prompt}
+                onChange={setPrompt}
+                onGenerate={handleGenerate}
+                disabled={isGenerating}
+                loading={isGenerating}
+                generateLabel={isGenerating ? generationStage : "Create"}
+                modeLabel={isPro ? "Pro" : "Lite"}
+                mode={isPro ? "pro" : "lite"}
+                onAdd={handleAddResource}
+                controls={
+                  <div className="relative z-[900] flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                    <PromptControl
+                      label="Type"
+                      value={type}
+                      options={typeOptions}
+                      onChange={setType}
+                    />
+                    <PromptControl
+                      label="Model"
+                      value={resolvedModel}
+                      options={modelOptions}
+                      onChange={setModel}
+                    />
+                    <PromptControl
+                      label="Generations"
+                      value={String(generationCount)}
+                      options={GENERATION_COUNTS}
+                      onChange={(value) => setGenerationCount(Number(value))}
+                    />
+                    <PromptControl
+                      label="Output"
+                      value={resolvedFormat}
+                      options={formatOptions}
+                      onChange={setFormat}
+                    />
+                    <div className="ui-surface-1 flex min-w-[132px] items-center justify-center rounded-[20px] px-3 py-2">
+                      <IdeasMenu onPick={setPrompt} type={type as GenerationType} />
+                    </div>
+                  </div>
+                }
+              />
+
+              {generationWarning && (
+                <p className="mt-3 font-codec text-[11px] italic text-text/55">
+                  {generationWarning}
+                </p>
+              )}
+
+              {isPro && (
+                <p className="mt-3 font-codec text-xs italic text-text/50">
+                  Smart suggestions adapt as you type. Type, model and output format stay in sync.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </PageContainer>
   );
