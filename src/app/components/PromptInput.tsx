@@ -16,6 +16,7 @@ interface PromptInputProps {
   onAdd?: () => void;
   intelligenceHint?: string;
   activityChips?: ReactNode;
+  layout?: "hero" | "dock";
 }
 
 export default function PromptInput({
@@ -32,31 +33,39 @@ export default function PromptInput({
   onAdd,
   intelligenceHint,
   activityChips,
+  layout = "hero",
 }: PromptInputProps) {
-  const modeShell =
-    mode === "lite"
-      ? "ui-premium-border"
-      : "ui-premium-border";
+  const modeShell = "ui-premium-border";
   const modeBadge =
     mode === "lite"
       ? "border-[rgba(161,231,238,0.38)] bg-[rgba(161,231,238,0.18)] text-[#2f6a71]"
       : "border-[rgba(255,60,130,0.2)] bg-[rgba(255,60,130,0.12)] text-[#c22b64]";
+  const isHero = layout === "hero";
+
   return (
-    <div className={`prompt-shell ui-surface-3 overflow-visible rounded-[34px] px-4 py-4 transition-colors focus-within:border-primary/45 md:px-6 md:py-5 ${modeShell}`}>
+    <div
+      className={`prompt-shell ui-surface-3 overflow-visible rounded-[34px] transition-colors focus-within:border-primary/45 ${modeShell} ${
+        isHero ? "px-5 py-5 md:px-7 md:py-6" : "px-4 py-4 md:px-5 md:py-4"
+      }`}
+    >
       <div className="relative z-[1]">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div>
-            <div className="text-sm font-medium text-text/72">Describe your next sound</div>
-            <div className="mt-1 text-[12px] font-codec text-text/46">
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className={`${isHero ? "text-base" : "text-sm"} font-medium text-text/78`}>
+              {isHero ? "Chat to make music" : "Continue the generation"}
+            </div>
+            <div className="mt-1 text-[12px] font-codec text-text/48">
               Prompt once and shape results by format, model, and output mode.
             </div>
           </div>
-          <div className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${modeBadge}`}>
+          <div
+            className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${modeBadge}`}
+          >
             {modeLabel}
           </div>
         </div>
 
-        {activityChips && <div className="mb-3 flex flex-wrap gap-2">{activityChips}</div>}
+        {activityChips && isHero && <div className="mb-3 flex flex-wrap gap-2">{activityChips}</div>}
 
         <div
           className="ui-prompt-pulse"
@@ -66,9 +75,11 @@ export default function PromptInput({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
-            rows={3}
+            rows={isHero ? 4 : 2}
             placeholder={placeholder ?? "Describe the mood, instruments, texture and output you want..."}
-            className="min-h-[96px] w-full resize-none bg-transparent px-1 py-1 font-codec text-[15px] leading-7 text-text placeholder:text-text/38 focus:outline-none disabled:cursor-not-allowed disabled:text-text/60"
+            className={`w-full resize-none bg-transparent px-1 py-1 font-codec text-[15px] leading-7 text-text placeholder:text-text/38 focus:outline-none disabled:cursor-not-allowed disabled:text-text/60 ${
+              isHero ? "min-h-[124px]" : "min-h-[72px]"
+            }`}
           />
         </div>
 
@@ -76,11 +87,13 @@ export default function PromptInput({
           className="ui-compute-line relative mt-2 overflow-hidden rounded-full px-1 py-1 font-codec text-[11px] text-text/50"
           data-active={value.trim().length > 0 || loading ? "true" : "false"}
         >
-          {intelligenceHint ?? "Prompt interpreter idle. Add musical intent, arrangement cues, or timbral language to activate live orchestration."}
+          {intelligenceHint ??
+            "Prompt interpreter idle. Add musical intent, arrangement cues, or timbral language to activate live orchestration."}
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+        <div className={`mt-4 ${isHero ? "space-y-3" : "space-y-2.5"}`}>
+          <div className="flex min-w-0 flex-wrap items-center gap-2">{controls}</div>
+          <div className="flex items-center justify-between gap-3">
             <button
               type="button"
               disabled={disabled}
@@ -90,25 +103,24 @@ export default function PromptInput({
             >
               <span className="text-2xl leading-none">+</span>
             </button>
-            {controls}
-          </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              aria-label="Voice prompt"
-              disabled={disabled}
-              className="ui-surface-1 ui-interactive flex h-12 w-12 items-center justify-center rounded-full text-text/65 transition-colors hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Mic className="h-4 w-4" />
-            </button>
-            <GenerateButton
-              onClick={onGenerate}
-              disabled={disabled}
-              loading={loading}
-              label={generateLabel ?? "Create"}
-              mode={mode}
-            />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                aria-label="Voice prompt"
+                disabled={disabled}
+                className="ui-surface-1 ui-interactive flex h-12 w-12 items-center justify-center rounded-full text-text/65 transition-colors hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Mic className="h-4 w-4" />
+              </button>
+              <GenerateButton
+                onClick={onGenerate}
+                disabled={disabled}
+                loading={loading}
+                label={generateLabel ?? "Create"}
+                mode={mode}
+              />
+            </div>
           </div>
         </div>
       </div>
