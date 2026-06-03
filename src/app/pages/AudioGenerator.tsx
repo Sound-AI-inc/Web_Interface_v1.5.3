@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Clock3, MessageSquarePlus } from "lucide-react";
+import { Coins, Sparkles } from "lucide-react";
 import PageContainer from "../components/PageContainer";
 import PromptInput from "../components/PromptInput";
-import type { GenerationPreviewEntry } from "../components/ResultsList";
-import IdeasMenu from "../components/IdeasMenu";
 import BrandSelect from "../components/BrandSelect";
 import type { AudioResult } from "../data/mock";
 import { useInterfaceMode } from "../hooks/useInterfaceMode";
@@ -52,8 +50,17 @@ const GENERATION_STAGES = [
   "Generating outputs",
   "Finalizing results",
 ] as const;
-const MIN_GENERATION_VISUAL_MS = 3200;
-const REVEAL_STEP_MS = 540;
+const QUICK_IDEAS = [
+  "Dark techno kick with sub tail",
+  "Ambient texture for intro, 8 bars",
+  "Serum bass preset, aggressive mid-range",
+  "MIDI chord progression in D minor, 90 BPM",
+];
+const FORMAT_TAGS = ["Audio Sample", "MIDI", "VST Preset"];
+const MIN_GENERATION_VISUAL_MS = 1800;
+const CREDITS_TOTAL = 50;
+const CREDITS_REMAINING = 42;
+const COMPOSER_INPUT_ID = "generator-composer-input";
 
 interface GenerationBatch {
   id: string;
@@ -64,6 +71,17 @@ interface GenerationBatch {
   format: string;
   createdAt: string;
   items: AudioResult[];
+}
+
+interface PendingGeneration {
+  id: string;
+  prompt: string;
+  count: number;
+  type: string;
+  model: string;
+  format: string;
+  stage: string;
+  progress: number;
 }
 
 interface PromptControlConfig {
@@ -87,7 +105,7 @@ function sleep(ms: number) {
 }
 
 export default function AudioGenerator() {
-  const { mode } = useInterfaceMode();
+  const { mode, setMode } = useInterfaceMode();
   const isPro = mode === "pro";
 
   const typeOptions: string[] = useMemo(
@@ -100,9 +118,7 @@ export default function AudioGenerator() {
   const [generationCount, setGenerationCount] = useState(3);
 
   useEffect(() => {
-    if (!typeOptions.includes(type)) {
-      setType(typeOptions[0]);
-    }
+    if (!typeOptions.includes(type)) setType(typeOptions[0]);
   }, [typeOptions, type]);
 
   const modelOptions = useMemo(() => {
@@ -125,7 +141,6 @@ export default function AudioGenerator() {
 
   const [model, setModel] = useState(modelOptions[0]);
   const [format, setFormat] = useState(formatOptions[0]);
-
   const resolvedModel = modelOptions.includes(model) ? model : modelOptions[0];
   const resolvedFormat = formatOptions.includes(format) ? format : formatOptions[0];
 
@@ -139,182 +154,11 @@ export default function AudioGenerator() {
 
   const [saved, setSaved] = useState<Set<string>>(new Set());
   const [history, setHistory] = useState<GenerationBatch[]>([]);
-  const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
+  const [pending, setPending] = useState<PendingGeneration | null>(null);
   const [generationWarning, setGenerationWarning] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState(0);
-  const [generationStage, setGenerationStage] = useState<string>(GENERATION_STAGES[0]);
-  const [activeGenerationPrompt, setActiveGenerationPrompt] = useState("");
-  const [generationEntries, setGenerationEntries] = useState<GenerationPreviewEntry[] | null>(null);
 
-  const handleAddToLibrary = (item: AudioResult) => {
-    setSaved((prev) => {
-      if (prev.has(item.id)) return prev;
-      const next = new Set(prev);
-      next.add(item.id);
-      return next;
-    });
-  };
-
-  const handleRemix = (item: AudioResult) => {
-    setPrompt((value) =>
-      value ? `${value} - remix of ${item.title}` : `Remix of ${item.title}`,
-    );
-  };
-
-  const handleGenerate = async () => {
-    if (isGenerating || prompt.trim().length < 3) return;
-
-    const promptValue = prompt.trim();
-    const previewEntries: GenerationPreviewEntry[] = Array.from(
-      { length: generationCount },
-      (_, index) => ({
-        id: `pending-${Date.now()}-${index}`,
-        status: index === 0 ? "Analyzing prompt" : index === 1 ? "Learning pattern" : "Queued",
-        progress: index === 0 ? 0.12 : index === 1 ? 0.06 : 0.03,
-      }),
-    );
-
-    setIsGenerating(true);
-    setGenerationProgress(0.06);
-    setGenerationStage(GENERATION_STAGES[0]);
-    setActiveGenerationPrompt(promptValue);
-    setGenerationWarning(null);
-    setGenerationEntries(previewEntries);
-
-    const startedAt = Date.now();
-    const progressTimer = window.setInterval(() => {
-      const elapsed = Date.now() - startedAt;
-      const nextProgress = Math.min(0.94, elapsed / MIN_GENERATION_VISUAL_MS);
-      const nextStageIndex = Math.min(
-        GENERATION_STAGES.length - 1,
-        Math.floor(nextProgress * GENERATION_STAGES.length),
-      );
-      setGenerationProgress(nextProgress);
-      setGenerationStage(GENERATION_STAGES[nextStageIndex]);
-      setGenerationEntries((current) =>
-        current?.map((entry, index) => {
-          if (entry.item) return entry;
-
-          const shiftedProgress = Math.max(0.04, nextProgress - index * 0.18);
-          const shiftedStageIndex = Math.min(
-            GENERATION_STAGES.length - 1,
-            Math.max(0, Math.floor(shiftedProgress * GENERATION_STAGES.length)),
-          );
-
-          return {
-            ...entry,
-            status:
-              shiftedProgress < 0.12
-                ? "Queued"
-                : GENERATION_STAGES[shiftedStageIndex],
-            progress: Math.min(0.86, Math.max(entry.progress, shiftedProgress)),
-          };
-        }) ?? null,
-      );
-    }, 120);
-
-    try {
-      const response = await generateResults({
-        prompt: promptValue,
-        mode: isPro ? "pro" : "lite",
-        type: type as GenerationType,
-        model: resolvedModel,
-        format: resolvedFormat,
-        count: generationCount,
-      });
-      const next = response.items;
-
-      const elapsed = Date.now() - startedAt;
-      if (elapsed < MIN_GENERATION_VISUAL_MS) {
-        await sleep(MIN_GENERATION_VISUAL_MS - elapsed);
-      }
-
-      window.clearInterval(progressTimer);
-      setGenerationProgress(0.92);
-      setGenerationStage(GENERATION_STAGES[GENERATION_STAGES.length - 1]);
-
-      if (next.length === 0) return;
-
-      setGenerationWarning(response.warning ?? null);
-
-      for (let index = 0; index < next.length; index++) {
-        setGenerationStage(`Revealing result ${index + 1}/${next.length}`);
-        setGenerationProgress(Math.min(0.96, 0.92 + ((index + 1) / next.length) * 0.04));
-        setGenerationEntries((current) =>
-          current?.map((entry, entryIndex) => {
-            if (entryIndex < index) return entry;
-            if (entryIndex === index) {
-              return {
-                ...entry,
-                status: "Finalizing result",
-                progress: 0.96,
-              };
-            }
-            if (entryIndex === index + 1) {
-              return {
-                ...entry,
-                status: "Learning pattern",
-                progress: Math.max(entry.progress, 0.42),
-              };
-            }
-            return entry;
-          }) ?? null,
-        );
-        await sleep(REVEAL_STEP_MS * 0.55);
-        setGenerationEntries((current) =>
-          current?.map((entry, entryIndex) =>
-            entryIndex === index
-              ? {
-                  ...entry,
-                  item: next[index],
-                  status: "Ready",
-                  progress: 1,
-                }
-              : entry,
-          ) ?? null,
-        );
-        await sleep(REVEAL_STEP_MS * 0.45);
-      }
-
-      setGenerationProgress(1);
-      setGenerationStage("Results ready");
-
-      const createdAt = new Date();
-      const batch: GenerationBatch = {
-        id: `${createdAt.getTime()}`,
-        prompt: promptValue,
-        count: generationCount,
-        type,
-        model: resolvedModel,
-        format: resolvedFormat,
-        createdAt: formatBatchTimestamp(createdAt),
-        items: next,
-      };
-
-      setHistory((prev) => [batch, ...prev]);
-      setSelectedBatchId(batch.id);
-      await sleep(220);
-      setGenerationEntries(null);
-      setPrompt("");
-    } catch (error) {
-      setGenerationWarning(
-        error instanceof Error ? error.message : "Generation failed unexpectedly.",
-      );
-      setGenerationEntries(null);
-    } finally {
-      window.clearInterval(progressTimer);
-      setIsGenerating(false);
-    }
-  };
-
-  const activeBatch = useMemo(() => {
-    if (history.length === 0) return null;
-    return history.find((batch) => batch.id === selectedBatchId) ?? history[0];
-  }, [history, selectedBatchId]);
-
-  const conversationBatches = useMemo(() => [...history].reverse(), [history]);
-  const hasWorkspace = isGenerating || Boolean(generationEntries) || history.length > 0;
+  const hasFeed = history.length > 0 || Boolean(pending);
 
   const promptControls: PromptControlConfig[] = useMemo(
     () => [
@@ -331,361 +175,365 @@ export default function AudioGenerator() {
     [type, typeOptions, resolvedModel, modelOptions, generationCount, resolvedFormat, formatOptions],
   );
 
-  const handleAddResource = () => {
-    console.log("Open add audio/components flow");
+  const handleAddToLibrary = (item: AudioResult) => {
+    setSaved((prev) => {
+      const next = new Set(prev);
+      next.add(item.id);
+      return next;
+    });
   };
 
-  const handleNewChat = () => {
-    setPrompt("");
-    setSelectedBatchId(null);
+  const handleRemix = (item: AudioResult) => {
+    setPrompt((value) =>
+      value ? `${value} - reuse ${item.title}` : `Reuse ${item.title} as a new variation`,
+    );
     document.getElementById("audio-generator-composer")?.scrollIntoView({
       behavior: "smooth",
-      block: "center",
+      block: "end",
     });
   };
 
-  const openBatch = (batchId: string) => {
-    setSelectedBatchId(batchId);
-    document.getElementById(`batch-${batchId}`)?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
+  const handleGenerate = async () => {
+    if (isGenerating || prompt.trim().length < 3) return;
+
+    const promptValue = prompt.trim();
+    const pendingId = `${Date.now()}`;
+    setIsGenerating(true);
+    setGenerationWarning(null);
+    setPending({
+      id: pendingId,
+      prompt: promptValue,
+      count: generationCount,
+      type,
+      model: resolvedModel,
+      format: resolvedFormat,
+      stage: GENERATION_STAGES[0],
+      progress: 0.12,
     });
+
+    const startedAt = Date.now();
+    const progressTimer = window.setInterval(() => {
+      const elapsed = Date.now() - startedAt;
+      const nextProgress = Math.min(0.92, elapsed / MIN_GENERATION_VISUAL_MS);
+      const nextStageIndex = Math.min(
+        GENERATION_STAGES.length - 1,
+        Math.floor(nextProgress * GENERATION_STAGES.length),
+      );
+      setPending((current) =>
+        current
+          ? {
+              ...current,
+              stage: GENERATION_STAGES[nextStageIndex],
+              progress: nextProgress,
+            }
+          : current,
+      );
+    }, 120);
+
+    try {
+      const response = await generateResults({
+        prompt: promptValue,
+        mode: isPro ? "pro" : "lite",
+        type: type as GenerationType,
+        model: resolvedModel,
+        format: resolvedFormat,
+        count: generationCount,
+      });
+
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < MIN_GENERATION_VISUAL_MS) {
+        await sleep(MIN_GENERATION_VISUAL_MS - elapsed);
+      }
+
+      setGenerationWarning(response.warning ?? null);
+      const createdAt = new Date();
+      const batch: GenerationBatch = {
+        id: pendingId,
+        prompt: promptValue,
+        count: generationCount,
+        type,
+        model: resolvedModel,
+        format: resolvedFormat,
+        createdAt: formatBatchTimestamp(createdAt),
+        items: response.items,
+      };
+
+      setHistory((prev) => [...prev, batch]);
+      setPrompt("");
+      setPending(null);
+    } catch (error) {
+      setGenerationWarning(
+        error instanceof Error ? error.message : "Generation failed unexpectedly.",
+      );
+      setPending(null);
+    } finally {
+      window.clearInterval(progressTimer);
+      setIsGenerating(false);
+    }
   };
+
+  const controls = (
+    <>
+      {promptControls.map((control) => (
+        <PromptControl key={control.label} {...control} />
+      ))}
+    </>
+  );
+
+  const activityChips = (
+    <div className="flex flex-wrap items-center gap-2">
+      {FORMAT_TAGS.map((tag) => (
+        <button
+          key={tag}
+          type="button"
+          onClick={() => {
+            if (tag === "MIDI") setType("MIDI Melody");
+            else if (tag === "VST Preset") setType("VST Preset");
+            else setType("Audio Sample");
+          }}
+          disabled={!isPro && tag !== "Audio Sample"}
+          className="quick-chip px-3 py-1.5 font-codec text-[12px] font-semibold disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          {tag}
+        </button>
+      ))}
+    </div>
+  );
+
+  const creditsLow = CREDITS_REMAINING / CREDITS_TOTAL < 0.2;
 
   return (
     <PageContainer
-      title="Audio Generator"
-      subtitle={hasWorkspace ? "Generations accumulate as a live creative thread." : ""}
+      headerLayout="brand"
+      userInitials="D"
+      title={hasFeed ? "" : "Audio Generator"}
       actions={
-        <div className="rounded-card border-2 border-primary px-4 py-2 text-center">
-          <div className="font-poppins text-[11px] font-medium text-text/60">Credits</div>
-          <div className="font-poppins text-sm font-semibold text-text">42 remaining</div>
+        <div
+          className={`credits-pill flex items-center gap-2 ${creditsLow ? "credits-pill--low" : ""}`}
+          title={creditsLow ? "Low credits — upgrade plan" : undefined}
+        >
+          <Coins className="h-4 w-4 text-primary" />
+          <span>
+            <span className={creditsLow ? "text-primary" : ""}>{CREDITS_REMAINING}</span>{" "}
+            <span className="text-text/55">Credits</span>
+          </span>
         </div>
       }
     >
-      {hasWorkspace ? (
-        <div className="mt-4 grid gap-4 xl:grid-cols-[260px_minmax(0,1fr)]">
-          <aside className="ui-surface-2 h-fit rounded-[30px] p-4 xl:sticky xl:top-6">
-            <button
-              type="button"
-              onClick={handleNewChat}
-              className="ui-surface-1 ui-interactive flex w-full items-center gap-3 rounded-[18px] px-4 py-3 text-left"
-            >
-              <MessageSquarePlus className="h-4 w-4 text-primary" />
-              <div>
-                <div className="font-poppins text-sm font-semibold text-text">New chat</div>
-                <div className="font-codec text-[11px] text-text/54">
-                  Start a fresh generation thread
-                </div>
-              </div>
-            </button>
-
-            <div className="mt-5">
-              <div className="mb-2 flex items-center gap-2 px-1">
-                <Clock3 className="h-4 w-4 text-primary" />
-                <h2 className="font-poppins text-xs font-semibold uppercase tracking-[0.12em] text-text/58">
-                  Chats
-                </h2>
-              </div>
-              {history.length > 0 ? (
-                <div className="flex max-h-[62vh] flex-col gap-2 overflow-y-auto pr-1">
-                  {history.map((batch) => {
-                    const selected = batch.id === activeBatch?.id;
-                    return (
-                      <button
-                        key={batch.id}
-                        type="button"
-                        onClick={() => openBatch(batch.id)}
-                        className={`rounded-[18px] px-3 py-3 text-left transition-colors ${
-                          selected ? "ui-premium-border ui-surface-1" : "ui-surface-1 ui-interactive"
-                        }`}
-                      >
-                        <div className="truncate font-poppins text-xs font-semibold text-text">
-                          {batch.prompt}
-                        </div>
-                        <div className="mt-1 font-codec text-[11px] text-text/54">
-                          {batch.type} - {batch.model}
-                        </div>
-                        <div className="mt-2 font-codec text-[10px] uppercase tracking-[0.1em] text-text/42">
-                          {batch.createdAt}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="ui-surface-1 rounded-[18px] border border-dashed px-4 py-5 text-center">
-                  <div className="font-poppins text-sm font-semibold text-text/72">No chats yet</div>
-                  <div className="mt-1 font-codec text-[11px] text-text/50">
-                    Your generation threads will appear here.
-                  </div>
-                </div>
-              )}
-            </div>
-          </aside>
-
-          <section className="min-w-0">
-            <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
-              {conversationBatches.map((batch) => (
-                <article key={batch.id} id={`batch-${batch.id}`} className="space-y-3">
-                  <div className="flex justify-end">
-                    <div
-                      className={`max-w-[78%] rounded-[26px] px-5 py-4 ${
-                        batch.id === activeBatch?.id ? "ui-surface-2 ui-premium-border" : "ui-surface-1"
-                      }`}
-                    >
-                      <div className="font-codec text-[15px] leading-7 text-text">{batch.prompt}</div>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <span className="ui-status-chip"><span className="ui-status-dot" />{batch.type}</span>
-                        <span className="ui-status-chip"><span className="ui-status-dot" />{batch.model}</span>
-                        <span className="ui-status-chip"><span className="ui-status-dot" />{batch.format}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="ui-surface-2 rounded-[30px] p-5">
-                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <div className="font-poppins text-sm font-semibold text-text">Generation outputs</div>
-                        <div className="mt-1 font-codec text-[11px] text-text/56">
-                          {batch.count} synchronized result{batch.count > 1 ? "s" : ""} created on {batch.createdAt}
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <span className="ui-status-chip"><span className="ui-status-dot" />Generation Synced</span>
-                        <span className="ui-status-chip"><span className="ui-status-dot" />Metadata Aware</span>
-                        <span className="ui-status-chip"><span className="ui-status-dot" />Multi-Format Active</span>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      {batch.items.map((item) => (
-                        <ResultCard
-                          key={item.id}
-                          item={toCardItem(item)}
-                          savedToLibrary={saved.has(item.id)}
-                          onAddToLibrary={() => handleAddToLibrary(item)}
-                          onRemix={() => handleRemix(item)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </article>
-              ))}
-
-              {generationEntries && (
-                <article className="space-y-3">
-                  <div className="flex justify-end">
-                    <div className="ui-surface-2 ui-premium-border max-w-[78%] rounded-[26px] px-5 py-4">
-                      <div className="font-codec text-[15px] leading-7 text-text">{activeGenerationPrompt}</div>
-                    </div>
-                  </div>
-
-                  <div className="ui-surface-2 rounded-[30px] p-5">
-                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <div className="font-poppins text-sm font-semibold text-text">Generation in progress</div>
-                        <div className="mt-1 font-codec text-[11px] text-text/56">
-                          {generationStage} - {Math.round(generationProgress * 100)}%
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <span className="ui-status-chip"><span className="ui-status-dot" />Live Orchestration</span>
-                        <span className="ui-status-chip"><span className="ui-status-dot" />Queued Outputs</span>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      {generationEntries.map((entry, index) => {
-                        if (!entry.item) {
-                          return (
-                            <PendingComposerCard
-                              key={entry.id}
-                              index={index}
-                              progress={entry.progress}
-                              stage={entry.status}
-                            />
-                          );
-                        }
-
-                        const item = entry.item;
-                        return (
-                          <ResultCard
-                            key={entry.id}
-                            item={toCardItem(item)}
-                            savedToLibrary={saved.has(item.id)}
-                            onAddToLibrary={() => handleAddToLibrary(item)}
-                            onRemix={() => handleRemix(item)}
-                            statusLabel={entry.status}
-                            statusProgress={entry.progress}
-                            disableActions
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                </article>
-              )}
-            </div>
-
-            <div id="audio-generator-composer" className="sticky bottom-0 mt-6 pt-6">
-              <div className="mx-auto w-full max-w-4xl rounded-t-[32px] bg-[linear-gradient(180deg,rgba(239,243,246,0)_0%,rgba(239,243,246,0.92)_26%,rgba(239,243,246,1)_100%)] px-2 pb-2 pt-8">
+      <div className="generator-page flex flex-col">
+        {!hasFeed ? (
+          <section className="flex min-h-[calc(100vh-112px)] flex-col items-center justify-center px-2 pb-8">
+            <div className="mx-auto w-full max-w-[760px] text-center">
+              <h1 className="generator-hero-title font-syne text-[40px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[48px]">
+                Create your next sound
+              </h1>
+              <p className="mx-auto mt-4 max-w-[560px] font-codec text-base leading-7 text-text/55">
+                Describe the mood, instruments, texture and output you want
+              </p>
+              <div className="mx-auto mt-10 w-full max-w-[680px]">
                 <PromptInput
                   value={prompt}
                   onChange={setPrompt}
                   onGenerate={handleGenerate}
                   disabled={isGenerating}
                   loading={isGenerating}
-                  generateLabel={isGenerating ? generationStage : "Create"}
-                  modeLabel={isPro ? "Pro" : "Lite"}
+                  generateLabel={isGenerating ? "Generating" : "Create"}
                   mode={isPro ? "pro" : "lite"}
-                  layout="dock"
-                  intelligenceHint={
-                    generationWarning ??
-                    "The composer stays docked while results accumulate in the center thread."
-                  }
-                  onAdd={handleAddResource}
-                  controls={
-                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-                      {promptControls.map((control) => (
-                        <PromptControl key={control.label} {...control} compact />
-                      ))}
-                      <IdeasDock type={type as GenerationType} onPick={setPrompt} />
-                    </div>
-                  }
+                  layout="hero"
+                  controls={controls}
+                  activityChips={activityChips}
+                  onModeChange={(nextMode) => setMode(nextMode)}
                 />
               </div>
+              <QuickIdeas onPick={setPrompt} />
+              {generationWarning && (
+                <p className="mt-4 font-codec text-sm text-primary">{generationWarning}</p>
+              )}
             </div>
           </section>
-        </div>
-      ) : (
-        <div className="flex h-full min-h-[72vh] flex-col items-center justify-center">
-          <div className="w-full max-w-5xl px-4">
-            <h1 className="text-center font-poppins text-5xl font-bold tracking-[-0.03em] text-text">
-              Create your next sound
-            </h1>
-            <p className="mt-4 text-center font-codec text-[18px] text-text/62">
-              Describe your next audio, MIDI, or preset idea
-            </p>
+        ) : (
+          <section className="feed-enter mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-2 pb-[120px] pt-6">
+            {history.map((batch) => (
+              <GenerationThread
+                key={batch.id}
+                batch={batch}
+                saved={saved}
+                onAddToLibrary={handleAddToLibrary}
+                onRemix={handleRemix}
+              />
+            ))}
+            {pending && <PendingThread pending={pending} />}
+            {generationWarning && (
+              <div className="generation-card rounded-[20px] px-4 py-3 font-codec text-sm text-primary">
+                {generationWarning}
+              </div>
+            )}
+          </section>
+        )}
 
-            <div className="mx-auto mt-12 max-w-4xl rounded-[42px] ui-surface-2 p-6 md:p-7">
+        {hasFeed && (
+          <div
+            id="audio-generator-composer"
+            className="composer-dock-enter sticky bottom-0 z-20 -mx-4 mt-auto sm:-mx-6"
+          >
+            <div className="composer-dock-surface mx-auto max-w-[calc(100%-32px)] rounded-t-[24px] border-t border-[var(--ui-border-soft)] px-2 pb-0 pt-7 sm:max-w-4xl">
               <PromptInput
                 value={prompt}
                 onChange={setPrompt}
                 onGenerate={handleGenerate}
                 disabled={isGenerating}
                 loading={isGenerating}
-                generateLabel={isGenerating ? generationStage : "Create"}
-                modeLabel={isPro ? "Pro" : "Lite"}
+                generateLabel={isGenerating ? "Generating" : "Create"}
                 mode={isPro ? "pro" : "lite"}
-                layout="hero"
-                intelligenceHint={
-                  generationWarning ??
-                  "The composer opens as a creative prompt surface, then docks itself below the thread after generation starts."
-                }
-                onAdd={handleAddResource}
-                controls={
-                  <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-                    {promptControls.map((control) => (
-                      <PromptControl key={control.label} {...control} />
-                    ))}
-                    <IdeasDock type={type as GenerationType} onPick={setPrompt} />
-                  </div>
-                }
-                activityChips={
-                  <>
-                    <span className="ui-status-chip"><span className="ui-status-dot" />Live Orchestration</span>
-                    <span className="ui-status-chip"><span className="ui-status-dot" />Prompt Optimized</span>
-                    <span className="ui-status-chip"><span className="ui-status-dot" />Metadata Aware</span>
-                  </>
-                }
+                layout="dock"
+                controls={controls}
+                activityChips={activityChips}
+                onModeChange={(nextMode) => setMode(nextMode)}
               />
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </PageContainer>
   );
 }
 
-function PromptControl({
-  label,
-  value,
-  options,
-  onChange,
-  compact = false,
-}: PromptControlConfig & { compact?: boolean }) {
+function PromptControl({ label, value, options, onChange }: PromptControlConfig) {
   return (
-    <div
-      className={`ui-surface-1 relative z-[900] min-w-[132px] rounded-[20px] px-3 py-2 ${
-        compact ? "min-w-[120px]" : ""
-      }`}
-    >
-      <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-text/42">
+    <div className="min-w-[136px] shrink-0">
+      <div className="mb-1 px-1 font-codec text-[10px] font-semibold uppercase tracking-[0.04em] text-text/40">
         {label}
       </div>
       <BrandSelect
         value={value}
         options={options}
         onChange={onChange}
-        className="min-w-[126px]"
+        className="min-w-[136px]"
       />
     </div>
   );
 }
 
-function IdeasDock({
-  type,
-  onPick,
-}: {
-  type: GenerationType;
-  onPick: (text: string) => void;
-}) {
+function QuickIdeas({ onPick }: { onPick: (prompt: string) => void }) {
   return (
-    <div className="ui-surface-1 flex min-w-[118px] items-center justify-center rounded-[20px] px-3 py-2">
-      <IdeasMenu onPick={onPick} type={type} />
+    <div className="mt-6">
+      <div className="mb-3 font-codec text-[13px] text-text/30">Try an idea →</div>
+      <div className="flex flex-wrap justify-center gap-2">
+        {QUICK_IDEAS.map((idea) => (
+          <button
+            key={idea}
+            type="button"
+            onClick={() => {
+              onPick(idea);
+              const input = document.getElementById(COMPOSER_INPUT_ID);
+              if (input instanceof HTMLTextAreaElement) {
+                input.focus();
+              }
+            }}
+            className="quick-chip px-[14px] py-[7px] font-codec text-[13px]"
+          >
+            {idea}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
 
-function PendingComposerCard({
-  index,
-  progress,
-  stage,
+function GenerationThread({
+  batch,
+  saved,
+  onAddToLibrary,
+  onRemix,
 }: {
-  index: number;
-  progress: number;
-  stage: string;
+  batch: GenerationBatch;
+  saved: Set<string>;
+  onAddToLibrary: (item: AudioResult) => void;
+  onRemix: (item: AudioResult) => void;
 }) {
   return (
-    <div className="ui-surface-1 rounded-[24px] p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="font-poppins text-xs font-semibold uppercase tracking-[0.12em] text-primary">
-            Draft {index + 1}
-          </div>
-          <div className="mt-1 font-codec text-sm text-text/64">{stage}</div>
+    <article className="space-y-3">
+      <div className="flex justify-end">
+        <div className="user-bubble max-w-[70%] px-4 py-3 font-codec text-sm leading-6 text-text">
+          {batch.prompt}
         </div>
-        <div className="ui-status-chip"><span className="ui-status-dot" />{Math.round(progress * 100)}%</div>
       </div>
-      <div className="mt-4 overflow-hidden rounded-[18px] ui-surface-1 px-3 py-4">
-        <div className="mb-3 flex gap-1.5">
-          {Array.from({ length: 32 }, (_, barIndex) => (
-            <div
-              key={barIndex}
-              className="w-full rounded-full bg-primary/15 transition-all duration-500"
-              style={{
-                height: `${16 + ((barIndex + index * 2) % 6) * 7}px`,
-                opacity: barIndex / 32 < progress ? 1 : 0.32,
-              }}
-            />
+      <div className="generation-card rounded-[20px] p-4 md:p-5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="font-codec text-sm font-semibold text-text">Generation outputs</div>
+            <div className="mt-1 font-mono text-[11px] text-text/45">
+              {batch.type} / {batch.model} / {batch.format} / {batch.createdAt}
+            </div>
+          </div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--ui-border-soft)] bg-[var(--ui-input)] px-3 py-1.5 font-codec text-[12px] text-text/55">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            {batch.count} asset{batch.count > 1 ? "s" : ""}
+          </div>
+        </div>
+        <div className="space-y-3">
+          {batch.items.map((item, index) => (
+            <div key={item.id} style={{ animationDelay: `${index * 80}ms` }}>
+              <ResultCard
+                item={toCardItem(item)}
+                savedToLibrary={saved.has(item.id)}
+                onAddToLibrary={() => onAddToLibrary(item)}
+                onRemix={() => onRemix(item)}
+              />
+            </div>
           ))}
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-white/80">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-primary via-accent to-primary transition-[width] duration-300"
-            style={{ width: `${Math.max(8, Math.round(progress * 100))}%` }}
-          />
+      </div>
+    </article>
+  );
+}
+
+function PendingThread({ pending }: { pending: PendingGeneration }) {
+  return (
+    <article className="space-y-3">
+      <div className="flex justify-end">
+        <div className="user-bubble max-w-[70%] px-4 py-3 font-codec text-sm leading-6 text-text">
+          {pending.prompt}
         </div>
       </div>
-    </div>
+      <div className="generation-card rounded-[20px] p-4 md:p-5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="font-codec text-sm font-semibold text-text">
+              Generating {pending.type}
+              <span className="generating-dots" aria-hidden>
+                ...
+              </span>
+            </div>
+            <div className="mt-1 font-mono text-[11px] text-text/45">
+              {pending.stage} / {Math.round(pending.progress * 100)}%
+            </div>
+          </div>
+          <div className="h-2 w-32 overflow-hidden rounded-full bg-[var(--ui-input)]">
+            <div
+              className="h-full rounded-full bg-[var(--ui-create-gradient)] transition-[width] duration-300"
+              style={{ width: `${Math.max(8, Math.round(pending.progress * 100))}%` }}
+            />
+          </div>
+        </div>
+        <div className="space-y-3">
+          {Array.from({ length: pending.count }, (_, index) => (
+            <div key={`${pending.id}-${index}`} className="rounded-[20px] border border-[var(--ui-border-soft)] bg-[var(--ui-input)] p-4">
+              <div className="skeleton-line h-12 rounded-[14px]" />
+              <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_120px_90px]">
+                <div className="skeleton-line h-3 rounded-full" />
+                <div className="skeleton-line h-3 rounded-full" />
+                <div className="skeleton-line h-3 rounded-full" />
+              </div>
+              <div className="mt-4 flex gap-2">
+                <div className="skeleton-line h-9 w-20 rounded-full" />
+                <div className="skeleton-line h-9 w-28 rounded-full" />
+                <div className="skeleton-line h-9 w-20 rounded-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </article>
   );
 }

@@ -17,14 +17,14 @@ export default function GenerateButton({
 }: GenerateButtonProps) {
   const palette =
     mode === "lite"
-      ? "bg-[linear-gradient(135deg,#a1e7ee,#b9edf1,#ff98a8)] shadow-[0_16px_36px_rgba(161,231,238,0.28)] text-[#18323a]"
-      : "bg-[linear-gradient(135deg,#ff3c82,#ff6d93,#ff98a8)] shadow-[0_16px_36px_rgba(255,60,130,0.26)] text-white";
+      ? "bg-[linear-gradient(135deg,#38bdf8_0%,#7dd3fc_60%,#bae6fd_100%)] shadow-[0_2px_16px_rgba(56,189,248,0.30)] text-[#0f0f12]"
+      : "bg-[linear-gradient(135deg,#ff3b6b_0%,#ff6b9d_60%,#ff9cc0_100%)] shadow-[0_0_32px_rgba(255,59,107,0.20)] text-white";
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled || loading}
-      className={`ui-cta-glow ui-interactive inline-flex h-12 min-w-[152px] items-center justify-center gap-2 rounded-full border border-white/45 px-5 font-poppins text-sm font-semibold transition-transform duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-80 ${palette}`}
+      className={`ui-cta-glow inline-flex h-11 min-w-[126px] items-center justify-center gap-2 rounded-full border border-white/10 px-5 font-codec text-sm font-semibold transition-all duration-200 hover:scale-[1.02] hover:brightness-[1.08] disabled:cursor-not-allowed disabled:opacity-80 ${palette}`}
     >
       {label}
       {loading ? (

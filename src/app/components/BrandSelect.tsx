@@ -62,8 +62,8 @@ export default function BrandSelect({
         type="button"
         onClick={() => setOpen((o) => !o)}
         data-open={open ? "true" : "false"}
-        className={`ui-surface-1 ui-focus-glow ui-interactive flex h-9 w-full items-center justify-between gap-2 rounded-input px-3 font-codec text-xs text-text transition-colors hover:border-primary/40 focus:outline-none focus:ring-0 ${
-          open ? "border-primary/60" : "border-surface"
+        className={`composer-control flex h-9 w-full items-center justify-between gap-2 px-3 font-codec text-[13px] focus:outline-none focus:ring-0 ${
+          open ? "border-primary/60" : ""
         }`}
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -78,7 +78,7 @@ export default function BrandSelect({
       {open && (
         <ul
           role="listbox"
-          className={`ui-floating-menu absolute z-[1100] mt-1.5 max-h-72 w-full overflow-auto rounded-card p-1 ${menuClassName}`}
+          className={`absolute z-[1100] mt-1.5 max-h-72 w-full overflow-auto rounded-[12px] border border-[var(--ui-border-soft)] bg-[var(--ui-elevated)] p-1 shadow-[var(--ui-shadow-floating)] ${menuClassName}`}
         >
           {normalized.map((o) => {
             const active = o.value === value;
@@ -93,7 +93,7 @@ export default function BrandSelect({
                   className={`flex w-full items-center gap-2 rounded-button px-2.5 py-1.5 text-left font-codec text-xs transition-colors ${
                     active
                       ? "bg-primary/10 text-primary"
-                      : "text-text/80 hover:bg-surface-muted"
+                      : "text-text/70 hover:bg-[var(--ui-input)] hover:text-text"
                   }`}
                   role="option"
                   aria-selected={active}

@@ -23,6 +23,7 @@ export default function AppLayout() {
       <InterfaceModeContext.Provider value={ctx}>
         <AnimatedBackground />
         <div
+          data-theme={mode === "pro" ? "pro" : "lite"}
           className={`relative flex min-h-screen bg-transparent font-codec text-text ${
             mode === "pro" ? "theme-pro" : "theme-lite"
           }`}

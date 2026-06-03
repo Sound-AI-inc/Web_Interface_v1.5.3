@@ -31,7 +31,9 @@ export default {
       },
       fontFamily: {
         poppins: ["Poppins", "sans-serif"],
-        codec: ['"Codec Pro"', "Inter", "sans-serif"],
+        codec: ["Inter", "sans-serif"],
+        syne: ["Syne", "Poppins", "sans-serif"],
+        mono: ['"JetBrains Mono"', "monospace"],
       },
       boxShadow: {
         "flat-sm": "0 1px 2px 0 rgba(21, 20, 20, 0.04)",

@@ -62,7 +62,7 @@ const assetsSystem: NavItem[] = [
 ];
 
 const NAV_ITEM_BASE =
-  "group flex items-center gap-3 rounded-button px-3 py-2 font-poppins text-[10px] font-bold uppercase tracking-[0.08em] transition-colors";
+  "group flex items-center gap-3 border-l-2 border-transparent px-3 py-2.5 font-codec text-[12px] font-semibold transition-colors";
 const WEBSITE_BASE =
   (import.meta.env.VITE_WEBSITE_URL as string | undefined)?.replace(/\/$/, "") ??
   "http://127.0.0.1:4174";
@@ -76,7 +76,7 @@ function Item({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
   if (item.disabled) {
     return (
       <div
-        className={`${collapsed ? collapsedBase : NAV_ITEM_BASE} cursor-not-allowed text-text/40`}
+        className={`${collapsed ? collapsedBase : NAV_ITEM_BASE} cursor-not-allowed text-text/30`}
         title={collapsed ? `${label}${item.badge ? ` • ${item.badge}` : ""}` : undefined}
         aria-disabled
       >
@@ -85,7 +85,7 @@ function Item({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
           <>
             <span className="flex-1">{label}</span>
             {item.badge && (
-              <span className="rounded-full bg-surface px-2 py-0.5 font-poppins text-[9px] font-bold tracking-wider text-text/40">
+              <span className="rounded-[4px] bg-white/10 px-1.5 py-0.5 font-codec text-[10px] font-bold tracking-[0.06em] text-text/30">
                 {item.badge}
               </span>
             )}
@@ -100,7 +100,9 @@ function Item({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
       title={collapsed ? label : undefined}
       className={({ isActive }) =>
         `${collapsed ? collapsedBase : NAV_ITEM_BASE} ${
-          isActive ? "text-primary" : "text-text hover:bg-surface"
+          isActive
+            ? "border-l-primary bg-[var(--ui-elevated)] text-text"
+            : "text-text/55 hover:bg-white/[0.04] hover:text-text"
         }`
       }
     >
@@ -109,7 +111,7 @@ function Item({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
         <>
           <span className="flex-1">{label}</span>
           {item.badge && (
-            <span className="rounded-full bg-surface px-2 py-0.5 font-poppins text-[9px] font-bold tracking-wider text-text/50">
+            <span className="rounded-[4px] bg-white/10 px-1.5 py-0.5 font-codec text-[10px] font-bold tracking-[0.06em] text-text/30">
               {item.badge}
             </span>
           )}
@@ -121,7 +123,7 @@ function Item({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
 
 function SectionSeparator({ collapsed }: { collapsed: boolean }) {
   return (
-    <div className={`my-3 ${collapsed ? "" : "mx-3"} h-px bg-surface`} aria-hidden />
+    <div className={`my-3 ${collapsed ? "" : "mx-3"} h-px bg-[var(--ui-border-soft)]`} aria-hidden />
   );
 }
 
@@ -306,7 +308,7 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`sticky top-0 flex h-screen ${width} shrink-0 flex-col self-start border-r border-white/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.62),rgba(247,249,251,0.84))] shadow-[8px_0_40px_rgba(15,23,42,0.04)] backdrop-blur-xl transition-[width] duration-150 ease-linear`}
+      className={`sticky top-0 flex h-screen ${width} shrink-0 flex-col self-start border-r border-[var(--ui-border-soft)] bg-[var(--ui-bg)] shadow-[8px_0_40px_rgba(0,0,0,0.12)] transition-[width] duration-150 ease-linear`}
     >
       {/* Inject small menu-row utility */}
       <style>{`
@@ -318,12 +320,12 @@ export default function Sidebar({
           border-radius: 0.5rem;
           font-family: var(--font-codec, 'Inter', sans-serif);
           font-size: 12px;
-          color: #1D1D1D;
+          color: rgb(var(--color-text) / 0.72);
           transition: background-color 150ms ease;
           width: 100%;
           cursor: pointer;
         }
-        .menu-row:hover { background-color: rgb(var(--color-surface)); }
+        .menu-row:hover { background-color: var(--ui-input); color: rgb(var(--color-text)); }
       `}</style>
 
       {/* Top: brand + collapse toggle */}
@@ -338,10 +340,10 @@ export default function Sidebar({
               <img
                 src="/logo SoundAI v1.5 (1).svg"
                 alt="SoundAI"
-                className="soundai-logo-mark logo-drift h-full w-full object-contain brightness-0"
+                className="soundai-logo-mark logo-drift h-full w-full object-contain"
               />
             </div>
-            <span className="translate-y-[1px] font-poppins text-[17px] font-semibold text-text">SoundAI</span>
+            <span className="translate-y-[1px] font-syne text-[17px] font-bold text-text">SoundAI</span>
           </div>
         )}
         <button
@@ -349,7 +351,7 @@ export default function Sidebar({
           onClick={() => setCollapsed((c) => !c)}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="flex h-8 w-8 items-center justify-center rounded-button text-text/60 transition-colors hover:bg-surface hover:text-text"
+          className="flex h-8 w-8 items-center justify-center rounded-button text-text/60 transition-colors hover:bg-[var(--ui-input)] hover:text-text"
         >
           {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
         </button>
@@ -376,7 +378,7 @@ export default function Sidebar({
       </nav>
 
       {/* Interface Mode toggle */}
-      <div className={`border-t border-surface ${collapsed ? "p-2" : "px-4 py-3"}`}>
+      <div className={`border-t border-[var(--ui-border-soft)] ${collapsed ? "p-2" : "px-4 py-3"}`}>
         {!collapsed ? (
           <>
             <div className="mb-2 flex items-center justify-between">
@@ -394,21 +396,11 @@ export default function Sidebar({
             <button
               type="button"
               onClick={toggle}
-              className="flex w-full items-center gap-2 rounded-button px-1 py-1 text-left"
+              className="mode-toggle"
               aria-label="Toggle interface mode"
             >
-              <span
-                className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
-                  isPro ? "bg-primary animate-pro-pulse" : "bg-surface"
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                    isPro ? "translate-x-[18px]" : "translate-x-0.5"
-                  }`}
-                />
-              </span>
-              <span className="font-codec text-xs text-text/70">Lite / Pro</span>
+              <span className="mode-toggle-button" data-active={!isPro ? "true" : "false"}>Lite</span>
+              <span className="mode-toggle-button" data-active={isPro ? "true" : "false"}>Pro</span>
             </button>
           </>
         ) : (
@@ -417,7 +409,7 @@ export default function Sidebar({
             onClick={toggle}
             title={isPro ? "Pro" : "Lite"}
             className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full ${
-              isPro ? "bg-primary text-white animate-pro-pulse" : "bg-surface text-text"
+              isPro ? "bg-primary text-white animate-pro-pulse" : "bg-[var(--ui-input)] text-text"
             }`}
           >
             <span className="font-poppins text-[9px] font-bold">
@@ -430,7 +422,7 @@ export default function Sidebar({
       {/* User profile docked at very bottom */}
       <div
         ref={menuRef}
-        className={`relative border-t border-surface ${collapsed ? "p-2" : "px-3 py-3"}`}
+        className={`relative border-t border-[var(--ui-border-soft)] ${collapsed ? "p-2" : "px-3 py-3"}`}
       >
         <UserMenu
           collapsed={collapsed}
@@ -443,7 +435,7 @@ export default function Sidebar({
           type="button"
           onClick={() => setUserMenuOpen((v) => !v)}
           title={collapsed ? "Account" : undefined}
-          className={`flex items-center rounded-button transition-colors hover:bg-surface ${
+          className={`flex items-center rounded-button transition-colors hover:bg-[var(--ui-input)] ${
             collapsed
               ? "h-9 w-full justify-center"
               : "w-full gap-2 px-2 py-2"
