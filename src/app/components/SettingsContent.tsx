@@ -68,7 +68,7 @@ export default function SettingsContent({ onSave, compact = false }: SettingsCon
   ];
 
   return (
-    <div className="rounded-card border border-surface bg-white shadow-flat-sm">
+    <div className="rounded-card token-card border border-[var(--border-primary)] shadow-flat-sm">
       <div className={`flex items-center justify-between border-b border-surface ${compact ? "px-5 py-4" : "px-6 py-4"}`}>
         <div>
           <h2 className="font-poppins text-lg font-semibold text-text">{t("settings.title")}</h2>
@@ -175,7 +175,7 @@ export default function SettingsContent({ onSave, compact = false }: SettingsCon
                 onClick={() => setQualityPreset(preset.value)}
                 className={`h-9 rounded-button px-4 font-poppins text-xs font-medium transition-colors ${
                   qualityPreset === preset.value
-                    ? "bg-primary text-white"
+                    ? "bg-primary text-on-accent"
                     : "bg-surface-muted text-text/60 hover:bg-surface"
                 }`}
               >

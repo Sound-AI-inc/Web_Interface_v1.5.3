@@ -27,6 +27,8 @@ import {
   Info,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import ThemedLogo from "./ThemedLogo";
+import WorkspaceNav from "./workspace/WorkspaceNav";
 import { useLanguage } from "../i18n/LanguageProvider";
 import { LANGUAGES, type LanguageCode } from "../i18n/translations";
 
@@ -84,7 +86,7 @@ function Item({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
           <>
             <span className="flex-1">{label}</span>
             {item.badge && (
-              <span className="rounded-[4px] bg-white/10 px-1.5 py-0.5 font-codec text-[10px] font-bold tracking-[0.06em] text-text/30">
+              <span className="rounded-[4px] bg-[var(--surface-secondary)] px-1.5 py-0.5 font-codec text-[10px] font-bold tracking-[0.06em] text-[var(--text-muted)]">
                 {item.badge}
               </span>
             )}
@@ -101,7 +103,7 @@ function Item({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
         `${collapsed ? collapsedBase : NAV_ITEM_BASE} ${
           isActive
             ? "border-l-primary bg-[var(--ui-elevated)] text-text"
-            : "text-text/55 hover:bg-white/[0.04] hover:text-text"
+            : "text-text/55 hover:bg-[var(--surface-secondary)] hover:text-text"
         }`
       }
     >
@@ -163,9 +165,10 @@ function UserMenu({
 
   return (
     <div
-      className={`ui-floating-menu absolute bottom-full z-40 mb-2 w-[240px] rounded-card p-1.5 ${
+      className={`ui-floating-menu token-menu absolute bottom-full mb-2 w-[240px] rounded-card p-1.5 ${
         collapsed ? "left-full ml-2" : "left-3 right-3 w-auto"
       }`}
+      style={{ zIndex: "var(--z-dropdown)" }}
     >
       <button type="button" className="menu-row" onClick={() => { onOpenSettings(); onClose(); }}>
         <SettingsIcon className="h-4 w-4 text-text/60" />
@@ -333,11 +336,7 @@ export default function Sidebar({
         {!collapsed && (
           <div className="flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center">
-              <img
-                src="/logo SoundAI v1.5 (1).svg"
-                alt="SoundAI"
-                className="soundai-logo-mark logo-drift h-full w-full object-contain"
-              />
+              <ThemedLogo className="logo-drift h-full w-full object-contain" />
             </div>
             <span className="translate-y-[1px] font-syne text-[17px] font-bold text-text">SoundAI</span>
           </div>
@@ -354,10 +353,17 @@ export default function Sidebar({
       </div>
 
       <nav
-        className={`flex flex-1 flex-col justify-center overflow-y-auto ${
+        className={`flex flex-1 flex-col overflow-y-auto ${
           collapsed ? "px-2" : "px-3"
-        } pb-4`}
+        } pb-4 pt-2`}
       >
+        <WorkspaceNav collapsed={collapsed} />
+        <SectionSeparator collapsed={collapsed} />
+        {!collapsed && (
+          <div className="mb-2 px-3 font-codec text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--text-muted)]">
+            Tools
+          </div>
+        )}
         <div className="flex flex-col gap-1">
           {coreProduct.map((i) => (
             <Item key={i.to} item={i} collapsed={collapsed} />
@@ -397,7 +403,7 @@ export default function Sidebar({
           aria-haspopup="menu"
           aria-expanded={userMenuOpen}
         >
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-on-accent">
             D
           </div>
           {!collapsed && (

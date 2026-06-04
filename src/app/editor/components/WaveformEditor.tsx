@@ -257,7 +257,7 @@ export default function WaveformEditor({ onReady, onPlayStateChange }: Props) {
         </div>
       </div>
 
-      <div ref={ref} className="rounded-card border border-surface bg-white p-3" />
+      <div ref={ref} className="rounded-card token-card border border-[var(--border-primary)] p-3" />
 
       {selection ? (
         <p className="app-meta">

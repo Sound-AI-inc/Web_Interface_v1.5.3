@@ -3,7 +3,7 @@ import { plans } from "../data/mock";
 
 export default function UpgradePlanModalContent() {
   return (
-    <div className="rounded-card border border-surface bg-white shadow-flat-sm">
+    <div className="rounded-card token-card border border-[var(--border-primary)] shadow-flat-sm">
       <div className="border-b border-surface px-5 py-4">
         <h2 className="font-poppins text-lg font-semibold text-text">Upgrade Plan</h2>
         <p className="app-meta mt-1">

@@ -110,7 +110,7 @@ function Val({ value }: { value: Cell }) {
 
 export default function BillingComparisonTable() {
   return (
-    <div className="overflow-x-auto rounded-card border border-surface bg-white shadow-flat-sm">
+    <div className="overflow-x-auto rounded-card token-card border border-[var(--border-primary)] shadow-flat-sm">
       <table className="w-full min-w-[720px] border-collapse text-left">
         <thead>
           <tr className="border-b border-surface bg-surface-muted">
@@ -127,7 +127,7 @@ export default function BillingComparisonTable() {
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">{p.name}</span>
                   {p.highlight && (
-                    <span className="rounded-full bg-primary px-1.5 py-0.5 font-poppins text-[9px] font-bold uppercase tracking-wider text-white">
+                    <span className="rounded-full bg-primary px-1.5 py-0.5 font-poppins text-[9px] font-bold uppercase tracking-wider text-on-accent">
                       Popular
                     </span>
                   )}

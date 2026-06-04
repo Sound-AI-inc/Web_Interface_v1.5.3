@@ -11,13 +11,13 @@ export default function Billing() {
   return (
     <PageContainer title="Billing" subtitle="Plan, usage and invoices">
       <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="rounded-card border border-surface bg-white p-5 shadow-flat-sm">
+        <div className="rounded-card token-card border border-[var(--border-primary)] p-5 shadow-flat-sm">
           <div className="app-section-title mb-2">Current plan</div>
           <div className="font-poppins text-xl font-semibold text-text">Standard</div>
           <p className="app-meta mt-1">Renews on May 14</p>
           <button className="app-btn-ghost mt-4 h-9 w-full">Manage plan</button>
         </div>
-        <div className="rounded-card border border-surface bg-white p-5 shadow-flat-sm md:col-span-2">
+        <div className="rounded-card token-card border border-[var(--border-primary)] p-5 shadow-flat-sm md:col-span-2">
           <div className="app-section-title mb-2">Credits this month</div>
           <div className="flex items-baseline gap-2">
             <span className="font-poppins text-3xl font-semibold text-text">{usedCredits}</span>
@@ -41,7 +41,7 @@ export default function Billing() {
       <BillingComparisonTable />
 
       <h2 className="app-section-title mb-4 mt-10">Recent invoices</h2>
-      <div className="overflow-hidden rounded-card border border-surface bg-white">
+      <div className="overflow-hidden rounded-card token-card border border-[var(--border-primary)]">
         <table className="w-full text-left">
           <thead>
             <tr className="border-b border-surface">

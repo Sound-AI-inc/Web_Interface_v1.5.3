@@ -53,7 +53,7 @@ export default function Profile() {
       subtitle="Your identity on SoundAI"
       actions={<button className="app-btn-primary h-9">Save changes</button>}
     >
-      <div className="rounded-card border border-surface bg-white px-6 shadow-flat-sm">
+      <div className="rounded-card token-card border border-[var(--border-primary)] px-6 shadow-flat-sm">
         <SettingsSection title="Account" description="How you appear across SoundAI.">
           <div className="flex items-center gap-5">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 font-poppins text-xl font-semibold text-primary">

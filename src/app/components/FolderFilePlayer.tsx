@@ -146,7 +146,7 @@ export default function FolderFilePlayer({ asset }: FolderFilePlayerProps) {
         onClick={toggle}
         className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors ${
           playing
-            ? "bg-primary text-white"
+            ? "bg-primary text-on-accent"
             : "bg-surface text-text/70 hover:bg-primary/10 hover:text-primary"
         }`}
         aria-label={playing ? "Pause" : "Play"}

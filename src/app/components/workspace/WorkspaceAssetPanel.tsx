@@ -1,11 +1,21 @@
 import { useState } from "react";
-import { ChevronDown, Heart, KeyboardMusic, Music2, SlidersHorizontal } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  KeyboardMusic,
+  Music2,
+  SlidersHorizontal,
+} from "lucide-react";
 import type { AudioResult } from "../../data/mock";
 
 interface WorkspaceAssetPanelProps {
   sessionAssets: AudioResult[];
   favoriteIds: Set<string>;
   onToggleFavorite: (id: string) => void;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
 }
 
 function kindIcon(kind: AudioResult["kind"]) {
@@ -18,14 +28,17 @@ function CollapsibleSection({
   title,
   count,
   defaultOpen = true,
+  collapsed,
   children,
 }: {
   title: string;
   count: number;
   defaultOpen?: boolean;
+  collapsed: boolean;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  if (collapsed) return null;
   return (
     <div className="border-b border-[var(--border-primary)] pb-3">
       <button
@@ -47,12 +60,26 @@ function AssetRow({
   item,
   favorited,
   onToggleFavorite,
+  iconOnly,
 }: {
   item: AudioResult;
   favorited: boolean;
   onToggleFavorite: () => void;
+  iconOnly?: boolean;
 }) {
   const Icon = kindIcon(item.kind);
+  if (iconOnly) {
+    return (
+      <button
+        type="button"
+        title={item.title}
+        onClick={onToggleFavorite}
+        className="flex h-10 w-10 items-center justify-center rounded-[10px] text-primary hover:bg-[var(--surface-secondary)]"
+      >
+        <Icon className="h-4 w-4" />
+      </button>
+    );
+  }
   return (
     <div className="asset-panel-row group flex items-center gap-2 rounded-[10px] px-2 py-2">
       <Icon className="h-3.5 w-3.5 shrink-0 text-primary" />
@@ -79,6 +106,8 @@ export default function WorkspaceAssetPanel({
   sessionAssets,
   favoriteIds,
   onToggleFavorite,
+  collapsed,
+  onToggleCollapsed,
 }: WorkspaceAssetPanelProps) {
   const audio = sessionAssets.filter((a) => a.kind === "audio");
   const midi = sessionAssets.filter((a) => a.kind === "midi");
@@ -87,72 +116,105 @@ export default function WorkspaceAssetPanel({
   const recent = [...sessionAssets].reverse().slice(0, 8);
 
   return (
-    <aside className="workspace-assets hidden w-[min(360px,100%)] shrink-0 flex-col border-l border-[var(--border-primary)] bg-[var(--background-secondary)] lg:flex">
-      <div className="border-b border-[var(--border-primary)] px-4 py-4">
-        <h2 className="font-syne text-[15px] font-bold text-[var(--text-primary)]">Assets</h2>
-        <p className="mt-1 font-codec text-[12px] text-[var(--text-secondary)]">
-          Session library · updates live
-        </p>
+    <aside
+      data-collapsed={collapsed ? "true" : "false"}
+      className="workspace-assets hidden shrink-0 flex-col border-l border-[var(--border-primary)] bg-[var(--background-secondary)] lg:flex"
+    >
+      <div className="flex items-center justify-between border-b border-[var(--border-primary)] px-3 py-3">
+        {!collapsed && (
+          <div className="min-w-0 px-1">
+            <h2 className="font-syne text-[15px] font-bold text-[var(--text-primary)]">Assets</h2>
+            <p className="mt-0.5 font-codec text-[11px] text-[var(--text-secondary)]">Live session</p>
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={onToggleCollapsed}
+          aria-label={collapsed ? "Expand assets panel" : "Collapse assets panel"}
+          className="composer-control flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+        >
+          {collapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        </button>
       </div>
-      <div className="flex-1 overflow-y-auto px-3 py-3">
-        <CollapsibleSection title="Recent" count={recent.length}>
-          {recent.length === 0 ? (
-            <p className="px-2 py-1 font-codec text-[12px] text-[var(--text-muted)]">No assets yet</p>
-          ) : (
-            recent.map((item) => (
-              <AssetRow
-                key={item.id}
-                item={item}
-                favorited={favoriteIds.has(item.id)}
-                onToggleFavorite={() => onToggleFavorite(item.id)}
-              />
-            ))
-          )}
-        </CollapsibleSection>
-        <CollapsibleSection title="Favorites" count={favorites.length}>
-          {favorites.length === 0 ? (
-            <p className="px-2 py-1 font-codec text-[12px] text-[var(--text-muted)]">Star results to save</p>
-          ) : (
-            favorites.map((item) => (
-              <AssetRow
-                key={item.id}
-                item={item}
-                favorited
-                onToggleFavorite={() => onToggleFavorite(item.id)}
-              />
-            ))
-          )}
-        </CollapsibleSection>
-        <CollapsibleSection title="Audio Samples" count={audio.length} defaultOpen={false}>
-          {audio.map((item) => (
-            <AssetRow
-              key={item.id}
-              item={item}
-              favorited={favoriteIds.has(item.id)}
-              onToggleFavorite={() => onToggleFavorite(item.id)}
-            />
-          ))}
-        </CollapsibleSection>
-        <CollapsibleSection title="MIDI Files" count={midi.length} defaultOpen={false}>
-          {midi.map((item) => (
-            <AssetRow
-              key={item.id}
-              item={item}
-              favorited={favoriteIds.has(item.id)}
-              onToggleFavorite={() => onToggleFavorite(item.id)}
-            />
-          ))}
-        </CollapsibleSection>
-        <CollapsibleSection title="VST Presets" count={preset.length} defaultOpen={false}>
-          {preset.map((item) => (
-            <AssetRow
-              key={item.id}
-              item={item}
-              favorited={favoriteIds.has(item.id)}
-              onToggleFavorite={() => onToggleFavorite(item.id)}
-            />
-          ))}
-        </CollapsibleSection>
+      <div className="flex-1 overflow-y-auto px-2 py-3">
+        {collapsed ? (
+          <div className="flex flex-col items-center gap-1">
+            {recent.length === 0 ? (
+              <Music2 className="h-4 w-4 text-[var(--text-muted)]" />
+            ) : (
+              recent.slice(0, 5).map((item) => (
+                <AssetRow
+                  key={item.id}
+                  item={item}
+                  favorited={favoriteIds.has(item.id)}
+                  onToggleFavorite={() => onToggleFavorite(item.id)}
+                  iconOnly
+                />
+              ))
+            )}
+          </div>
+        ) : (
+          <>
+            <CollapsibleSection title="Recent" count={recent.length} collapsed={collapsed}>
+              {recent.length === 0 ? (
+                <p className="px-2 py-1 font-codec text-[12px] text-[var(--text-muted)]">No assets yet</p>
+              ) : (
+                recent.map((item) => (
+                  <AssetRow
+                    key={item.id}
+                    item={item}
+                    favorited={favoriteIds.has(item.id)}
+                    onToggleFavorite={() => onToggleFavorite(item.id)}
+                  />
+                ))
+              )}
+            </CollapsibleSection>
+            <CollapsibleSection title="Favorites" count={favorites.length} collapsed={collapsed}>
+              {favorites.length === 0 ? (
+                <p className="px-2 py-1 font-codec text-[12px] text-[var(--text-muted)]">Star results to save</p>
+              ) : (
+                favorites.map((item) => (
+                  <AssetRow
+                    key={item.id}
+                    item={item}
+                    favorited
+                    onToggleFavorite={() => onToggleFavorite(item.id)}
+                  />
+                ))
+              )}
+            </CollapsibleSection>
+            <CollapsibleSection title="Audio Samples" count={audio.length} defaultOpen={false} collapsed={collapsed}>
+              {audio.map((item) => (
+                <AssetRow
+                  key={item.id}
+                  item={item}
+                  favorited={favoriteIds.has(item.id)}
+                  onToggleFavorite={() => onToggleFavorite(item.id)}
+                />
+              ))}
+            </CollapsibleSection>
+            <CollapsibleSection title="MIDI Files" count={midi.length} defaultOpen={false} collapsed={collapsed}>
+              {midi.map((item) => (
+                <AssetRow
+                  key={item.id}
+                  item={item}
+                  favorited={favoriteIds.has(item.id)}
+                  onToggleFavorite={() => onToggleFavorite(item.id)}
+                />
+              ))}
+            </CollapsibleSection>
+            <CollapsibleSection title="VST Presets" count={preset.length} defaultOpen={false} collapsed={collapsed}>
+              {preset.map((item) => (
+                <AssetRow
+                  key={item.id}
+                  item={item}
+                  favorited={favoriteIds.has(item.id)}
+                  onToggleFavorite={() => onToggleFavorite(item.id)}
+                />
+              ))}
+            </CollapsibleSection>
+          </>
+        )}
       </div>
     </aside>
   );

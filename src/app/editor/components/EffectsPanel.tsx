@@ -84,7 +84,7 @@ function EffectBlock({ title, enabled, onToggle, children }: EffectBlockProps) {
             {enabled ? "On" : "Off"}
           </span>
           <span
-            className="flex h-5 w-5 items-center justify-center rounded-full bg-white shadow"
+            className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--surface-primary)] shadow"
           >
             <span
               className={`h-2 w-2 rounded-full ${enabled ? "bg-primary" : "bg-text/20"}`}

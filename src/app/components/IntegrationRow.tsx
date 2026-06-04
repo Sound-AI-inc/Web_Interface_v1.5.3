@@ -22,9 +22,9 @@ const CATEGORY_GRADIENT: Record<Integration["category"], string> = {
 export default function IntegrationRow({ integration }: IntegrationRowProps) {
   const gradient = CATEGORY_GRADIENT[integration.category];
   return (
-    <div className="flex items-center gap-3 rounded-card border border-surface bg-white p-2.5 transition-colors hover:border-primary/30 hover:shadow-flat-sm">
+    <div className="flex items-center gap-3 rounded-card token-card border border-[var(--border-primary)] p-2.5 transition-colors hover:border-primary/30 hover:shadow-flat-sm">
       <div
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-button bg-gradient-to-br ${gradient} font-poppins text-[11px] font-bold uppercase text-white shadow-sm`}
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-button bg-gradient-to-br ${gradient} font-poppins text-[11px] font-bold uppercase text-on-accent shadow-sm`}
       >
         {integration.iconLetter}
       </div>
@@ -48,7 +48,7 @@ export default function IntegrationRow({ integration }: IntegrationRowProps) {
           Connected
         </button>
       ) : (
-        <button className="h-7 shrink-0 rounded-button bg-primary px-3 font-poppins text-[10px] font-bold uppercase tracking-wider text-white transition-colors hover:bg-primary/90">
+        <button className="h-7 shrink-0 rounded-button bg-primary px-3 font-poppins text-[10px] font-bold uppercase tracking-wider text-on-accent transition-colors hover:bg-primary/90">
           Connect
         </button>
       )}

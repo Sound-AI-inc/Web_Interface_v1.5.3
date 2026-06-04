@@ -1,4 +1,5 @@
 import { Bell, Coins } from "lucide-react";
+import ThemedLogo from "./ThemedLogo";
 import { useInterfaceMode } from "../hooks/useInterfaceMode";
 
 const CREDITS_REMAINING = 42;
@@ -12,11 +13,7 @@ export default function AppHeader() {
     <header className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-[var(--border-primary)] bg-[var(--background-primary)] px-4 sm:px-6">
       <div className="flex min-w-0 items-center gap-2.5">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center">
-          <img
-            src="/logo SoundAI v1.5 (1).svg"
-            alt="SoundAI"
-            className="soundai-logo-mark h-full w-full object-contain"
-          />
+          <ThemedLogo />
         </div>
         <span className="truncate font-syne text-[17px] font-bold tracking-[-0.02em] text-[var(--text-primary)]">
           SoundAI
@@ -56,7 +53,7 @@ export default function AppHeader() {
           <Bell className="h-4 w-4" />
         </button>
         <div
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-on-accent"
           aria-hidden
         >
           D

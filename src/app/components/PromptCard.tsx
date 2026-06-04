@@ -7,7 +7,7 @@ interface PromptCardProps {
 
 export default function PromptCard({ prompt }: PromptCardProps) {
   return (
-    <article className="group flex flex-col gap-4 rounded-card border border-surface bg-white p-5 shadow-flat-sm transition-colors hover:border-primary/30">
+    <article className="group flex flex-col gap-4 rounded-card token-card border border-[var(--border-primary)] p-5 shadow-flat-sm transition-colors hover:border-primary/30">
       <header className="flex items-start justify-between gap-3">
         <div>
           <h3 className="font-poppins text-sm font-semibold text-text">{prompt.title}</h3>

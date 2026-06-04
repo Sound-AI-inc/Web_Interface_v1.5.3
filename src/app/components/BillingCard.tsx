@@ -37,7 +37,7 @@ export default function BillingCard({ plan, current }: BillingCardProps) {
         }`}
       >
         {isHighlight && (
-          <span className="absolute -top-3 left-6 rounded-full bg-primary px-2.5 py-1 font-poppins text-[10px] font-bold uppercase tracking-wider text-white">
+          <span className="absolute -top-3 left-6 rounded-full bg-primary px-2.5 py-1 font-poppins text-[10px] font-bold uppercase tracking-wider text-on-accent">
             Popular
           </span>
         )}

@@ -77,7 +77,7 @@ export default function LibraryImportMenu({
         {trigger}
       </button>
       {open && (
-        <div className="absolute right-0 top-10 z-30 w-72 rounded-card border border-surface bg-white p-2 shadow-flat">
+        <div className="absolute right-0 top-10 z-30 w-72 rounded-card token-card border border-[var(--border-primary)] p-2 shadow-flat">
           <div className="mb-2 flex flex-wrap gap-1">
             {folders.map((f) => (
               <button

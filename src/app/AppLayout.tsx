@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { X } from "lucide-react";
 import AppHeader from "./components/AppHeader";
@@ -18,6 +18,13 @@ export default function AppLayout() {
     [],
   );
   const ctx = useMemo(() => ({ mode, setMode, toggle }), [mode, toggle]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove("theme-pro", "theme-lite");
+    root.classList.add(mode === "pro" ? "theme-pro" : "theme-lite");
+    root.setAttribute("data-theme", mode === "pro" ? "pro" : "lite");
+  }, [mode]);
 
   return (
     <LanguageProvider>
@@ -69,7 +76,7 @@ function ShellModal({
       <button
         type="button"
         aria-label="Close modal"
-        className="absolute inset-0 bg-[rgba(18,18,18,0.22)] backdrop-blur-[3px]"
+        className="token-overlay absolute inset-0 backdrop-blur-[3px]"
         onClick={onClose}
       />
       <div className={`relative z-10 max-h-[88vh] w-full overflow-hidden ${widthClassName}`}>
@@ -80,7 +87,7 @@ function ShellModal({
         >
           <X className="h-4 w-4" />
         </button>
-        <div className="ui-modal-surface max-h-[88vh] overflow-y-auto rounded-[24px] p-2">
+        <div className="ui-modal-surface token-modal max-h-[88vh] overflow-y-auto rounded-[24px] p-2">
           {children}
         </div>
       </div>

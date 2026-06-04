@@ -4,7 +4,7 @@ import PageContainer from "../components/PageContainer";
 export default function Arrangement() {
   return (
     <PageContainer title="Arrangement" subtitle="AI-assisted song arrangement (preview)">
-      <div className="relative overflow-hidden rounded-card border border-surface bg-white">
+      <div className="relative overflow-hidden rounded-card token-card border border-[var(--border-primary)]">
         {/* Blurred preview of a fake arrangement grid */}
         <div className="pointer-events-none select-none p-8 [filter:blur(6px)_saturate(0.9)] opacity-60">
           <div className="mb-4 flex gap-2">
@@ -37,8 +37,8 @@ export default function Arrangement() {
           </div>
         </div>
 
-        <div className="absolute inset-0 flex items-center justify-center bg-white/70">
-          <div className="max-w-md rounded-card border border-surface bg-white p-8 text-center shadow-flat">
+        <div className="absolute inset-0 flex items-center justify-center bg-[var(--surface-primary)]/70">
+          <div className="max-w-md rounded-card token-card border border-[var(--border-primary)] p-8 text-center shadow-flat">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
               <LayoutGrid className="h-5 w-5 text-primary" />
             </div>

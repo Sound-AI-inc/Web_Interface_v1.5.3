@@ -88,7 +88,7 @@ export default function ExportPanel() {
                         </span>
                         <button
                           type="button"
-                          className="inline-flex h-6 items-center gap-1 rounded-button bg-primary px-2 font-codec text-[10px] text-white transition-colors hover:bg-primary/90"
+                          className="inline-flex h-6 items-center gap-1 rounded-button bg-primary px-2 font-codec text-[10px] text-on-accent transition-colors hover:bg-primary/90"
                           title="Export"
                         >
                           <Download className="h-3 w-3" />

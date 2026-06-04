@@ -6,7 +6,7 @@ interface IntegrationCardProps {
 
 export default function IntegrationCard({ integration }: IntegrationCardProps) {
   return (
-    <div className="flex flex-col gap-4 rounded-card border border-surface bg-white p-5 shadow-flat-sm">
+    <div className="flex flex-col gap-4 rounded-card token-card border border-[var(--border-primary)] p-5 shadow-flat-sm">
       <header className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-button bg-surface-muted font-poppins text-xs font-semibold text-text">
           {integration.iconLetter}

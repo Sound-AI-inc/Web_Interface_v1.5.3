@@ -130,7 +130,7 @@ export default function Prompts() {
 
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-text/20 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-2xl rounded-card border border-primary/20 bg-white p-6 shadow-2xl">
+          <div className="w-full max-w-2xl rounded-card border border-primary/20 bg-[var(--surface-primary)] p-6 shadow-2xl">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 className="font-poppins text-lg font-semibold text-text">Create a new prompt</h2>

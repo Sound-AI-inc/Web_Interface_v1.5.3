@@ -314,7 +314,7 @@ export default function Library() {
                     Move
                   </button>
                   {moveMenuFor === a.id && (
-                    <div className="absolute right-0 top-8 z-20 w-52 rounded-card border border-surface bg-white p-1 shadow-flat">
+                    <div className="absolute right-0 top-8 z-20 w-52 rounded-card token-card border border-[var(--border-primary)] p-1 shadow-flat">
                       {folders.map((f) => {
                         const current =
                           (assetFolder[a.id] ?? LIBRARY_ROOT_ID) === f.id;

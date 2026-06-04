@@ -53,7 +53,7 @@ export function Toggle({ label, description, checked, onChange }: ToggleProps) {
       className={`flex w-full items-center justify-between gap-4 rounded-card border p-4 text-left transition-colors ${
         checked
           ? "border-primary/40 bg-primary/5"
-          : "border-surface bg-white hover:border-primary/20"
+          : "border-surface bg-[var(--surface-primary)] hover:border-primary/20"
       }`}
     >
       <div className="min-w-0">
@@ -67,7 +67,7 @@ export function Toggle({ label, description, checked, onChange }: ToggleProps) {
         }`}
       >
         <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+          className={`absolute top-0.5 h-5 w-5 rounded-full bg-[var(--surface-primary)] shadow transition-transform ${
             checked ? "translate-x-[22px]" : "translate-x-0.5"
           }`}
         />

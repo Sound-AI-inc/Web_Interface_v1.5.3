@@ -96,7 +96,7 @@ export default function EditorPanel() {
       className={`relative ${dragOver ? "ring-2 ring-primary/40" : ""}`}
     >
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="inline-flex rounded-button border border-surface bg-white p-1">
+        <div className="inline-flex rounded-button token-card border border-[var(--border-primary)] p-1">
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = tab === t.id;
@@ -106,7 +106,7 @@ export default function EditorPanel() {
                 type="button"
                 onClick={() => setTab(t.id)}
                 className={`inline-flex items-center gap-1.5 rounded-[8px] px-3 py-1.5 font-poppins text-[11px] font-bold uppercase tracking-wider transition-colors ${
-                  active ? "bg-primary text-white" : "text-text/70 hover:text-text"
+                  active ? "bg-primary text-on-accent" : "text-text/70 hover:text-text"
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" />

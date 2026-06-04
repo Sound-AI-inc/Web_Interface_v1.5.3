@@ -57,7 +57,7 @@ export default function BrandSelect({
   }, [open]);
 
   return (
-    <div ref={wrapRef} className={`relative z-[920] ${className}`}>
+    <div ref={wrapRef} className={`relative ${className}`} style={{ zIndex: "var(--z-dropdown)" }}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -78,7 +78,8 @@ export default function BrandSelect({
       {open && (
         <ul
           role="listbox"
-          className={`absolute z-[1100] mt-1.5 max-h-72 w-full overflow-auto rounded-[12px] border border-[var(--ui-border-soft)] bg-[var(--ui-elevated)] p-1 shadow-[var(--ui-shadow-floating)] ${menuClassName}`}
+          className={`token-menu absolute mt-1.5 max-h-72 w-full overflow-auto rounded-[12px] p-1 ${menuClassName}`}
+          style={{ zIndex: "calc(var(--z-dropdown) + 1)" }}
         >
           {normalized.map((o) => {
             const active = o.value === value;

@@ -107,7 +107,7 @@ export default function MidiPreview({ notes, durationSeconds, className = "" }: 
           <Play className="h-4 w-4" />
         )}
       </button>
-      <div className="relative h-14 flex-1 overflow-hidden rounded-input border border-surface bg-white">
+      <div className="relative h-14 flex-1 overflow-hidden rounded-input token-card border border-[var(--border-primary)]">
         {/* Horizontal pitch grid */}
         <svg
           viewBox={`0 0 100 ${pitchRange}`}

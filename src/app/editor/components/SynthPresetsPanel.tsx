@@ -119,7 +119,7 @@ export default function SynthPresetsPanel() {
               className={`rounded-card border p-3 text-left transition-colors ${
                 active
                   ? "border-primary/40 bg-primary/5"
-                  : "border-surface bg-white hover:border-primary/20"
+                  : "border-surface bg-[var(--surface-primary)] hover:border-primary/20"
               }`}
             >
               <div className="flex items-center justify-between">

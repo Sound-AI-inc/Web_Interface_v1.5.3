@@ -12,7 +12,6 @@ interface PromptInputProps {
   generateLabel?: string;
   mode?: "pro" | "lite";
   controls?: ReactNode;
-  activityChips?: ReactNode;
   layout?: "hero" | "dock";
   textareaId?: string;
 }
@@ -27,7 +26,6 @@ export default function PromptInput({
   generateLabel = "Create",
   mode = "pro",
   controls,
-  activityChips,
   layout = "hero",
   textareaId = "generator-composer-input",
 }: PromptInputProps) {
@@ -49,10 +47,6 @@ export default function PromptInput({
       }`}
     >
       <div className="relative z-[1]">
-        {activityChips && (
-          <div className="mb-3 flex flex-wrap items-center gap-2">{activityChips}</div>
-        )}
-
         <textarea
           id={textareaId}
           ref={textareaRef}

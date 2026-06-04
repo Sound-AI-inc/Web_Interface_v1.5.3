@@ -17,8 +17,8 @@ export default function GenerateButton({
 }: GenerateButtonProps) {
   const palette =
     mode === "lite"
-      ? "bg-[linear-gradient(135deg,#38bdf8_0%,#7dd3fc_60%,#bae6fd_100%)] shadow-[0_2px_16px_rgba(56,189,248,0.30)] text-[#0f0f12]"
-      : "bg-[linear-gradient(135deg,#ff3b6b_0%,#ff6b9d_60%,#ff9cc0_100%)] shadow-[0_0_32px_rgba(255,59,107,0.20)] text-white";
+      ? "bg-[var(--ui-create-gradient)] shadow-[0_2px_16px_var(--ui-glow)] text-on-accent"
+      : "bg-[var(--ui-create-gradient)] shadow-[0_0_32px_var(--ui-glow)] text-on-accent";
   return (
     <button
       type="button"

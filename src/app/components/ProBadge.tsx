@@ -15,7 +15,7 @@ export default function ProBadge() {
       <span
         className="relative inline-flex items-center gap-1.5 rounded-full px-3 py-1
           bg-size-200 animate-pro-shimmer
-          font-poppins text-[10px] font-bold uppercase tracking-[0.16em] text-white
+          font-poppins text-[10px] font-bold uppercase tracking-[0.16em] text-on-accent
           shadow-flat-sm animate-pro-pulse"
         aria-label="Pro mode active"
         style={{
@@ -27,7 +27,7 @@ export default function ProBadge() {
         Pro
         <span
           aria-hidden
-          className="ml-0.5 inline-block h-1.5 w-1.5 rounded-full bg-white animate-pro-dot"
+          className="ml-0.5 inline-block h-1.5 w-1.5 rounded-full bg-[var(--surface-primary)] animate-pro-dot"
         />
       </span>
     );

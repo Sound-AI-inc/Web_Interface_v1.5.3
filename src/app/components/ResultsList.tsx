@@ -87,7 +87,7 @@ export default function ResultsList({
               <div
                 key={stage}
                 className={`ui-surface-1 flex items-center gap-2 rounded-[16px] px-3 py-2 ${
-                  active ? "border-primary/25 bg-white/88" : "opacity-70"
+                  active ? "border-primary/25 bg-[var(--surface-primary)]/88" : "opacity-70"
                 }`}
               >
                 <span className="ui-status-dot" />
@@ -119,7 +119,7 @@ export default function ResultsList({
                 </p>
               </div>
               <div className="w-32 shrink-0">
-                <div className="h-2 overflow-hidden rounded-full bg-white/70 shadow-[inset_0_1px_2px_rgba(15,23,42,0.06)]">
+                <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-primary)]/70 shadow-[inset_0_1px_2px_rgba(15,23,42,0.06)]">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-primary via-accent to-primary transition-[width] duration-300"
                     style={{ width: `${Math.max(8, Math.round(generationProgress * 100))}%` }}
@@ -191,7 +191,7 @@ interface PendingResultCardProps {
 
 function PendingResultCard({ index, progress, stage }: PendingResultCardProps) {
   return (
-    <div className="ui-surface-1 flex items-center gap-4 rounded-card border-primary/15 bg-white/85 p-4">
+    <div className="ui-surface-1 flex items-center gap-4 rounded-card border-primary/15 bg-[var(--surface-primary)]/85 p-4">
       <div className="flex min-w-0 flex-1 items-center gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -224,7 +224,7 @@ function PendingResultCard({ index, progress, stage }: PendingResultCardProps) {
               ))}
               </div>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-white">
+            <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-primary)]">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-primary via-accent to-primary transition-[width] duration-300"
                 style={{ width: `${Math.max(8, Math.round(progress * 100))}%` }}

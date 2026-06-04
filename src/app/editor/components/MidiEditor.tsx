@@ -319,11 +319,11 @@ export default function MidiEditor() {
 
       <div
         ref={scrollerRef}
-        className="overflow-auto rounded-card border border-surface bg-white"
+        className="overflow-auto rounded-card token-card border border-[var(--border-primary)]"
         style={{ maxHeight: VIEWPORT_H }}
       >
         <div className="flex">
-          <div className="sticky left-0 z-10 w-12 shrink-0 border-r border-surface bg-white">
+          <div className="sticky left-0 z-10 w-12 shrink-0 border-r border-surface bg-[var(--surface-primary)]">
             {pitches.map((pitch) => {
               const name = midiToNoteName(pitch);
               const isBlack = name.includes("#");
@@ -333,7 +333,7 @@ export default function MidiEditor() {
                   key={pitch}
                   style={{ height: ROW_H }}
                   className={`flex items-center justify-center font-codec text-[9px] ${
-                    isBlack ? "bg-surface text-text/50" : "bg-white text-text/70"
+                    isBlack ? "bg-surface text-text/50" : "bg-[var(--surface-primary)] text-text/70"
                   } ${isC ? "font-semibold text-text" : ""}`}
                 >
                   {name}
@@ -354,7 +354,7 @@ export default function MidiEditor() {
                   <div
                     key={pitch}
                     className={`absolute left-0 right-0 border-b border-surface/80 ${
-                      isBlack ? "bg-surface-muted" : "bg-white"
+                      isBlack ? "bg-surface-muted" : "bg-[var(--surface-primary)]"
                     }`}
                     style={{ top: index * ROW_H, height: ROW_H }}
                   />
@@ -385,7 +385,7 @@ export default function MidiEditor() {
                     key={note.id}
                     onMouseDown={(event) => onNoteMouseDown(event, note)}
                     onDoubleClick={(event) => deleteNote(event, note.id)}
-                    className="absolute cursor-grab rounded bg-primary/80 text-white hover:bg-primary"
+                    className="absolute cursor-grab rounded bg-primary/80 text-on-accent hover:bg-primary"
                     style={{
                       left: note.start * PX_PER_SEC,
                       top: row * ROW_H + 1,
