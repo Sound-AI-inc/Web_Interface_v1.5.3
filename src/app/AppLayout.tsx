@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { X } from "lucide-react";
 import AppHeader from "./components/AppHeader";
+import ErrorBoundary from "./components/ErrorBoundary";
 import Sidebar from "./components/Sidebar";
 import AnimatedBackground from "./components/AnimatedBackground";
 import SettingsContent from "./components/SettingsContent";
@@ -42,8 +43,10 @@ export default function AppLayout() {
           />
           <div className="flex min-h-screen min-w-0 flex-1 flex-col">
             <AppHeader />
-            <main className="flex-1 overflow-x-hidden overflow-y-auto">
-              <Outlet />
+            <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[var(--background-primary)]">
+              <ErrorBoundary fallbackTitle="Workspace failed to load">
+                <Outlet />
+              </ErrorBoundary>
             </main>
           </div>
           <ShellModal open={settingsModalOpen} onClose={() => setSettingsModalOpen(false)} widthClassName="max-w-[1040px]">

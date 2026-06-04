@@ -11,6 +11,7 @@ import TypewriterPlaceholder from "../components/workspace/TypewriterPlaceholder
 import RecommendationCards, { type Recommendation } from "../components/workspace/RecommendationCards";
 import WorkspaceAssetPanel from "../components/workspace/WorkspaceAssetPanel";
 import {
+  selectActiveChat,
   useWorkspaceStore,
   type GenerationBatch,
 } from "../state/workspaceStore";
@@ -101,11 +102,27 @@ export default function AudioGenerator() {
   const isPro = mode === "pro";
 
   const activeChatId = useWorkspaceStore((s) => s.activeChatId);
-  const activeChat = useWorkspaceStore((s) => s.getActiveChat());
+  const chats = useWorkspaceStore((s) => s.chats);
+  const activeChat = useMemo(
+    () => selectActiveChat({ chats, activeChatId }),
+    [chats, activeChatId],
+  );
   const updateChat = useWorkspaceStore((s) => s.updateChat);
   const appendBatch = useWorkspaceStore((s) => s.appendBatch);
+  const createChat = useWorkspaceStore((s) => s.createChat);
+  const setActiveChat = useWorkspaceStore((s) => s.setActiveChat);
   const assetsPanelCollapsed = useWorkspaceStore((s) => s.assetsPanelCollapsed);
   const setAssetsPanelCollapsed = useWorkspaceStore((s) => s.setAssetsPanelCollapsed);
+
+  useEffect(() => {
+    if (chats.length === 0) {
+      createChat();
+      return;
+    }
+    if (!chats.some((c) => c.id === activeChatId)) {
+      setActiveChat(chats[0].id);
+    }
+  }, [chats, activeChatId, createChat, setActiveChat]);
 
   const history = activeChat?.history ?? [];
   const sessionAssets = activeChat?.sessionAssets ?? [];

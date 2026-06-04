@@ -1,22 +1,33 @@
 import { useState } from "react";
 import { ChevronDown, FolderKanban, MessageSquare, Plus, Star } from "lucide-react";
-import { useWorkspaceStore } from "../../state/workspaceStore";
+import { useMemo } from "react";
+import {
+  selectProjectChats,
+  selectRecentChats,
+  useWorkspaceStore,
+} from "../../state/workspaceStore";
 
 export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
   const projects = useWorkspaceStore((s) => s.projects);
+  const chats = useWorkspaceStore((s) => s.chats);
   const activeProjectId = useWorkspaceStore((s) => s.activeProjectId);
   const activeChatId = useWorkspaceStore((s) => s.activeChatId);
-  const recentChats = useWorkspaceStore((s) => s.getRecentChats());
   const setActiveProject = useWorkspaceStore((s) => s.setActiveProject);
   const setActiveChat = useWorkspaceStore((s) => s.setActiveChat);
   const createProject = useWorkspaceStore((s) => s.createProject);
   const createChat = useWorkspaceStore((s) => s.createChat);
-  const getProjectChats = useWorkspaceStore((s) => s.getProjectChats);
   const [projectsOpen, setProjectsOpen] = useState(true);
   const [chatsOpen, setChatsOpen] = useState(true);
 
-  const activeProjectChats = getProjectChats(activeProjectId);
-  const favoriteChats = recentChats.filter((c) => c.favoriteIds.length > 0 || c.savedIds.length > 0);
+  const activeProjectChats = useMemo(
+    () => selectProjectChats({ chats }, activeProjectId),
+    [chats, activeProjectId],
+  );
+  const recentChats = useMemo(() => selectRecentChats({ chats }), [chats]);
+  const favoriteChats = useMemo(
+    () => recentChats.filter((c) => c.favoriteIds.length > 0 || c.savedIds.length > 0),
+    [recentChats],
+  );
 
   if (collapsed) {
     return (

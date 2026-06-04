@@ -45,14 +45,16 @@ interface WorkspaceState {
   setActiveChat: (id: string) => void;
   updateChat: (chatId: string, patch: Partial<WorkspaceChat>) => void;
   appendBatch: (chatId: string, batch: GenerationBatch, assets: AudioResult[]) => void;
-  getActiveChat: () => WorkspaceChat | undefined;
-  getProjectChats: (projectId: string) => WorkspaceChat[];
-  getRecentChats: (limit?: number) => WorkspaceChat[];
 }
+
+type PersistedWorkspaceState = Pick<
+  WorkspaceState,
+  "projects" | "chats" | "activeProjectId" | "activeChatId" | "assetsPanelCollapsed"
+>;
 
 const DEFAULT_PROJECT_ID = "project-default";
 
-function seed(): Pick<WorkspaceState, "projects" | "chats" | "activeProjectId" | "activeChatId"> {
+function createSeed(): PersistedWorkspaceState & { assetsPanelCollapsed: boolean } {
   const now = Date.now();
   const chatId = `chat-${now}`;
   return {
@@ -76,14 +78,69 @@ function seed(): Pick<WorkspaceState, "projects" | "chats" | "activeProjectId" |
     ],
     activeProjectId: DEFAULT_PROJECT_ID,
     activeChatId: chatId,
+    assetsPanelCollapsed: false,
+  };
+}
+
+function normalizeChat(chat: Partial<WorkspaceChat>, fallbackProjectId: string): WorkspaceChat {
+  const now = Date.now();
+  return {
+    id: typeof chat.id === "string" ? chat.id : `chat-${now}`,
+    projectId: typeof chat.projectId === "string" ? chat.projectId : fallbackProjectId,
+    title: typeof chat.title === "string" ? chat.title : "New chat",
+    history: Array.isArray(chat.history) ? chat.history : [],
+    sessionAssets: Array.isArray(chat.sessionAssets) ? chat.sessionAssets : [],
+    favoriteIds: Array.isArray(chat.favoriteIds) ? chat.favoriteIds : [],
+    savedIds: Array.isArray(chat.savedIds) ? chat.savedIds : [],
+    createdAt: typeof chat.createdAt === "number" ? chat.createdAt : now,
+    updatedAt: typeof chat.updatedAt === "number" ? chat.updatedAt : now,
+  };
+}
+
+function repairPersistedState(
+  state: Partial<PersistedWorkspaceState> | undefined,
+): PersistedWorkspaceState & { assetsPanelCollapsed: boolean } {
+  const seed = createSeed();
+  if (!state) return seed;
+
+  const projects =
+    Array.isArray(state.projects) && state.projects.length > 0 ? state.projects : seed.projects;
+
+  const projectIds = new Set(projects.map((p) => p.id));
+  const fallbackProjectId = projects[0]?.id ?? DEFAULT_PROJECT_ID;
+
+  let chats = Array.isArray(state.chats)
+    ? state.chats.map((c) =>
+        normalizeChat(c as Partial<WorkspaceChat>, fallbackProjectId),
+      )
+    : seed.chats;
+
+  chats = chats.filter((c) => projectIds.has(c.projectId));
+  if (chats.length === 0) {
+    chats = seed.chats.map((c) => ({ ...c, projectId: fallbackProjectId }));
+  }
+
+  const activeProjectId = projectIds.has(state.activeProjectId ?? "")
+    ? (state.activeProjectId as string)
+    : fallbackProjectId;
+
+  const activeChatId = chats.some((c) => c.id === state.activeChatId)
+    ? (state.activeChatId as string)
+    : chats[0].id;
+
+  return {
+    projects,
+    chats,
+    activeProjectId,
+    activeChatId,
+    assetsPanelCollapsed: Boolean(state.assetsPanelCollapsed),
   };
 }
 
 export const useWorkspaceStore = create<WorkspaceState>()(
   persist(
     (set, get) => ({
-      ...seed(),
-      assetsPanelCollapsed: false,
+      ...createSeed(),
 
       setAssetsPanelCollapsed: (collapsed) => set({ assetsPanelCollapsed: collapsed }),
 
@@ -120,7 +177,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       setActiveProject: (id) => {
-        const chats = get().getProjectChats(id);
+        const chats = get()
+          .chats.filter((c) => c.projectId === id)
+          .sort((a, b) => b.updatedAt - a.updatedAt);
         set({
           activeProjectId: id,
           activeChatId: chats[0]?.id ?? get().activeChatId,
@@ -159,17 +218,43 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           }),
         }));
       },
-
-      getActiveChat: () => get().chats.find((c) => c.id === get().activeChatId),
-
-      getProjectChats: (projectId) =>
-        get()
-          .chats.filter((c) => c.projectId === projectId)
-          .sort((a, b) => b.updatedAt - a.updatedAt),
-
-      getRecentChats: (limit = 6) =>
-        [...get().chats].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, limit),
     }),
-    { name: "soundai-workspace-v1" },
+    {
+      name: "soundai-workspace-v1",
+      version: 2,
+      partialize: (state): PersistedWorkspaceState & { assetsPanelCollapsed: boolean } => ({
+        projects: state.projects,
+        chats: state.chats,
+        activeProjectId: state.activeProjectId,
+        activeChatId: state.activeChatId,
+        assetsPanelCollapsed: state.assetsPanelCollapsed,
+      }),
+      migrate: (persisted) => repairPersistedState(persisted as Partial<PersistedWorkspaceState>),
+      merge: (persisted, current) => ({
+        ...current,
+        ...repairPersistedState(persisted as Partial<PersistedWorkspaceState>),
+      }),
+    },
   ),
 );
+
+/** Stable selectors — never call store methods inside useWorkspaceStore(selector). */
+export function selectActiveChat(state: {
+  chats: WorkspaceChat[];
+  activeChatId: string;
+}): WorkspaceChat | undefined {
+  return state.chats.find((c) => c.id === state.activeChatId);
+}
+
+export function selectProjectChats(
+  state: { chats: WorkspaceChat[] },
+  projectId: string,
+): WorkspaceChat[] {
+  return state.chats
+    .filter((c) => c.projectId === projectId)
+    .sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
+export function selectRecentChats(state: { chats: WorkspaceChat[] }, limit = 6): WorkspaceChat[] {
+  return [...state.chats].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, limit);
+}
