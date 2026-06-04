@@ -5,6 +5,22 @@
 @layer base {
   :root {
     --radius: 0.5rem;
+    /* Semantic design tokens */
+    --background-primary: #0f0f12;
+    --background-secondary: #0e1016;
+    --surface-primary: #18181c;
+    --surface-secondary: #1e1e24;
+    --surface-elevated: #22222a;
+    --border-primary: rgba(255, 255, 255, 0.08);
+    --border-secondary: rgba(255, 255, 255, 0.14);
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.55);
+    --text-muted: rgba(255, 255, 255, 0.3);
+    --accent-primary: #ff3b6b;
+    --accent-secondary: #ff9cc0;
+    --success: #34d399;
+    --warning: #fbbf24;
+    --error: #f87171;
     --color-primary: 255 59 107;
     --color-primary-rgb: 255, 59, 107;
     --color-primary-soft: 255 156 192;
@@ -34,6 +50,18 @@
     --ui-shimmer-b: rgba(255, 255, 255, 0.1);
   }
   .theme-pro {
+    --background-primary: #0f0f12;
+    --background-secondary: #0e1016;
+    --surface-primary: #18181c;
+    --surface-secondary: #1e1e24;
+    --surface-elevated: #22222a;
+    --border-primary: rgba(255, 255, 255, 0.08);
+    --border-secondary: rgba(255, 255, 255, 0.14);
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.55);
+    --text-muted: rgba(255, 255, 255, 0.3);
+    --accent-primary: #ff3b6b;
+    --accent-secondary: #ff9cc0;
     --color-primary: 255 59 107;
     --color-primary-rgb: 255, 59, 107;
     --color-primary-soft: 255 156 192;
@@ -61,6 +89,18 @@
     --ui-accent-gradient: linear-gradient(135deg, #ff3b6b 0%, #ff9cc0 100%);
   }
   .theme-lite {
+    --background-primary: #f4f5f7;
+    --background-secondary: #eef0f4;
+    --surface-primary: #ffffff;
+    --surface-secondary: #ffffff;
+    --surface-elevated: #ffffff;
+    --border-primary: rgba(0, 0, 0, 0.08);
+    --border-secondary: rgba(0, 0, 0, 0.13);
+    --text-primary: #0f0f12;
+    --text-secondary: rgba(15, 15, 18, 0.55);
+    --text-muted: rgba(15, 15, 18, 0.35);
+    --accent-primary: #38bdf8;
+    --accent-secondary: #bae6fd;
     --color-primary: 56 189 248;
     --color-primary-rgb: 56, 189, 248;
     --color-primary-soft: 186 230 253;
@@ -107,25 +147,28 @@
 @layer components {
   /* ---- Dashboard design system (app/*) ---- */
   .app-card {
-    @apply bg-white border border-surface rounded-card shadow-flat-sm;
-    background: linear-gradient(180deg, var(--ui-panel-strong), rgba(255, 255, 255, 0.76));
-    border-color: rgba(255, 255, 255, 0.58);
+    @apply rounded-card;
+    background: var(--surface-primary);
+    border: 1px solid var(--border-primary);
     box-shadow: var(--ui-shadow-soft);
+    backdrop-filter: blur(24px);
   }
   .app-card-muted {
-    @apply bg-surface-muted border border-surface rounded-card;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.48));
-    border-color: rgba(255, 255, 255, 0.45);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    @apply rounded-card;
+    background: var(--surface-secondary);
+    border: 1px solid var(--border-primary);
+    box-shadow: var(--ui-shadow-inset);
   }
   .app-input {
-    @apply w-full rounded-input border border-surface bg-white px-4 py-3 text-sm
-      font-codec text-text placeholder:text-text/40
+    @apply w-full rounded-input px-4 py-3 text-sm font-codec
       focus:outline-none focus:border-primary/60 focus:ring-4 focus:ring-primary/10
-      transition-colors;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.72));
-    border-color: rgba(255, 255, 255, 0.56);
-    box-shadow: var(--ui-shadow-soft), var(--ui-shadow-inset);
+      transition-colors duration-200;
+    background: var(--surface-secondary);
+    border: 1px solid var(--border-primary);
+    color: var(--text-primary);
+  }
+  .app-input::placeholder {
+    color: var(--text-muted);
   }
   .app-btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-button bg-primary px-4 py-2.5
@@ -135,10 +178,15 @@
       transition-colors;
   }
   .app-btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-button border border-surface bg-white px-4 py-2.5
-      font-poppins text-sm font-medium text-text
-      hover:border-primary/40 hover:text-primary
-      transition-colors;
+    @apply inline-flex items-center justify-center gap-2 rounded-button px-4 py-2.5
+      font-poppins text-sm font-medium transition-colors duration-200;
+    background: var(--surface-secondary);
+    border: 1px solid var(--border-primary);
+    color: var(--text-primary);
+  }
+  .app-btn-ghost:hover {
+    border-color: rgba(var(--color-primary-rgb), 0.4);
+    color: rgb(var(--color-primary));
   }
   .app-chip {
     @apply inline-flex items-center gap-1.5 rounded-full border border-surface
@@ -194,14 +242,14 @@
     isolation: isolate;
   }
   .ui-surface-1 {
-    background: linear-gradient(180deg, var(--ui-panel-strong), rgba(255, 255, 255, 0.76));
-    border: 1px solid var(--ui-border-soft);
+    background: var(--surface-primary);
+    border: 1px solid var(--border-primary);
     box-shadow: var(--ui-shadow-soft), var(--ui-shadow-inset);
     backdrop-filter: blur(14px);
   }
   .ui-surface-2 {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.42));
-    border: 1px solid var(--ui-border-soft);
+    background: var(--surface-secondary);
+    border: 1px solid var(--border-primary);
     box-shadow:
       0 0 0 1px rgba(var(--color-primary-rgb), 0.025),
       var(--ui-shadow-ambient),
@@ -209,8 +257,8 @@
     backdrop-filter: blur(18px);
   }
   .ui-surface-3 {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.58));
-    border: 1px solid var(--ui-border-strong);
+    background: var(--surface-elevated);
+    border: 1px solid var(--border-secondary);
     box-shadow:
       0 0 0 1px rgba(var(--color-primary-rgb), 0.04),
       0 0 42px rgba(var(--color-primary-rgb), 0.08),
@@ -455,10 +503,10 @@
   .composer-shell {
     position: relative;
     overflow: hidden;
-    border: 1px solid var(--ui-border-soft);
-    background: var(--ui-panel-strong);
+    border: 1px solid var(--border-primary);
+    background: var(--background-secondary);
     box-shadow: var(--ui-shadow-floating);
-    backdrop-filter: blur(20px);
+    backdrop-filter: blur(24px);
   }
   .composer-shell::before {
     content: "";
@@ -615,6 +663,86 @@
     vertical-align: bottom;
     animation: generatingDots 1.2s steps(4, end) infinite;
   }
+  .workspace-layout {
+    background: var(--background-primary);
+  }
+  .workspace-conversation {
+    background: var(--background-primary);
+  }
+  .workspace-dock {
+    background: linear-gradient(180deg, transparent 0%, var(--background-primary) 28%);
+  }
+  .assistant-bubble {
+    border: 1px solid var(--border-primary);
+    border-radius: 20px 20px 20px 4px;
+    background: var(--surface-primary);
+    padding: 12px 16px;
+  }
+  .timeline-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 9999px;
+    border: 1px solid var(--border-primary);
+    background: var(--surface-secondary);
+    padding: 4px 10px;
+    font-family: Inter, sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--success);
+  }
+  .timeline-status[data-state="loading"] {
+    color: var(--text-secondary);
+  }
+  .recommendation-card {
+    border: 1px solid var(--border-primary);
+    border-radius: 16px;
+    background: var(--surface-primary);
+    padding: 14px 16px;
+    transition:
+      border-color 220ms ease,
+      box-shadow 220ms ease,
+      transform 220ms ease;
+  }
+  .recommendation-card:hover {
+    border-color: rgba(var(--color-primary-rgb), 0.45);
+    box-shadow: 0 0 24px var(--ui-glow);
+    transform: translateY(-2px);
+  }
+  .asset-panel-row:hover {
+    background: var(--surface-secondary);
+  }
+  .typewriter-cursor {
+    display: inline-block;
+    margin-left: 2px;
+    color: rgb(var(--color-primary));
+    animation: cursorBlink 1s step-end infinite;
+  }
+  .auth-brand-panel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    background: var(--background-secondary);
+    border: 1px solid var(--border-primary);
+  }
+  .auth-brand-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(60% 80% at 20% 20%, rgba(var(--color-primary-rgb), 0.18), transparent 60%),
+      radial-gradient(50% 70% at 80% 80%, rgba(var(--color-primary-soft-rgb), 0.12), transparent 55%);
+    pointer-events: none;
+    animation: authGradientDrift 12s ease-in-out infinite alternate;
+  }
+  .auth-card {
+    width: min(560px, 100%);
+    border-radius: 24px;
+    border: 1px solid var(--border-primary);
+    background: var(--surface-primary);
+    backdrop-filter: blur(24px);
+    box-shadow: var(--ui-shadow-floating);
+  }
 }
 
 @keyframes fadeInUp {
@@ -751,5 +879,24 @@
   }
   100% {
     width: 1.1em;
+  }
+}
+
+@keyframes cursorBlink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes authGradientDrift {
+  0% {
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    transform: scale(1.04) translateY(-8px);
   }
 }

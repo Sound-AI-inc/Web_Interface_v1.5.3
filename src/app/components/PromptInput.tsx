@@ -14,7 +14,6 @@ interface PromptInputProps {
   controls?: ReactNode;
   activityChips?: ReactNode;
   layout?: "hero" | "dock";
-  onModeChange?: (mode: "pro" | "lite") => void;
   textareaId?: string;
 }
 
@@ -30,7 +29,6 @@ export default function PromptInput({
   controls,
   activityChips,
   layout = "hero",
-  onModeChange,
   textareaId = "generator-composer-input",
 }: PromptInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -51,23 +49,9 @@ export default function PromptInput({
       }`}
     >
       <div className="relative z-[1]">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <div className="mode-toggle" aria-label="Interface mode">
-            {(["lite", "pro"] as const).map((nextMode) => (
-              <button
-                key={nextMode}
-                type="button"
-                className="mode-toggle-button"
-                data-active={mode === nextMode ? "true" : "false"}
-                onClick={() => onModeChange?.(nextMode)}
-                disabled={disabled}
-              >
-                {nextMode === "lite" ? "Lite" : "Pro"}
-              </button>
-            ))}
-          </div>
-          {activityChips}
-        </div>
+        {activityChips && (
+          <div className="mb-3 flex flex-wrap items-center gap-2">{activityChips}</div>
+        )}
 
         <textarea
           id={textareaId}
@@ -77,7 +61,7 @@ export default function PromptInput({
           disabled={disabled}
           rows={1}
           placeholder={placeholder}
-          className="composer-field w-full resize-none bg-transparent px-1 py-1 font-codec text-[15px] leading-7 text-text placeholder:text-text/35 focus:outline-none disabled:cursor-not-allowed disabled:text-text/50"
+          className="composer-field w-full resize-none bg-transparent px-1 py-1 font-codec text-[15px] leading-7 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
         />
 
         <div className="mt-4 flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

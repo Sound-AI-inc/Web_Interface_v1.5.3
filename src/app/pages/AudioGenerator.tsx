@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Coins, Sparkles } from "lucide-react";
-import PageContainer from "../components/PageContainer";
+import { Check, Pencil, RefreshCw, Sparkles } from "lucide-react";
 import PromptInput from "../components/PromptInput";
 import BrandSelect from "../components/BrandSelect";
 import type { AudioResult } from "../data/mock";
@@ -8,6 +7,9 @@ import { useInterfaceMode } from "../hooks/useInterfaceMode";
 import type { GenerationType } from "../lib/promptGeneration";
 import { generateResults } from "../lib/generationGateway";
 import ResultCard, { toCardItem } from "../components/ResultCard";
+import TypewriterPlaceholder from "../components/workspace/TypewriterPlaceholder";
+import RecommendationCards, { type Recommendation } from "../components/workspace/RecommendationCards";
+import WorkspaceAssetPanel from "../components/workspace/WorkspaceAssetPanel";
 
 const LITE_TYPES = ["Audio Sample"] as const;
 const LITE_MODELS_BY_TYPE: Record<(typeof LITE_TYPES)[number], string[]> = {
@@ -50,16 +52,8 @@ const GENERATION_STAGES = [
   "Generating outputs",
   "Finalizing results",
 ] as const;
-const QUICK_IDEAS = [
-  "Dark techno kick with sub tail",
-  "Ambient texture for intro, 8 bars",
-  "Serum bass preset, aggressive mid-range",
-  "MIDI chord progression in D minor, 90 BPM",
-];
 const FORMAT_TAGS = ["Audio Sample", "MIDI", "VST Preset"];
 const MIN_GENERATION_VISUAL_MS = 1800;
-const CREDITS_TOTAL = 50;
-const CREDITS_REMAINING = 42;
 const COMPOSER_INPUT_ID = "generator-composer-input";
 
 interface GenerationBatch {
@@ -104,8 +98,14 @@ function sleep(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
+function mapRecommendationType(rec: Recommendation) {
+  if (rec.type === "MIDI") return "MIDI Melody";
+  if (rec.type === "VST Preset") return "VST Preset";
+  return "Audio Sample";
+}
+
 export default function AudioGenerator() {
-  const { mode, setMode } = useInterfaceMode();
+  const { mode } = useInterfaceMode();
   const isPro = mode === "pro";
 
   const typeOptions: string[] = useMemo(
@@ -153,6 +153,8 @@ export default function AudioGenerator() {
   }, [formatOptions, format]);
 
   const [saved, setSaved] = useState<Set<string>>(new Set());
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [sessionAssets, setSessionAssets] = useState<AudioResult[]>([]);
   const [history, setHistory] = useState<GenerationBatch[]>([]);
   const [pending, setPending] = useState<PendingGeneration | null>(null);
   const [generationWarning, setGenerationWarning] = useState<string | null>(null);
@@ -176,21 +178,37 @@ export default function AudioGenerator() {
   );
 
   const handleAddToLibrary = (item: AudioResult) => {
-    setSaved((prev) => {
+    setSaved((prev) => new Set(prev).add(item.id));
+  };
+
+  const handleToggleFavorite = (id: string) => {
+    setFavorites((prev) => {
       const next = new Set(prev);
-      next.add(item.id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
 
-  const handleRemix = (item: AudioResult) => {
-    setPrompt((value) =>
-      value ? `${value} - reuse ${item.title}` : `Reuse ${item.title} as a new variation`,
+  const handleRemix = (item: AudioResult, batchPrompt?: string) => {
+    const base = batchPrompt ?? prompt;
+    setPrompt(
+      base
+        ? `${base} — make ${item.title} harder and more aggressive`
+        : `Make ${item.title} harder and more aggressive`,
     );
-    document.getElementById("audio-generator-composer")?.scrollIntoView({
-      behavior: "smooth",
-      block: "end",
-    });
+    document.getElementById(COMPOSER_INPUT_ID)?.focus();
+  };
+
+  const handleRegenerate = (batch: GenerationBatch) => {
+    setPrompt(batch.prompt);
+    document.getElementById(COMPOSER_INPUT_ID)?.focus();
+  };
+
+  const handleRecommendation = (rec: Recommendation) => {
+    setPrompt(rec.prompt);
+    setType(mapRecommendationType(rec));
+    document.getElementById(COMPOSER_INPUT_ID)?.focus();
   };
 
   const handleGenerate = async () => {
@@ -246,7 +264,6 @@ export default function AudioGenerator() {
       }
 
       setGenerationWarning(response.warning ?? null);
-      const createdAt = new Date();
       const batch: GenerationBatch = {
         id: pendingId,
         prompt: promptValue,
@@ -254,11 +271,12 @@ export default function AudioGenerator() {
         type,
         model: resolvedModel,
         format: resolvedFormat,
-        createdAt: formatBatchTimestamp(createdAt),
+        createdAt: formatBatchTimestamp(new Date()),
         items: response.items,
       };
 
       setHistory((prev) => [...prev, batch]);
+      setSessionAssets((prev) => [...prev, ...response.items]);
       setPrompt("");
       setPending(null);
     } catch (error) {
@@ -300,83 +318,52 @@ export default function AudioGenerator() {
     </div>
   );
 
-  const creditsLow = CREDITS_REMAINING / CREDITS_TOTAL < 0.2;
-
   return (
-    <PageContainer
-      headerLayout="brand"
-      userInitials="D"
-      title={hasFeed ? "" : "Audio Generator"}
-      actions={
-        <div
-          className={`credits-pill flex items-center gap-2 ${creditsLow ? "credits-pill--low" : ""}`}
-          title={creditsLow ? "Low credits — upgrade plan" : undefined}
-        >
-          <Coins className="h-4 w-4 text-primary" />
-          <span>
-            <span className={creditsLow ? "text-primary" : ""}>{CREDITS_REMAINING}</span>{" "}
-            <span className="text-text/55">Credits</span>
-          </span>
-        </div>
-      }
-    >
-      <div className="generator-page flex flex-col">
-        {!hasFeed ? (
-          <section className="flex min-h-[calc(100vh-112px)] flex-col items-center justify-center px-2 pb-8">
-            <div className="mx-auto w-full max-w-[760px] text-center">
-              <h1 className="generator-hero-title font-syne text-[40px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[48px]">
-                Create your next sound
-              </h1>
-              <p className="mx-auto mt-4 max-w-[560px] font-codec text-base leading-7 text-text/55">
-                Describe the mood, instruments, texture and output you want
-              </p>
-              <div className="mx-auto mt-10 w-full max-w-[680px]">
-                <PromptInput
-                  value={prompt}
-                  onChange={setPrompt}
-                  onGenerate={handleGenerate}
-                  disabled={isGenerating}
-                  loading={isGenerating}
-                  generateLabel={isGenerating ? "Generating" : "Create"}
-                  mode={isPro ? "pro" : "lite"}
-                  layout="hero"
-                  controls={controls}
-                  activityChips={activityChips}
-                  onModeChange={(nextMode) => setMode(nextMode)}
-                />
+    <div className="workspace-layout flex h-[calc(100vh-64px)] flex-col">
+      <div className="flex min-h-0 flex-1">
+        <section className="workspace-conversation flex min-w-0 flex-1 flex-col">
+          <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
+            {!hasFeed ? (
+              <div className="mx-auto flex max-w-3xl flex-col items-center pt-[8vh] text-center">
+                <h1 className="generator-hero-title font-syne text-[36px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[44px]">
+                  Your AI production workspace
+                </h1>
+                <p className="mt-4 max-w-lg font-codec text-base text-[var(--text-secondary)]">
+                  Collaborate with SoundAI — every prompt becomes part of your session history.
+                </p>
+                <div className="mt-8 w-full max-w-xl rounded-[16px] border border-[var(--border-primary)] bg-[var(--surface-primary)] px-5 py-4 text-left">
+                  <TypewriterPlaceholder />
+                </div>
+                <div className="mt-10 w-full">
+                  <RecommendationCards onSelect={handleRecommendation} />
+                </div>
               </div>
-              <QuickIdeas onPick={setPrompt} />
-              {generationWarning && (
-                <p className="mt-4 font-codec text-sm text-primary">{generationWarning}</p>
-              )}
-            </div>
-          </section>
-        ) : (
-          <section className="feed-enter mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-2 pb-[120px] pt-6">
-            {history.map((batch) => (
-              <GenerationThread
-                key={batch.id}
-                batch={batch}
-                saved={saved}
-                onAddToLibrary={handleAddToLibrary}
-                onRemix={handleRemix}
-              />
-            ))}
-            {pending && <PendingThread pending={pending} />}
-            {generationWarning && (
-              <div className="generation-card rounded-[20px] px-4 py-3 font-codec text-sm text-primary">
-                {generationWarning}
+            ) : (
+              <div className="feed-enter mx-auto flex w-full max-w-3xl flex-col gap-8 pb-6">
+                {history.map((batch) => (
+                  <GenerationTimeline
+                    key={batch.id}
+                    batch={batch}
+                    saved={saved}
+                    favorites={favorites}
+                    onAddToLibrary={handleAddToLibrary}
+                    onToggleFavorite={handleToggleFavorite}
+                    onRemix={(item) => handleRemix(item, batch.prompt)}
+                    onRegenerate={() => handleRegenerate(batch)}
+                  />
+                ))}
+                {pending && <PendingTimeline pending={pending} />}
+                {generationWarning && (
+                  <div className="generation-card rounded-[20px] px-4 py-3 font-codec text-sm text-primary">
+                    {generationWarning}
+                  </div>
+                )}
               </div>
             )}
-          </section>
-        )}
+          </div>
 
-        {hasFeed && (
-          <div
-            id="audio-generator-composer"
-            className="composer-dock-enter sticky bottom-0 z-20 -mx-4 mt-auto sm:-mx-6"
-          >
-            <div className="composer-dock-surface mx-auto max-w-[calc(100%-32px)] rounded-t-[24px] border-t border-[var(--ui-border-soft)] px-2 pb-0 pt-7 sm:max-w-4xl">
+          <div id="audio-generator-composer" className="workspace-dock shrink-0 px-4 pb-4 pt-3 sm:px-6">
+            <div className="composer-dock-enter mx-auto max-w-3xl">
               <PromptInput
                 value={prompt}
                 onChange={setPrompt}
@@ -388,20 +375,26 @@ export default function AudioGenerator() {
                 layout="dock"
                 controls={controls}
                 activityChips={activityChips}
-                onModeChange={(nextMode) => setMode(nextMode)}
+                textareaId={COMPOSER_INPUT_ID}
               />
             </div>
           </div>
-        )}
+        </section>
+
+        <WorkspaceAssetPanel
+          sessionAssets={sessionAssets}
+          favoriteIds={favorites}
+          onToggleFavorite={handleToggleFavorite}
+        />
       </div>
-    </PageContainer>
+    </div>
   );
 }
 
 function PromptControl({ label, value, options, onChange }: PromptControlConfig) {
   return (
     <div className="min-w-[136px] shrink-0">
-      <div className="mb-1 px-1 font-codec text-[10px] font-semibold uppercase tracking-[0.04em] text-text/40">
+      <div className="mb-1 px-1 font-codec text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--text-muted)]">
         {label}
       </div>
       <BrandSelect
@@ -414,126 +407,167 @@ function PromptControl({ label, value, options, onChange }: PromptControlConfig)
   );
 }
 
-function QuickIdeas({ onPick }: { onPick: (prompt: string) => void }) {
-  return (
-    <div className="mt-6">
-      <div className="mb-3 font-codec text-[13px] text-text/30">Try an idea →</div>
-      <div className="flex flex-wrap justify-center gap-2">
-        {QUICK_IDEAS.map((idea) => (
-          <button
-            key={idea}
-            type="button"
-            onClick={() => {
-              onPick(idea);
-              const input = document.getElementById(COMPOSER_INPUT_ID);
-              if (input instanceof HTMLTextAreaElement) {
-                input.focus();
-              }
-            }}
-            className="quick-chip px-[14px] py-[7px] font-codec text-[13px]"
-          >
-            {idea}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function GenerationThread({
+function GenerationTimeline({
   batch,
   saved,
+  favorites,
   onAddToLibrary,
+  onToggleFavorite,
   onRemix,
+  onRegenerate,
 }: {
   batch: GenerationBatch;
   saved: Set<string>;
+  favorites: Set<string>;
   onAddToLibrary: (item: AudioResult) => void;
+  onToggleFavorite: (id: string) => void;
   onRemix: (item: AudioResult) => void;
+  onRegenerate: () => void;
 }) {
+  const label =
+    batch.type === "Audio Sample"
+      ? `${batch.count} Audio Sample${batch.count > 1 ? "s" : ""} Generated`
+      : batch.type === "MIDI Melody"
+        ? `${batch.count} MIDI File${batch.count > 1 ? "s" : ""} Generated`
+        : `${batch.count} VST Preset${batch.count > 1 ? "s" : ""} Generated`;
+
   return (
-    <article className="space-y-3">
+    <article className="space-y-4">
       <div className="flex justify-end">
-        <div className="user-bubble max-w-[70%] px-4 py-3 font-codec text-sm leading-6 text-text">
+        <div className="user-bubble max-w-[85%] px-4 py-3 font-codec text-sm leading-6 text-[var(--text-primary)]">
           {batch.prompt}
         </div>
       </div>
-      <div className="generation-card rounded-[20px] p-4 md:p-5">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="font-codec text-sm font-semibold text-text">Generation outputs</div>
-            <div className="mt-1 font-mono text-[11px] text-text/45">
-              {batch.type} / {batch.model} / {batch.format} / {batch.createdAt}
+      <div className="flex justify-start">
+        <div className="assistant-bubble max-w-full space-y-4 md:max-w-[95%]">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="font-codec text-sm font-semibold text-[var(--text-primary)]">
+                SoundAI
+              </div>
+              <div className="mt-1 font-codec text-[13px] text-[var(--text-secondary)]">{label}</div>
+              <div className="mt-1 font-mono text-[11px] text-[var(--text-muted)]">
+                {batch.model} · {batch.format} · {batch.createdAt}
+              </div>
             </div>
+            <span className="timeline-status">
+              <Check className="h-3 w-3" />
+              Completed
+            </span>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--ui-border-soft)] bg-[var(--ui-input)] px-3 py-1.5 font-codec text-[12px] text-text/55">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
-            {batch.count} asset{batch.count > 1 ? "s" : ""}
+          <div className="flex flex-wrap gap-2">
+            <TimelineAction icon={RefreshCw} label="Regenerate" onClick={onRegenerate} />
           </div>
-        </div>
-        <div className="space-y-3">
-          {batch.items.map((item, index) => (
-            <div key={item.id} style={{ animationDelay: `${index * 80}ms` }}>
-              <ResultCard
-                item={toCardItem(item)}
-                savedToLibrary={saved.has(item.id)}
-                onAddToLibrary={() => onAddToLibrary(item)}
-                onRemix={() => onRemix(item)}
-              />
-            </div>
-          ))}
+          <div className="space-y-3">
+            {batch.items.map((item, index) => (
+              <div key={item.id} className="asset-enter" style={{ animationDelay: `${index * 80}ms` }}>
+                <ResultCard
+                  item={toCardItem(item)}
+                  savedToLibrary={saved.has(item.id)}
+                  onAddToLibrary={() => onAddToLibrary(item)}
+                  onRemix={() => onRemix(item)}
+                />
+                <div className="mt-2 flex flex-wrap gap-2 pl-1">
+                  <TimelineAction
+                    icon={Pencil}
+                    label="Edit"
+                    onClick={() => onRemix(item)}
+                  />
+                  {favorites.has(item.id) ? (
+                    <span className="font-codec text-[11px] text-primary">Favorited</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => onToggleFavorite(item.id)}
+                      className="font-codec text-[11px] text-[var(--text-muted)] hover:text-primary"
+                    >
+                      Favorite
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </article>
   );
 }
 
-function PendingThread({ pending }: { pending: PendingGeneration }) {
+function PendingTimeline({ pending }: { pending: PendingGeneration }) {
   return (
-    <article className="space-y-3">
+    <article className="space-y-4">
       <div className="flex justify-end">
-        <div className="user-bubble max-w-[70%] px-4 py-3 font-codec text-sm leading-6 text-text">
+        <div className="user-bubble max-w-[85%] px-4 py-3 font-codec text-sm leading-6 text-[var(--text-primary)]">
           {pending.prompt}
         </div>
       </div>
-      <div className="generation-card rounded-[20px] p-4 md:p-5">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="font-codec text-sm font-semibold text-text">
-              Generating {pending.type}
-              <span className="generating-dots" aria-hidden>
-                ...
-              </span>
+      <div className="flex justify-start">
+        <div className="assistant-bubble max-w-full space-y-4 md:max-w-[95%]">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="font-codec text-sm font-semibold text-[var(--text-primary)]">
+                SoundAI
+              </div>
+              <div className="mt-1 font-codec text-[13px] text-[var(--text-secondary)]">
+                Generating {pending.type.toLowerCase()}
+                <span className="generating-dots" aria-hidden>
+                  ...
+                </span>
+              </div>
+              <div className="mt-1 font-mono text-[11px] text-[var(--text-muted)]">
+                {pending.stage} · {Math.round(pending.progress * 100)}%
+              </div>
             </div>
-            <div className="mt-1 font-mono text-[11px] text-text/45">
-              {pending.stage} / {Math.round(pending.progress * 100)}%
-            </div>
+            <span className="timeline-status" data-state="loading">
+              <Sparkles className="h-3 w-3 animate-pulse text-primary" />
+              In progress
+            </span>
           </div>
-          <div className="h-2 w-32 overflow-hidden rounded-full bg-[var(--ui-input)]">
+          <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-secondary)]">
             <div
               className="h-full rounded-full bg-[var(--ui-create-gradient)] transition-[width] duration-300"
               style={{ width: `${Math.max(8, Math.round(pending.progress * 100))}%` }}
             />
           </div>
-        </div>
-        <div className="space-y-3">
-          {Array.from({ length: pending.count }, (_, index) => (
-            <div key={`${pending.id}-${index}`} className="rounded-[20px] border border-[var(--ui-border-soft)] bg-[var(--ui-input)] p-4">
-              <div className="skeleton-line h-12 rounded-[14px]" />
-              <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_120px_90px]">
-                <div className="skeleton-line h-3 rounded-full" />
-                <div className="skeleton-line h-3 rounded-full" />
-                <div className="skeleton-line h-3 rounded-full" />
+          <div className="space-y-3">
+            {Array.from({ length: pending.count }, (_, index) => (
+              <div
+                key={`${pending.id}-${index}`}
+                className="rounded-[20px] border border-[var(--border-primary)] bg-[var(--surface-secondary)] p-4"
+              >
+                <div className="skeleton-line h-12 rounded-[14px]" />
+                <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_120px_90px]">
+                  <div className="skeleton-line h-3 rounded-full" />
+                  <div className="skeleton-line h-3 rounded-full" />
+                  <div className="skeleton-line h-3 rounded-full" />
+                </div>
               </div>
-              <div className="mt-4 flex gap-2">
-                <div className="skeleton-line h-9 w-20 rounded-full" />
-                <div className="skeleton-line h-9 w-28 rounded-full" />
-                <div className="skeleton-line h-9 w-20 rounded-full" />
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </article>
+  );
+}
+
+function TimelineAction({
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  icon: typeof RefreshCw;
+  label: string;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="composer-control inline-flex h-8 items-center gap-1.5 rounded-full px-3 font-codec text-[11px] font-semibold"
+    >
+      <Icon className="h-3 w-3" />
+      {label}
+    </button>
   );
 }

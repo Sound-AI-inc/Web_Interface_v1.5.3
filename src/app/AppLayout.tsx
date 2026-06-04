@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { X } from "lucide-react";
+import AppHeader from "./components/AppHeader";
 import Sidebar from "./components/Sidebar";
 import AnimatedBackground from "./components/AnimatedBackground";
 import SettingsContent from "./components/SettingsContent";
@@ -32,9 +33,12 @@ export default function AppLayout() {
             onOpenSettings={() => setSettingsModalOpen(true)}
             onOpenUpgrade={() => setUpgradeModalOpen(true)}
           />
-          <main className="flex-1 overflow-x-hidden">
-            <Outlet />
-          </main>
+          <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+            <AppHeader />
+            <main className="flex-1 overflow-x-hidden overflow-y-auto">
+              <Outlet />
+            </main>
+          </div>
           <ShellModal open={settingsModalOpen} onClose={() => setSettingsModalOpen(false)} widthClassName="max-w-[1040px]">
             <SettingsContent onSave={() => setSettingsModalOpen(false)} compact />
           </ShellModal>

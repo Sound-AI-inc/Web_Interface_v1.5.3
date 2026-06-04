@@ -27,7 +27,6 @@ import {
   Info,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useInterfaceMode } from "../hooks/useInterfaceMode";
 import { useLanguage } from "../i18n/LanguageProvider";
 import { LANGUAGES, type LanguageCode } from "../i18n/translations";
 
@@ -286,12 +285,9 @@ export default function Sidebar({
   onOpenSettings: () => void;
   onOpenUpgrade: () => void;
 }) {
-  const { mode, toggle } = useInterfaceMode();
-  const { t } = useLanguage();
   const [collapsed, setCollapsed] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const width = collapsed ? "w-[56px]" : "w-[216px]";
-  const isPro = mode === "pro";
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -376,48 +372,6 @@ export default function Sidebar({
           ))}
         </div>
       </nav>
-
-      {/* Interface Mode toggle */}
-      <div className={`border-t border-[var(--ui-border-soft)] ${collapsed ? "p-2" : "px-4 py-3"}`}>
-        {!collapsed ? (
-          <>
-            <div className="mb-2 flex items-center justify-between">
-              <span className="font-poppins text-[11px] font-medium text-text/60">
-                {t("sidebar.interfaceMode")}
-              </span>
-              <span
-                className={`font-poppins text-[10px] font-bold uppercase tracking-[0.14em] ${
-                  isPro ? "text-primary" : "text-text/40"
-                }`}
-              >
-                {isPro ? "Pro" : "Lite"}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={toggle}
-              className="mode-toggle"
-              aria-label="Toggle interface mode"
-            >
-              <span className="mode-toggle-button" data-active={!isPro ? "true" : "false"}>Lite</span>
-              <span className="mode-toggle-button" data-active={isPro ? "true" : "false"}>Pro</span>
-            </button>
-          </>
-        ) : (
-          <button
-            type="button"
-            onClick={toggle}
-            title={isPro ? "Pro" : "Lite"}
-            className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full ${
-              isPro ? "bg-primary text-white animate-pro-pulse" : "bg-[var(--ui-input)] text-text"
-            }`}
-          >
-            <span className="font-poppins text-[9px] font-bold">
-              {isPro ? "P" : "L"}
-            </span>
-          </button>
-        )}
-      </div>
 
       {/* User profile docked at very bottom */}
       <div

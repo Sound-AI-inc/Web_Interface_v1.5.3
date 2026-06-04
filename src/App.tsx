@@ -16,8 +16,8 @@ const OAuthRegistration = lazy(() => import("./app/pages/OAuthRegistration"));
 
 function RouteFallback() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#eff3f6] px-6">
-      <div className="rounded-card border border-primary/20 bg-white px-6 py-4 font-poppins text-sm font-medium text-text shadow-flat-sm">
+    <div className="theme-pro flex min-h-screen items-center justify-center bg-[var(--background-primary)] px-6">
+      <div className="rounded-card border border-[var(--border-primary)] bg-[var(--surface-primary)] px-6 py-4 font-poppins text-sm font-medium text-[var(--text-primary)] shadow-flat-sm">
         Loading SoundAI...
       </div>
     </div>

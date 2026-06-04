@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, LockKeyhole, Mail, Music2, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, LockKeyhole, Mail } from "lucide-react";
 import type { Provider } from "@supabase/supabase-js";
 import { getSupabase, supabaseConfigured } from "../lib/supabase";
 
@@ -9,9 +9,9 @@ const WEBSITE_URL =
   "http://127.0.0.1:4174";
 
 const oauthProviders: Array<{ label: string; provider: Provider }> = [
-  { label: "Continue with Google", provider: "google" },
-  { label: "Continue with Spotify", provider: "spotify" },
-  { label: "Continue with Apple", provider: "apple" },
+  { label: "Google", provider: "google" },
+  { label: "Apple", provider: "apple" },
+  { label: "Microsoft", provider: "azure" },
 ];
 
 export default function OAuthRegistration() {
@@ -21,8 +21,6 @@ export default function OAuthRegistration() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [role, setRole] = useState("Producer");
-  const [goal, setGoal] = useState("Generate audio ideas faster");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -30,18 +28,14 @@ export default function OAuthRegistration() {
     () =>
       isSignUp
         ? {
-            eyebrow: "SoundAI OAuth",
-            title: "Create your SoundAI workspace",
-            description: "Register once, activate your 8-day access period, then continue directly into the production interface.",
-            cta: "Create workspace",
+            title: "Sign up",
+            cta: "Create account",
             switchText: "Already have an account?",
             switchPath: "/sign-in",
             switchLabel: "Sign in",
           }
         : {
-            eyebrow: "Welcome back",
-            title: "Sign in to SoundAI",
-            description: "Access saved generations, prompt history, and your current SoundAI workspace.",
+            title: "Sign in",
             cta: "Sign in",
             switchText: "Need an account?",
             switchPath: "/sign-up",
@@ -64,10 +58,7 @@ export default function OAuthRegistration() {
       provider,
       options: {
         redirectTo: `${window.location.origin}/app/generator`,
-        queryParams: {
-          access_type: "offline",
-          prompt: "consent",
-        },
+        queryParams: provider === "google" ? { access_type: "offline", prompt: "consent" } : undefined,
       },
     });
 
@@ -91,7 +82,7 @@ export default function OAuthRegistration() {
           email,
           password,
           options: {
-            data: { full_name: fullName, role, goal },
+            data: { full_name: fullName },
             emailRedirectTo: `${window.location.origin}/app/generator`,
           },
         });
@@ -111,154 +102,134 @@ export default function OAuthRegistration() {
   };
 
   return (
-    <main className="min-h-screen bg-surface font-codec text-text">
-      <div className="mx-auto grid min-h-screen w-full max-w-[1180px] gap-8 px-6 py-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-        <section className="flex flex-col gap-8">
-          <Link to={`${WEBSITE_URL}/`} className="inline-flex w-fit items-center gap-2 text-sm font-medium text-text/60 transition-colors hover:text-primary">
-            <ArrowLeft className="h-4 w-4" />
-            Back to website
-          </Link>
-
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-primary">
-              <Sparkles className="h-3.5 w-3.5" />
-              {copy.eyebrow}
-            </div>
-            <h1 className="mt-5 max-w-xl font-poppins text-[42px] font-semibold leading-[1.05] text-text sm:text-[54px]">
-              {copy.title}
-            </h1>
-            <p className="mt-5 max-w-lg text-[15px] leading-7 text-text/62">
-              {copy.description}
+    <main
+      data-theme="pro"
+      className="theme-pro min-h-screen bg-[var(--background-primary)] font-codec text-[var(--text-primary)]"
+    >
+      <div className="mx-auto grid min-h-screen w-full max-w-[1200px] gap-10 px-6 py-10 lg:grid-cols-2 lg:items-center lg:gap-16">
+        <section className="auth-brand-panel relative flex min-h-[420px] flex-col justify-center p-10 lg:min-h-[560px]">
+          <div className="relative z-[1]">
+            <Link
+              to={`${WEBSITE_URL}/`}
+              className="mb-10 inline-flex items-center gap-2 text-sm text-[var(--text-secondary)] transition-colors hover:text-primary"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to website
+            </Link>
+            <div className="font-syne text-[42px] font-bold tracking-[-0.03em]">SoundAI</div>
+            <p className="mt-6 max-w-md font-codec text-[22px] font-medium leading-snug text-[var(--text-primary)]">
+              Create production-ready
             </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="app-card p-5">
-              <ShieldCheck className="h-5 w-5 text-primary" />
-              <div className="mt-3 font-poppins text-sm font-medium">Secure account handoff</div>
-              <p className="mt-1 text-xs leading-5 text-text/58">Website traffic lands here before opening the app workspace.</p>
-            </div>
-            <div className="app-card p-5">
-              <Music2 className="h-5 w-5 text-primary" />
-              <div className="mt-3 font-poppins text-sm font-medium">Creator profile setup</div>
-              <p className="mt-1 text-xs leading-5 text-text/58">Registration metadata is stored with auth profile data for onboarding defaults.</p>
-            </div>
+            <ul className="mt-4 space-y-2 font-codec text-[18px] text-[var(--text-secondary)]">
+              <li>Audio Samples</li>
+              <li>MIDI</li>
+              <li>VST Presets</li>
+            </ul>
+            <p className="mt-6 font-codec text-[15px] leading-7 text-[var(--text-secondary)]">
+              for any DAW
+            </p>
+            <p className="mt-8 max-w-sm font-codec text-sm leading-7 text-[var(--text-muted)]">
+              Built for producers, composers, sound designers, and studios.
+            </p>
           </div>
         </section>
 
-        <section className="app-card p-6 sm:p-7">
-          <div className="mb-6 flex items-start justify-between gap-4">
-            <div>
-              <h2 className="font-poppins text-[24px] font-semibold leading-tight">{copy.title}</h2>
-              <p className="mt-2 text-sm text-text/58">
+        <section className="flex justify-center lg:justify-end">
+          <div className="auth-card w-full max-w-[560px] p-8 sm:p-10">
+            <div className="mb-8">
+              <h1 className="font-syne text-[28px] font-bold">{copy.title}</h1>
+              <p className="mt-2 text-sm text-[var(--text-secondary)]">
                 {copy.switchText}{" "}
-                <Link to={copy.switchPath} className="font-medium text-primary hover:text-primary/80">
+                <Link to={copy.switchPath} className="font-semibold text-primary hover:opacity-80">
                   {copy.switchLabel}
                 </Link>
               </p>
-            </div>
-            {!supabaseConfigured() && (
-              <span className="rounded-full border border-primary/20 bg-primary/8 px-3 py-1 text-[11px] font-medium text-primary">
-                Demo auth
-              </span>
-            )}
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            {oauthProviders.map((provider) => (
-              <button
-                key={provider.provider}
-                type="button"
-                onClick={() => void startOAuth(provider.provider)}
-                className="app-btn-ghost min-h-[44px] px-3 text-xs"
-              >
-                {provider.label.replace("Continue with ", "")}
-              </button>
-            ))}
-          </div>
-
-          <div className="my-6 flex items-center gap-3">
-            <div className="h-px flex-1 bg-surface" />
-            <span className="text-xs text-text/42">or continue with email</span>
-            <div className="h-px flex-1 bg-surface" />
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-text/72">Email address</label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text/34" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="you@example.com"
-                  className="app-input pl-10"
-                />
-              </div>
+              {!supabaseConfigured() && (
+                <span className="mt-3 inline-flex rounded-full border border-[var(--border-primary)] bg-[var(--surface-secondary)] px-3 py-1 text-[11px] font-semibold text-primary">
+                  Demo auth
+                </span>
+              )}
             </div>
 
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-text/72">Password</label>
-              <div className="relative">
-                <LockKeyhole className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text/34" />
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder={isSignUp ? "Create a password" : "Enter your password"}
-                  className="app-input pl-10"
-                />
-              </div>
+            <div className="grid gap-3">
+              {oauthProviders.map((provider) => (
+                <button
+                  key={provider.provider}
+                  type="button"
+                  onClick={() => void startOAuth(provider.provider)}
+                  className="app-btn-ghost min-h-[48px] justify-center"
+                >
+                  Continue with {provider.label}
+                </button>
+              ))}
             </div>
 
-            {isSignUp && (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="sm:col-span-2">
-                  <label className="mb-1.5 block text-sm font-medium text-text/72">Full name</label>
+            <div className="my-8 flex items-center gap-3">
+              <div className="h-px flex-1 bg-[var(--border-primary)]" />
+              <span className="text-xs text-[var(--text-muted)]">or email</span>
+              <div className="h-px flex-1 bg-[var(--border-primary)]" />
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {isSignUp && (
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-[var(--text-secondary)]">
+                    Full name
+                  </label>
                   <input
                     value={fullName}
-                    onChange={(event) => setFullName(event.target.value)}
+                    onChange={(e) => setFullName(e.target.value)}
                     required
-                    placeholder="Dmitriy Elat"
+                    placeholder="Your name"
                     className="app-input"
                   />
                 </div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-text/72">Primary role</label>
-                  <select value={role} onChange={(event) => setRole(event.target.value)} className="app-input">
-                    <option>Producer</option>
-                    <option>Artist</option>
-                    <option>Composer</option>
-                    <option>Developer</option>
-                    <option>Team Lead</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-text/72">Main goal</label>
-                  <select value={goal} onChange={(event) => setGoal(event.target.value)} className="app-input">
-                    <option>Generate audio ideas faster</option>
-                    <option>Build MIDI themes</option>
-                    <option>Create preset libraries</option>
-                    <option>Test AI audio workflows</option>
-                  </select>
+              )}
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-[var(--text-secondary)]">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@studio.com"
+                    className="app-input pl-10"
+                  />
                 </div>
               </div>
-            )}
-
-            {error && (
-              <div className="rounded-input border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {error}
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-[var(--text-secondary)]">
+                  Password
+                </label>
+                <div className="relative">
+                  <LockKeyhole className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={isSignUp ? "Create password" : "Password"}
+                    className="app-input pl-10"
+                  />
+                </div>
               </div>
-            )}
 
-            <button type="submit" disabled={busy} className="app-btn-primary w-full py-3">
-              {busy ? "Please wait..." : copy.cta}
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </form>
+              {error && (
+                <div className="rounded-input border border-[var(--error)]/30 bg-[var(--surface-secondary)] px-4 py-3 text-sm text-[var(--error)]">
+                  {error}
+                </div>
+              )}
+
+              <button type="submit" disabled={busy} className="app-btn-primary w-full py-3">
+                {busy ? "Please wait…" : copy.cta}
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </form>
+          </div>
         </section>
       </div>
     </main>
