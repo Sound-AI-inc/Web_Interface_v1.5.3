@@ -42,8 +42,8 @@ export default function PromptInput({
 
   return (
     <div
-      className={`composer-shell rounded-[18px] ${
-        isDock ? "rounded-b-none px-3 py-2.5 md:px-4 md:py-2.5" : "px-4 py-4 md:px-5 md:py-4"
+      className={`composer-shell rounded-[20px] ${
+        isDock ? "rounded-b-none px-3 py-3 md:px-5 md:py-3" : "px-5 py-5 md:px-6 md:py-5"
       }`}
     >
       <div className="relative z-[1]">
