@@ -39,6 +39,11 @@ export type TranslationKey =
   | "sidebar.lite"
   | "sidebar.pro"
   | "sidebar.soon"
+  | "sidebar.tools"
+  | "header.notifications"
+  | "header.lowCredits"
+  | "upgrade.title"
+  | "upgrade.subtitle"
   // User menu
   | "menu.settings"
   | "menu.language"
@@ -131,6 +136,10 @@ export type TranslationKey =
   | "billing.colAmount"
   | "billing.colStatus"
   | "billing.resets"
+  | "billing.popular"
+  | "billing.chooseBilling"
+  | "billing.selectCredits"
+  | "billing.currentPlanLabel"
   // Profile
   | "profile.title"
   | "profile.subtitle"
@@ -213,7 +222,9 @@ export type TranslationKey =
   | "workspace.midiFiles"
   | "workspace.vstPresets"
   | "workspace.noAssets"
-  | "workspace.starToSave";
+  | "workspace.starToSave"
+  | "workspace.renameProject"
+  | "workspace.noChats";
 
 type Dict = Partial<Record<TranslationKey, string>>;
 
@@ -232,6 +243,11 @@ const en: Record<TranslationKey, string> = {
   "sidebar.lite": "Lite",
   "sidebar.pro": "Pro",
   "sidebar.soon": "SOON",
+  "sidebar.tools": "Tools",
+  "header.notifications": "Notifications",
+  "header.lowCredits": "Low credits — upgrade plan",
+  "upgrade.title": "Upgrade Plan",
+  "upgrade.subtitle": "Compare plans and unlock more generations, formats and pro workflows.",
   "menu.settings": "Settings",
   "menu.language": "Language",
   "menu.getHelp": "Get Help",
@@ -318,6 +334,10 @@ const en: Record<TranslationKey, string> = {
   "billing.colAmount": "Amount",
   "billing.colStatus": "Status",
   "billing.resets": "Resets on May 14. Upgrade for more headroom.",
+  "billing.popular": "Popular",
+  "billing.chooseBilling": "Choose billing",
+  "billing.selectCredits": "Select credits package",
+  "billing.currentPlanLabel": "Current plan",
   "profile.title": "Profile",
   "profile.subtitle": "Your identity on SoundAI",
   "profile.saveChanges": "Save changes",
@@ -401,6 +421,8 @@ const en: Record<TranslationKey, string> = {
   "workspace.vstPresets": "VST Presets",
   "workspace.noAssets": "No assets yet",
   "workspace.starToSave": "Star results to save",
+  "workspace.renameProject": "Rename project",
+  "workspace.noChats": "No chats yet — create from Create",
 };
 
 const ru: Dict = {
@@ -418,6 +440,11 @@ const ru: Dict = {
   "sidebar.lite": "Lite",
   "sidebar.pro": "Pro",
   "sidebar.soon": "СКОРО",
+  "sidebar.tools": "Инструменты",
+  "header.notifications": "Уведомления",
+  "header.lowCredits": "Мало кредитов — улучшите тариф",
+  "upgrade.title": "Улучшить тариф",
+  "upgrade.subtitle": "Сравните тарифы и откройте больше генераций, форматов и Pro-инструментов.",
   "menu.settings": "Настройки",
   "menu.language": "Язык",
   "menu.getHelp": "Помощь",
@@ -504,6 +531,10 @@ const ru: Dict = {
   "billing.colAmount": "Сумма",
   "billing.colStatus": "Статус",
   "billing.resets": "Обновление 14 мая. Повысьте тариф для большего запаса.",
+  "billing.popular": "Популярный",
+  "billing.chooseBilling": "Выберите оплату",
+  "billing.selectCredits": "Выберите пакет кредитов",
+  "billing.currentPlanLabel": "Текущий тариф",
   "profile.title": "Профиль",
   "profile.subtitle": "Ваш профиль в SoundAI",
   "profile.saveChanges": "Сохранить",
@@ -588,10 +619,29 @@ const ru: Dict = {
   "workspace.vstPresets": "VST пресеты",
   "workspace.noAssets": "Пока нет ассетов",
   "workspace.starToSave": "Отмечайте звёздочкой",
+  "workspace.renameProject": "Переименовать проект",
+  "workspace.noChats": "Чатов пока нет — создайте в Create",
 };
 
 const es: Dict = {
-  "nav.audioGenerator": "Generador",
+  "nav.audioGenerator": "Crear",
+  "sidebar.tools": "Herramientas",
+  "sidebar.lite": "Lite",
+  "sidebar.pro": "Pro",
+  "upgrade.title": "Mejorar plan",
+  "upgrade.subtitle": "Compara planes y desbloquea más generaciones, formatos y flujos Pro.",
+  "workspace.projects": "Proyectos",
+  "workspace.newProject": "Nuevo proyecto",
+  "workspace.greeting": "¿Qué te gustaría crear hoy?",
+  "workspace.create": "Crear",
+  "workspace.generating": "Generando",
+  "workspace.generations": "Generaciones",
+  "workspace.renameProject": "Renombrar proyecto",
+  "workspace.noChats": "Sin chats — créalos en Crear",
+  "billing.popular": "Popular",
+  "billing.chooseBilling": "Elegir facturación",
+  "billing.currentPlanLabel": "Plan actual",
+  "header.notifications": "Notificaciones",
   "nav.prompts": "Prompts",
   "nav.arrangement": "Arreglo",
   "nav.editor": "Editor",
@@ -634,7 +684,24 @@ const es: Dict = {
 };
 
 const fr: Dict = {
-  "nav.audioGenerator": "Générateur",
+  "nav.audioGenerator": "Créer",
+  "sidebar.tools": "Outils",
+  "sidebar.lite": "Lite",
+  "sidebar.pro": "Pro",
+  "upgrade.title": "Changer de plan",
+  "upgrade.subtitle": "Comparez les offres et débloquez plus de générations, formats et workflows Pro.",
+  "workspace.projects": "Projets",
+  "workspace.newProject": "Nouveau projet",
+  "workspace.greeting": "Que souhaitez-vous créer aujourd'hui ?",
+  "workspace.create": "Créer",
+  "workspace.generating": "Génération",
+  "workspace.generations": "Générations",
+  "workspace.renameProject": "Renommer le projet",
+  "workspace.noChats": "Aucun chat — créez depuis Créer",
+  "billing.popular": "Populaire",
+  "billing.chooseBilling": "Choisir la facturation",
+  "billing.currentPlanLabel": "Offre actuelle",
+  "header.notifications": "Notifications",
   "nav.prompts": "Prompts",
   "nav.arrangement": "Arrangement",
   "nav.editor": "Éditeur",
@@ -677,7 +744,24 @@ const fr: Dict = {
 };
 
 const de: Dict = {
-  "nav.audioGenerator": "Generator",
+  "nav.audioGenerator": "Erstellen",
+  "sidebar.tools": "Werkzeuge",
+  "sidebar.lite": "Lite",
+  "sidebar.pro": "Pro",
+  "upgrade.title": "Plan upgraden",
+  "upgrade.subtitle": "Pläne vergleichen und mehr Generierungen, Formate und Pro-Workflows freischalten.",
+  "workspace.projects": "Projekte",
+  "workspace.newProject": "Neues Projekt",
+  "workspace.greeting": "Was möchten Sie heute erstellen?",
+  "workspace.create": "Erstellen",
+  "workspace.generating": "Generierung",
+  "workspace.generations": "Generierungen",
+  "workspace.renameProject": "Projekt umbenennen",
+  "workspace.noChats": "Keine Chats — in Erstellen anlegen",
+  "billing.popular": "Beliebt",
+  "billing.chooseBilling": "Abrechnung wählen",
+  "billing.currentPlanLabel": "Aktueller Plan",
+  "header.notifications": "Benachrichtigungen",
   "nav.prompts": "Prompts",
   "nav.arrangement": "Arrangement",
   "nav.editor": "Editor",
@@ -720,7 +804,14 @@ const de: Dict = {
 };
 
 const pt: Dict = {
-  "nav.audioGenerator": "Gerador",
+  "nav.audioGenerator": "Criar",
+  "sidebar.tools": "Ferramentas",
+  "sidebar.lite": "Lite",
+  "sidebar.pro": "Pro",
+  "upgrade.title": "Atualizar plano",
+  "workspace.projects": "Projetos",
+  "workspace.create": "Criar",
+  "workspace.greeting": "O que você quer criar hoje?",
   "nav.prompts": "Prompts",
   "nav.arrangement": "Arranjo",
   "nav.editor": "Editor",
@@ -749,7 +840,14 @@ const pt: Dict = {
 };
 
 const it: Dict = {
-  "nav.audioGenerator": "Generatore",
+  "nav.audioGenerator": "Crea",
+  "sidebar.tools": "Strumenti",
+  "sidebar.lite": "Lite",
+  "sidebar.pro": "Pro",
+  "upgrade.title": "Aggiorna piano",
+  "workspace.projects": "Progetti",
+  "workspace.create": "Crea",
+  "workspace.greeting": "Cosa vuoi creare oggi?",
   "nav.prompts": "Prompt",
   "nav.arrangement": "Arrangiamento",
   "nav.editor": "Editor",
@@ -778,7 +876,14 @@ const it: Dict = {
 };
 
 const ja: Dict = {
-  "nav.audioGenerator": "ジェネレーター",
+  "nav.audioGenerator": "作成",
+  "sidebar.tools": "ツール",
+  "sidebar.lite": "Lite",
+  "sidebar.pro": "Pro",
+  "upgrade.title": "プランを変更",
+  "workspace.projects": "プロジェクト",
+  "workspace.create": "作成",
+  "workspace.greeting": "今日は何を作りますか？",
   "nav.prompts": "プロンプト",
   "nav.arrangement": "アレンジ",
   "nav.editor": "エディター",
@@ -807,7 +912,14 @@ const ja: Dict = {
 };
 
 const zh: Dict = {
-  "nav.audioGenerator": "生成器",
+  "nav.audioGenerator": "创作",
+  "sidebar.tools": "工具",
+  "sidebar.lite": "Lite",
+  "sidebar.pro": "Pro",
+  "upgrade.title": "升级方案",
+  "workspace.projects": "项目",
+  "workspace.create": "创作",
+  "workspace.greeting": "今天想创作什么？",
   "nav.prompts": "提示词",
   "nav.arrangement": "编排",
   "nav.editor": "编辑器",

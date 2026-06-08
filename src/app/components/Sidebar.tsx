@@ -1,38 +1,24 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import {
-  Mic2,
   Lightbulb,
   LayoutGrid,
   Pencil,
   Library as LibraryIcon,
   Plug,
   CreditCard,
-  Settings as SettingsIcon,
-  LogOut,
   PanelLeftClose,
   PanelLeftOpen,
   Upload,
-  ChevronRight,
-  Gift,
-  HelpCircle,
-  Languages as LanguagesIcon,
-  GraduationCap,
-  Check,
   Sparkles,
-  BookOpen,
-  FileText,
-  Shield,
-  Terminal,
-  Info,
   Lock,
 } from "lucide-react";
+import UserMenuPortal from "./UserMenuPortal";
 import { useInterfaceMode } from "../hooks/useInterfaceMode";
 import type { LucideIcon } from "lucide-react";
 import ThemedLogo from "./ThemedLogo";
 import WorkspaceNav from "./workspace/WorkspaceNav";
 import { useLanguage } from "../i18n/LanguageProvider";
-import { LANGUAGES, type LanguageCode } from "../i18n/translations";
 
 interface NavItem {
   labelKey:
@@ -51,7 +37,7 @@ interface NavItem {
 }
 
 const coreProduct: NavItem[] = [
-  { labelKey: "nav.audioGenerator", to: "/app/generator", icon: Mic2 },
+  { labelKey: "nav.audioGenerator", to: "/app/generator", icon: Sparkles },
   { labelKey: "nav.prompts", to: "/app/prompts", icon: Lightbulb },
   { labelKey: "nav.arrangement", to: "/app/arrangement", icon: LayoutGrid, disabled: true, badge: "SOON" },
   { labelKey: "nav.editor", to: "/app/editor", icon: Pencil },
@@ -68,10 +54,6 @@ const LITE_LOCKED_KEYS: NavItem["labelKey"][] = ["nav.editor", "nav.library", "n
 
 const NAV_ITEM_BASE =
   "group flex items-center gap-3 border-l-2 border-transparent px-3 py-2.5 font-codec text-[12px] font-semibold transition-colors";
-const WEBSITE_BASE =
-  (import.meta.env.VITE_WEBSITE_URL as string | undefined)?.replace(/\/$/, "") ??
-  "http://127.0.0.1:4174";
-
 function Item({
   item,
   collapsed,
@@ -119,7 +101,7 @@ function Item({
             <span className="flex-1">{label}</span>
             {item.badge && (
               <span className="rounded-[4px] bg-[var(--surface-secondary)] px-1.5 py-0.5 font-codec text-[10px] font-bold tracking-[0.06em] text-[var(--text-muted)]">
-                {item.badge}
+                {t("sidebar.soon")}
               </span>
             )}
           </>
@@ -144,8 +126,8 @@ function Item({
         <>
           <span className="flex-1">{label}</span>
           {item.badge && (
-            <span className="rounded-[4px] bg-white/10 px-1.5 py-0.5 font-codec text-[10px] font-bold tracking-[0.06em] text-text/30">
-              {item.badge}
+            <span className="rounded-[4px] bg-[var(--surface-secondary)] px-1.5 py-0.5 font-codec text-[10px] font-bold tracking-[0.06em] text-[var(--text-muted)]">
+              {t("sidebar.soon")}
             </span>
           )}
         </>
@@ -160,159 +142,6 @@ function SectionSeparator({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-/**
- * Bottom-docked user profile control with a compact account menu.
- */
-function UserMenu({
-  collapsed,
-  open,
-  onClose,
-  onOpenSettings,
-  onOpenUpgrade,
-}: {
-  collapsed: boolean;
-  open: boolean;
-  onClose: () => void;
-  onOpenSettings: () => void;
-  onOpenUpgrade: () => void;
-}) {
-  const { language, setLanguage, t } = useLanguage();
-  const navigate = useNavigate();
-  const [subOpen, setSubOpen] = useState<"language" | "help" | null>(null);
-
-  // Only render the floating menu when open; use pointer-events-none layout
-  // hints so the main sidebar layout remains stable.
-  if (!open) return null;
-
-  const handleNav = (to: string) => {
-    navigate(to);
-    onClose();
-  };
-
-  const pickLanguage = (code: LanguageCode) => {
-    setLanguage(code);
-  };
-
-  const websiteHref = (path: string) => `${WEBSITE_BASE}${path}`;
-
-  return (
-    <div
-      className={`token-menu absolute bottom-full mb-2 w-[240px] rounded-card p-1.5 ${
-        collapsed ? "left-full ml-2" : "left-3 right-3 w-auto"
-      }`}
-      style={{ zIndex: "var(--z-dropdown)" }}
-    >
-      <button type="button" className="menu-row" onClick={() => { onOpenSettings(); onClose(); }}>
-        <SettingsIcon className="h-4 w-4 text-text/60" />
-        <span className="flex-1 text-left">{t("menu.settings")}</span>
-      </button>
-
-      <div
-        className="relative"
-        onMouseEnter={() => setSubOpen("language")}
-        onMouseLeave={() => setSubOpen((s) => (s === "language" ? null : s))}
-      >
-        <button type="button" className="menu-row">
-          <LanguagesIcon className="h-4 w-4 text-text/60" />
-          <span className="flex-1 text-left">{t("menu.language")}</span>
-          <ChevronRight className="h-3 w-3 text-text/40" />
-        </button>
-        {subOpen === "language" && (
-          <div className="token-menu absolute bottom-0 left-full ml-1 w-[200px] rounded-card p-1.5" style={{ zIndex: "var(--z-dropdown)" }}>
-            {LANGUAGES.map((l) => (
-              <button
-                key={l.code}
-                type="button"
-                className="menu-row"
-                onClick={() => pickLanguage(l.code)}
-              >
-                <span className="flex-1 text-left">{l.label}</span>
-                {language === l.code && (
-                  <Check className="h-3.5 w-3.5 text-primary" />
-                )}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div
-        className="relative"
-        onMouseEnter={() => setSubOpen("help")}
-        onMouseLeave={() => setSubOpen((s) => (s === "help" ? null : s))}
-      >
-        <button type="button" className="menu-row">
-          <HelpCircle className="h-4 w-4 text-text/60" />
-          <span className="flex-1 text-left">{t("menu.getHelp")}</span>
-          <ChevronRight className="h-3 w-3 text-text/40" />
-        </button>
-        {subOpen === "help" && (
-          <div className="token-menu absolute bottom-0 left-full ml-1 w-[220px] rounded-card p-1.5" style={{ zIndex: "var(--z-dropdown)" }}>
-            <div className="px-2 py-1 font-poppins text-[9px] font-bold uppercase tracking-wider text-text/40">
-              {t("menu.learnMore")}
-            </div>
-            <a href={websiteHref("/api")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
-              <Terminal className="h-4 w-4 text-text/60" />
-              <span className="flex-1 text-left">{t("menu.apiConsole")}</span>
-            </a>
-            <a href={websiteHref("/about")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
-              <Info className="h-4 w-4 text-text/60" />
-              <span className="flex-1 text-left">{t("menu.aboutSoundAI")}</span>
-            </a>
-            <a href={websiteHref("/docs")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
-              <BookOpen className="h-4 w-4 text-text/60" />
-              <span className="flex-1 text-left">{t("menu.tutorials")}</span>
-            </a>
-            <a href={websiteHref("/faq")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
-              <GraduationCap className="h-4 w-4 text-text/60" />
-              <span className="flex-1 text-left">{t("menu.courses")}</span>
-            </a>
-            <div className="my-1 mx-1 h-px bg-surface" aria-hidden />
-            <a href={websiteHref("/legal/terms")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
-              <FileText className="h-4 w-4 text-text/60" />
-              <span className="flex-1 text-left">{t("menu.usagePolicy")}</span>
-            </a>
-            <a href={websiteHref("/legal/privacy")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
-              <Shield className="h-4 w-4 text-text/60" />
-              <span className="flex-1 text-left">{t("menu.privacyPolicy")}</span>
-            </a>
-            <a href={websiteHref("/legal/info")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
-              <Shield className="h-4 w-4 text-text/60" />
-              <span className="flex-1 text-left">{t("menu.privacyChoices")}</span>
-            </a>
-          </div>
-        )}
-      </div>
-
-      <div className="my-1 mx-1 h-px bg-surface" aria-hidden />
-
-      <button
-        type="button"
-        className="menu-row text-primary"
-        onClick={() => { onOpenUpgrade(); onClose(); }}
-      >
-        <Sparkles className="h-4 w-4" />
-        <span className="flex-1 text-left">{t("menu.upgradePlan")}</span>
-      </button>
-      <button
-        type="button"
-        className="menu-row"
-        onClick={() => handleNav("/app/billing")}
-      >
-        <Gift className="h-4 w-4 text-text/60" />
-        <span className="flex-1 text-left">{t("menu.giftSoundAI")}</span>
-      </button>
-
-      <div className="my-1 mx-1 h-px bg-surface" aria-hidden />
-
-      <button type="button" className="menu-row" onClick={onClose}>
-        <LogOut className="h-4 w-4 text-text/60" />
-        <span className="flex-1 text-left">{t("menu.logOut")}</span>
-      </button>
-    </div>
-  );
-}
-
 export default function Sidebar({
   onOpenSettings,
   onOpenUpgrade,
@@ -323,15 +152,16 @@ export default function Sidebar({
   const [collapsed, setCollapsed] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const width = collapsed ? "w-[56px]" : "w-[216px]";
-  const menuRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLButtonElement>(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!userMenuOpen) return;
     const onDocClick = (e: MouseEvent) => {
-      if (!menuRef.current) return;
-      if (!menuRef.current.contains(e.target as Node)) {
-        setUserMenuOpen(false);
-      }
+      const target = e.target as Node;
+      if (profileRef.current?.contains(target)) return;
+      if ((target as Element).closest?.("[data-user-menu]")) return;
+      setUserMenuOpen(false);
     };
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
@@ -341,24 +171,6 @@ export default function Sidebar({
     <aside
       className={`sticky top-0 flex h-screen ${width} shrink-0 flex-col self-start border-r border-[var(--ui-border-soft)] bg-[var(--ui-bg)] shadow-[8px_0_40px_rgba(0,0,0,0.12)] transition-[width] duration-150 ease-linear`}
     >
-      {/* Inject small menu-row utility */}
-      <style>{`
-        .menu-row {
-          display: flex;
-          align-items: center;
-          gap: 0.625rem;
-          padding: 0.5rem 0.625rem;
-          border-radius: 0.5rem;
-          font-family: var(--font-codec, 'Inter', sans-serif);
-          font-size: 12px;
-          color: rgb(var(--color-text) / 0.72);
-          transition: background-color 150ms ease;
-          width: 100%;
-          cursor: pointer;
-        }
-        .menu-row:hover { background-color: var(--ui-input); color: rgb(var(--color-text)); }
-      `}</style>
-
       {/* Top: brand + collapse toggle */}
       <div
         className={`flex h-16 items-center ${
@@ -393,7 +205,7 @@ export default function Sidebar({
         <SectionSeparator collapsed={collapsed} />
         {!collapsed && (
           <div className="mb-2 px-3 font-codec text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--text-muted)]">
-            Tools
+            {t("sidebar.tools")}
           </div>
         )}
         <div className="flex flex-col gap-1">
@@ -412,18 +224,17 @@ export default function Sidebar({
       </nav>
 
       {/* User profile docked at very bottom */}
-      <div
-        ref={menuRef}
-        className={`relative border-t border-[var(--ui-border-soft)] ${collapsed ? "p-2" : "px-3 py-3"}`}
-      >
-        <UserMenu
+      <div className={`relative border-t border-[var(--ui-border-soft)] ${collapsed ? "p-2" : "px-3 py-3"}`}>
+        <UserMenuPortal
           collapsed={collapsed}
           open={userMenuOpen}
+          anchorRef={profileRef}
           onClose={() => setUserMenuOpen(false)}
           onOpenSettings={onOpenSettings}
           onOpenUpgrade={onOpenUpgrade}
         />
         <button
+          ref={profileRef}
           type="button"
           onClick={() => setUserMenuOpen((v) => !v)}
           title={collapsed ? "Account" : undefined}

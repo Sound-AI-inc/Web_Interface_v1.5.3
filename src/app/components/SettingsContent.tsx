@@ -68,8 +68,8 @@ export default function SettingsContent({ onSave, compact = false }: SettingsCon
   ];
 
   return (
-    <div className="rounded-card token-card border border-[var(--border-primary)] shadow-flat-sm">
-      <div className={`flex items-center justify-between border-b border-surface ${compact ? "px-5 py-4" : "px-6 py-4"}`}>
+    <div className="rounded-card border border-[var(--border-primary)] bg-[var(--surface-modal)]">
+      <div className={`flex items-center justify-between border-b border-[var(--border-primary)] ${compact ? "px-5 py-4" : "px-6 py-4"}`}>
         <div>
           <h2 className="font-poppins text-lg font-semibold text-text">{t("settings.title")}</h2>
           <p className="app-meta mt-1">{t("settings.subtitle")}</p>

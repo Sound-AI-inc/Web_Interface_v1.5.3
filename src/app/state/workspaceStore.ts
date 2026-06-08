@@ -42,6 +42,7 @@ interface WorkspaceState {
 
   setAssetsPanelCollapsed: (collapsed: boolean) => void;
   createProject: (name: string) => string;
+  renameProject: (id: string, name: string) => void;
   createChat: (projectId?: string, title?: string) => string;
   setActiveProject: (id: string) => void;
   setActiveChat: (id: string) => void;
@@ -164,6 +165,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           activeProjectId: id,
         }));
         return id;
+      },
+
+      renameProject: (id, name) => {
+        const trimmed = name.trim();
+        if (!trimmed) return;
+        set((s) => ({
+          projects: s.projects.map((p) => (p.id === id ? { ...p, name: trimmed } : p)),
+        }));
       },
 
       createChat: (projectId, title) => {

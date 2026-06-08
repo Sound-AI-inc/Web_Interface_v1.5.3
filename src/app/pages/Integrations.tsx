@@ -3,6 +3,7 @@ import PageContainer from "../components/PageContainer";
 import IntegrationRow from "../components/IntegrationRow";
 import { integrations } from "../data/mock";
 import type { IntegrationCategory } from "../data/mock";
+import { useLanguage } from "../i18n/LanguageProvider";
 
 type Filter = "All" | IntegrationCategory;
 
@@ -26,6 +27,7 @@ const CATEGORY_LABEL: Record<IntegrationCategory, string> = {
 const VISIBLE_INTEGRATIONS = integrations.filter((i) => i.category !== "Storage");
 
 export default function Integrations() {
+  const { t } = useLanguage();
   const [filter, setFilter] = useState<Filter>("All");
 
   const counts = useMemo(() => {
@@ -48,12 +50,10 @@ export default function Integrations() {
   }, [filter]);
 
   const filters: Filter[] = ["All", ...CATEGORY_ORDER];
+  const filterLabel = (f: Filter) => (f === "All" ? t("common.all") : f);
 
   return (
-    <PageContainer
-      title="Integrations"
-      subtitle="Connect SoundAI to the tools you already use"
-    >
+    <PageContainer title={t("integrations.title")} subtitle={t("integrations.subtitle")}>
       <div className="mb-5 flex flex-wrap items-center gap-1.5">
         {filters.map((f) => {
           const active = f === filter;
@@ -67,7 +67,7 @@ export default function Integrations() {
                   : "bg-surface-muted text-text/60 hover:bg-surface"
               }`}
             >
-              <span className="font-medium">{f}</span>
+              <span className="font-medium">{filterLabel(f)}</span>
               <span
                 className={`font-poppins text-[9px] ${
                   active ? "text-primary/70" : "text-text/40"

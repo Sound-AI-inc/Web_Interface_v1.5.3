@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { X } from "lucide-react";
 import AppHeader from "./components/AppHeader";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -20,6 +20,8 @@ export default function AppLayout() {
     [],
   );
   const ctx = useMemo(() => ({ mode, setMode, toggle }), [mode, toggle]);
+  const location = useLocation();
+  const isWorkspaceRoute = location.pathname.includes("/generator");
 
   useEffect(() => {
     const root = document.documentElement;
@@ -44,7 +46,11 @@ export default function AppLayout() {
           />
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             <AppHeader />
-            <main className="min-h-0 flex-1 overflow-hidden bg-[var(--background-primary)]">
+            <main
+              className={`min-h-0 flex-1 bg-[var(--background-primary)] ${
+                isWorkspaceRoute ? "overflow-hidden" : "token-scroll overflow-y-auto"
+              }`}
+            >
               <ErrorBoundary fallbackTitle="Workspace failed to load">
                 <Outlet />
               </ErrorBoundary>
@@ -94,7 +100,7 @@ function ShellModal({
         >
           <X className="h-4 w-4" />
         </button>
-        <div className="token-modal token-scroll max-h-[88vh] overflow-y-auto rounded-[24px] p-2 shadow-[var(--ui-shadow-floating)]">
+        <div className="shell-modal-panel token-modal token-scroll max-h-[88vh] overflow-y-auto rounded-[24px] border border-[var(--border-primary)] p-2 shadow-[var(--ui-shadow-floating)]">
           {children}
         </div>
       </div>

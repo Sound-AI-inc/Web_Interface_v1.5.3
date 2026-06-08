@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { Mic } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import GenerateButton from "./GenerateButton";
 
 interface PromptInputProps {
@@ -65,11 +65,11 @@ export default function PromptInput({
           <div className="flex shrink-0 items-center justify-end gap-2">
             <button
               type="button"
-              aria-label="Voice prompt"
+              aria-label="Creation assist"
               disabled={disabled}
               className="composer-control flex h-9 w-9 items-center justify-center rounded-full text-text/60 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Mic className="h-4 w-4" />
+              <Sparkles className="h-4 w-4" />
             </button>
             <GenerateButton
               onClick={onGenerate}

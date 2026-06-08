@@ -12,6 +12,7 @@ import WorkspaceGreeting from "../components/workspace/WorkspaceGreeting";
 import WorkspaceAssetPanel from "../components/workspace/WorkspaceAssetPanel";
 import AddToProjectMenu from "../components/workspace/AddToProjectMenu";
 import { COMPOSER_INPUT_ID, focusComposerInput } from "../lib/focusComposer";
+import { toModelSelectOptions } from "../lib/modelOptions";
 import { useLibraryStore } from "../state/libraryStore";
 import {
   selectActiveChat,
@@ -79,6 +80,7 @@ interface PromptControlConfig {
   label: string;
   value: string;
   options: string[];
+  optionLabels?: { value: string; label?: string }[];
   onChange: (value: string) => void;
 }
 
@@ -195,10 +197,21 @@ export default function AudioGenerator() {
 
   const hasFeed = history.length > 0 || Boolean(pending);
 
+  const modelSelectOptions = useMemo(
+    () => toModelSelectOptions(modelOptions, isPro ? "pro" : "lite"),
+    [modelOptions, isPro],
+  );
+
   const promptControls: PromptControlConfig[] = useMemo(
     () => [
       { label: t("generator.type"), value: type, options: typeOptions, onChange: setType },
-      { label: t("generator.model"), value: resolvedModel, options: modelOptions, onChange: setModel },
+      {
+        label: t("generator.model"),
+        value: resolvedModel,
+        options: modelSelectOptions.map((o) => o.value),
+        optionLabels: modelSelectOptions,
+        onChange: setModel,
+      },
       {
         label: t("workspace.generations"),
         value: String(generationCount),
@@ -207,7 +220,7 @@ export default function AudioGenerator() {
       },
       { label: t("generator.outputFormat"), value: resolvedFormat, options: formatOptions, onChange: setFormat },
     ],
-    [t, type, typeOptions, resolvedModel, modelOptions, generationCount, resolvedFormat, formatOptions],
+    [t, type, typeOptions, resolvedModel, modelSelectOptions, generationCount, resolvedFormat, formatOptions],
   );
 
   const patchChatIds = (field: "favoriteIds" | "savedIds", id: string) => {
@@ -359,7 +372,7 @@ export default function AudioGenerator() {
   );
 
   return (
-    <div className="workspace-layout flex h-full min-h-0 flex-col overflow-hidden">
+    <div className="workspace-layout flex h-[calc(100dvh-4rem)] min-h-0 flex-col overflow-hidden">
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <section className="workspace-conversation relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {!hasFeed ? (
@@ -422,7 +435,7 @@ export default function AudioGenerator() {
   );
 }
 
-function PromptControl({ label, value, options, onChange }: PromptControlConfig) {
+function PromptControl({ label, value, options, optionLabels, onChange }: PromptControlConfig) {
   return (
     <div className="min-w-[124px] shrink-0">
       <div className="mb-0.5 px-1 font-codec text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--text-muted)]">
@@ -430,7 +443,7 @@ function PromptControl({ label, value, options, onChange }: PromptControlConfig)
       </div>
       <BrandSelect
         value={value}
-        options={options}
+        options={optionLabels ?? options}
         onChange={onChange}
         className="min-w-[124px]"
       />

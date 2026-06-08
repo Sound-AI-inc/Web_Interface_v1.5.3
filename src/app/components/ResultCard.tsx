@@ -1,4 +1,4 @@
-import { Download, Heart, KeyboardMusic, Play, Repeat, SlidersHorizontal } from "lucide-react";
+import { Heart, KeyboardMusic, Play, Repeat, SlidersHorizontal } from "lucide-react";
 import type { AudioResult, LibraryAsset, ResultKind } from "../data/mock";
 import AudioPreview from "./previews/AudioPreview";
 import MidiPreview from "./previews/MidiPreview";
@@ -96,7 +96,6 @@ export default function ResultCard({
 
       <div className="mt-4 flex flex-wrap gap-2">
         <AssetAction disabled={disableActions} icon={Icon} label={kindCopy[item.kind].action} />
-        <AssetAction disabled={disableActions} icon={Download} label={`Download ${downloadExtension(item)}`} />
         <AssetAction
           disabled={savedToLibrary || disableActions}
           icon={Heart}
@@ -160,12 +159,6 @@ function buildMetadata(item: ResultCardItem): string[] {
     `Category: ${item.tags?.[0] ?? item.preset?.oscillator ?? "Bass"}`,
     `Format: ${item.format}`,
   ];
-}
-
-function downloadExtension(item: ResultCardItem): string {
-  if (item.kind === "audio") return item.format.toLowerCase().includes("wav") ? ".wav" : `.${item.format.toLowerCase()}`;
-  if (item.kind === "midi") return ".mid";
-  return item.format.includes("fxp") ? ".fxp" : ".vstpreset";
 }
 
 function formatDuration(s: number): string {

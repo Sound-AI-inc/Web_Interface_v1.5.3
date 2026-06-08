@@ -1,12 +1,14 @@
 import { Bell, Coins } from "lucide-react";
 import ThemedLogo from "./ThemedLogo";
 import { useInterfaceMode } from "../hooks/useInterfaceMode";
+import { useLanguage } from "../i18n/LanguageProvider";
 
 const CREDITS_REMAINING = 42;
 const CREDITS_TOTAL = 50;
 
 export default function AppHeader() {
   const { mode, setMode } = useInterfaceMode();
+  const { t } = useLanguage();
   const creditsLow = CREDITS_REMAINING / CREDITS_TOTAL < 0.2;
 
   return (
@@ -29,7 +31,7 @@ export default function AppHeader() {
             data-active={mode === nextMode ? "true" : "false"}
             onClick={() => setMode(nextMode)}
           >
-            {nextMode === "lite" ? "Lite" : "Pro"}
+            {nextMode === "lite" ? t("sidebar.lite") : t("sidebar.pro")}
           </button>
         ))}
       </div>
@@ -37,17 +39,17 @@ export default function AppHeader() {
       <div className="flex min-w-0 items-center justify-end gap-2">
         <div
           className={`credits-pill flex items-center gap-2 ${creditsLow ? "credits-pill--low" : ""}`}
-          title={creditsLow ? "Low credits — upgrade plan" : undefined}
+          title={creditsLow ? t("header.lowCredits") : undefined}
         >
           <Coins className="h-4 w-4 text-primary" />
           <span>
             <span className={creditsLow ? "text-primary" : ""}>{CREDITS_REMAINING}</span>{" "}
-            <span className="text-[var(--text-secondary)]">Credits</span>
+            <span className="text-[var(--text-secondary)]">{t("generator.credits")}</span>
           </span>
         </div>
         <button
           type="button"
-          aria-label="Notifications"
+          aria-label={t("header.notifications")}
           className="composer-control flex h-9 w-9 items-center justify-center rounded-full text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
         >
           <Bell className="h-4 w-4" />
