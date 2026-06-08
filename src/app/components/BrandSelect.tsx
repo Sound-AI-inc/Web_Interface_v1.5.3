@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, Check } from "lucide-react";
+import { useInterfaceMode } from "../hooks/useInterfaceMode";
 
 export interface BrandSelectOption {
   value: string;
@@ -29,6 +30,8 @@ export default function BrandSelect({
   className = "",
   menuClassName = "",
 }: BrandSelectProps) {
+  const { mode } = useInterfaceMode();
+  const themeClass = mode === "lite" ? "theme-lite" : "theme-pro";
   const [open, setOpen] = useState(false);
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
   const [openUpward, setOpenUpward] = useState(false);
@@ -99,7 +102,8 @@ export default function BrandSelect({
         <ul
           ref={menuRef}
           role="listbox"
-          className={`token-menu max-h-72 overflow-auto rounded-[12px] p-1 shadow-[var(--ui-shadow-floating)] ${menuClassName}`}
+          data-theme={mode}
+          className={`token-menu ${themeClass} max-h-72 overflow-auto rounded-[12px] p-1 ${menuClassName}`}
           style={menuStyle}
         >
           {normalized.map((o) => {

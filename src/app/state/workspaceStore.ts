@@ -43,7 +43,9 @@ interface WorkspaceState {
   setAssetsPanelCollapsed: (collapsed: boolean) => void;
   createProject: (name: string) => string;
   renameProject: (id: string, name: string) => void;
+  deleteProject: (id: string) => void;
   createChat: (projectId?: string, title?: string) => string;
+  startNewSession: (projectId?: string) => string;
   setActiveProject: (id: string) => void;
   setActiveChat: (id: string) => void;
   updateChat: (chatId: string, patch: Partial<WorkspaceChat>) => void;
@@ -175,6 +177,31 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }));
       },
 
+      deleteProject: (id) => {
+        set((s) => {
+          if (s.projects.length <= 1) return s;
+          const projects = s.projects.filter((p) => p.id !== id);
+          const chats = s.chats.filter((c) => c.projectId !== id);
+          const { [id]: _removed, ...projectAssetIds } = s.projectAssetIds;
+          void _removed;
+          const activeProjectId =
+            s.activeProjectId === id ? projects[0].id : s.activeProjectId;
+          const projectChats = chats
+            .filter((c) => c.projectId === activeProjectId)
+            .sort((a, b) => b.updatedAt - a.updatedAt);
+          const activeChatId = chats.some((c) => c.id === s.activeChatId)
+            ? s.activeChatId
+            : projectChats[0]?.id ?? chats[0]?.id ?? s.activeChatId;
+          return {
+            projects,
+            chats,
+            activeProjectId,
+            activeChatId,
+            projectAssetIds,
+          };
+        });
+      },
+
       createChat: (projectId, title) => {
         const pid = projectId ?? get().activeProjectId;
         const id = `chat-${Date.now()}`;
@@ -196,6 +223,10 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           activeProjectId: pid,
         }));
         return id;
+      },
+
+      startNewSession: (projectId) => {
+        return get().createChat(projectId);
       },
 
       setActiveProject: (id) => {

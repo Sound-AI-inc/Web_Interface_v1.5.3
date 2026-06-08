@@ -17,6 +17,7 @@ import {
   Terminal,
   Info,
 } from "lucide-react";
+import { useInterfaceMode } from "../hooks/useInterfaceMode";
 import { useLanguage } from "../i18n/LanguageProvider";
 import { LANGUAGES, type LanguageCode } from "../i18n/translations";
 
@@ -42,6 +43,8 @@ export default function UserMenuPortal({
   onOpenUpgrade,
 }: UserMenuPortalProps) {
   const { language, setLanguage, t } = useLanguage();
+  const { mode } = useInterfaceMode();
+  const themeClass = mode === "lite" ? "theme-lite" : "theme-pro";
   const navigate = useNavigate();
   const [subOpen, setSubOpen] = useState<"language" | "help" | null>(null);
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
@@ -96,7 +99,7 @@ export default function UserMenuPortal({
   const websiteHref = (path: string) => `${WEBSITE_BASE}${path}`;
 
   return createPortal(
-    <div data-user-menu className="token-menu rounded-card p-1.5 shadow-[var(--ui-shadow-floating)]" style={menuStyle}>
+    <div data-user-menu data-theme={mode} className={`token-menu ${themeClass} rounded-card p-1.5 shadow-[var(--ui-shadow-floating)]`} style={menuStyle}>
       <button type="button" className="menu-row" onClick={() => { onOpenSettings(); onClose(); }}>
         <SettingsIcon className="h-4 w-4 text-[var(--text-muted)]" />
         <span className="flex-1 text-left">{t("menu.settings")}</span>

@@ -224,7 +224,16 @@ export type TranslationKey =
   | "workspace.noAssets"
   | "workspace.starToSave"
   | "workspace.renameProject"
-  | "workspace.noChats";
+  | "workspace.noChats"
+  // Project workspace
+  | "project.notFound"
+  | "project.backToCreate"
+  | "project.subtitle"
+  | "project.delete"
+  | "project.deleteConfirm"
+  | "project.openPage"
+  | "project.generations"
+  | "project.assetsCount";
 
 type Dict = Partial<Record<TranslationKey, string>>;
 
@@ -423,6 +432,14 @@ const en: Record<TranslationKey, string> = {
   "workspace.starToSave": "Star results to save",
   "workspace.renameProject": "Rename project",
   "workspace.noChats": "No chats yet — create from Create",
+  "project.notFound": "Project not found",
+  "project.backToCreate": "Back to Create",
+  "project.subtitle": "Generation chats in this project",
+  "project.delete": "Delete project",
+  "project.deleteConfirm": "Delete this project and all its chats?",
+  "project.openPage": "Open project page",
+  "project.generations": "generations",
+  "project.assetsCount": "assets",
 };
 
 const ru: Dict = {
@@ -621,6 +638,14 @@ const ru: Dict = {
   "workspace.starToSave": "Отмечайте звёздочкой",
   "workspace.renameProject": "Переименовать проект",
   "workspace.noChats": "Чатов пока нет — создайте в Create",
+  "project.notFound": "Проект не найден",
+  "project.backToCreate": "Вернуться к Create",
+  "project.subtitle": "Чаты генераций в этом проекте",
+  "project.delete": "Удалить проект",
+  "project.deleteConfirm": "Удалить проект и все его чаты?",
+  "project.openPage": "Открыть страницу проекта",
+  "project.generations": "генераций",
+  "project.assetsCount": "ассетов",
 };
 
 const es: Dict = {
@@ -947,16 +972,16 @@ const zh: Dict = {
   "settings.interface": "界面",
 };
 
-export const DICTIONARIES: Record<LanguageCode, Dict> = {
+export const DICTIONARIES: Record<LanguageCode, Record<TranslationKey, string>> = {
   en,
-  ru,
-  es,
-  fr,
-  de,
-  pt,
-  it,
-  ja,
-  zh,
+  ru: { ...en, ...ru },
+  es: { ...en, ...es },
+  fr: { ...en, ...fr },
+  de: { ...en, ...de },
+  pt: { ...en, ...pt },
+  it: { ...en, ...it },
+  ja: { ...en, ...ja },
+  zh: { ...en, ...zh },
 };
 
 export function translate(lang: LanguageCode, key: TranslationKey): string {

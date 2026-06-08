@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, LockKeyhole, Mail } from "lucide-react";
 import type { Provider } from "@supabase/supabase-js";
 import { getSupabase, supabaseConfigured } from "../lib/supabase";
+import { useAuth } from "../hooks/useAuth";
 
 const WEBSITE_URL =
   (import.meta.env.VITE_WEBSITE_URL as string | undefined)?.replace(/\/$/, "") ??
@@ -17,6 +18,7 @@ const oauthProviders: Array<{ label: string; provider: Provider }> = [
 export default function OAuthRegistration() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { markFreshSession } = useAuth();
   const isSignUp = location.pathname === "/sign-up" || location.pathname === "/auth";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,7 +46,10 @@ export default function OAuthRegistration() {
     [isSignUp],
   );
 
-  const redirectToApp = () => navigate("/app/generator", { replace: true });
+  const redirectToApp = () => {
+    markFreshSession();
+    navigate("/app/generator", { replace: true });
+  };
 
   const startOAuth = async (provider: Provider) => {
     setError(null);
@@ -57,7 +62,7 @@ export default function OAuthRegistration() {
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/app/generator`,
+        redirectTo: `${window.location.origin}/app/generator?fresh=1`,
         queryParams: provider === "google" ? { access_type: "offline", prompt: "consent" } : undefined,
       },
     });
@@ -83,7 +88,7 @@ export default function OAuthRegistration() {
           password,
           options: {
             data: { full_name: fullName },
-            emailRedirectTo: `${window.location.origin}/app/generator`,
+            emailRedirectTo: `${window.location.origin}/app/generator?fresh=1`,
           },
         });
         if (signUpError) throw signUpError;

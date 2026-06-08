@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CreditCard, Plus, Trash2 } from "lucide-react";
 import PageContainer from "../components/PageContainer";
 import { Field, SettingsSection, Toggle } from "../components/SettingsForm";
+import { useLanguage } from "../i18n/LanguageProvider";
 
 interface PaymentCard {
   id: string;
@@ -17,6 +18,7 @@ const initialCards: PaymentCard[] = [
 ];
 
 export default function Profile() {
+  const { t } = useLanguage();
   const [cards, setCards] = useState<PaymentCard[]>(initialCards);
   const [generationsEmail, setGenerationsEmail] = useState(true);
   const [productUpdates, setProductUpdates] = useState(false);
@@ -49,12 +51,12 @@ export default function Profile() {
 
   return (
     <PageContainer
-      title="Profile"
-      subtitle="Your identity on SoundAI"
-      actions={<button className="app-btn-primary h-9">Save changes</button>}
+      title={t("profile.title")}
+      subtitle={t("profile.subtitle")}
+      actions={<button className="app-btn-primary h-9">{t("profile.saveChanges")}</button>}
     >
       <div className="rounded-card token-card border border-[var(--border-primary)] px-6 shadow-flat-sm">
-        <SettingsSection title="Account" description="How you appear across SoundAI.">
+        <SettingsSection title={t("profile.account")} description={t("profile.accountDesc")}>
           <div className="flex items-center gap-5">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 font-poppins text-xl font-semibold text-primary">
               DM
@@ -63,36 +65,33 @@ export default function Profile() {
               <span className="font-poppins text-sm font-semibold text-text">Dmitriy M.</span>
               <span className="font-codec text-xs text-text/60">dmitriy@soundai.studio</span>
             </div>
-            <button className="app-btn-ghost ml-auto h-9 px-3 text-xs">Change avatar</button>
+            <button className="app-btn-ghost ml-auto h-9 px-3 text-xs">{t("profile.changeAvatar")}</button>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Field label="Display name">
+            <Field label={t("profile.displayName")}>
               <input className="app-input" defaultValue="Dmitriy M." />
             </Field>
-            <Field label="Email">
+            <Field label={t("profile.email")}>
               <input className="app-input" defaultValue="dmitriy@soundai.studio" type="email" />
             </Field>
-            <Field label="Workspace">
+            <Field label={t("profile.workspace")}>
               <input className="app-input" defaultValue="SoundAI · Studio" />
             </Field>
-            <Field label="Role">
+            <Field label={t("profile.role")}>
               <input className="app-input" defaultValue="Producer" />
             </Field>
           </div>
         </SettingsSection>
 
-        <SettingsSection title="Stats" description="Snapshot of your recent activity.">
+        <SettingsSection title={t("profile.stats")} description={t("profile.statsDesc")}>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <Stat label="Generations" value="312" />
-            <Stat label="Saved prompts" value="46" />
-            <Stat label="Library assets" value="128" />
+            <Stat label={t("profile.generations")} value="312" />
+            <Stat label={t("profile.savedPrompts")} value="46" />
+            <Stat label={t("profile.libraryAssets")} value="128" />
           </div>
         </SettingsSection>
 
-        <SettingsSection
-          title="Payment Methods"
-          description="Cards used for subscriptions and credit packs."
-        >
+        <SettingsSection title={t("profile.payment")} description={t("profile.paymentDesc")}>
           <div className="flex flex-col gap-2">
             {cards.map((card) => (
               <div
@@ -110,7 +109,7 @@ export default function Profile() {
                 </div>
                 {card.isDefault ? (
                   <span className="rounded-full bg-primary/10 px-2.5 py-1 font-poppins text-[11px] font-medium text-primary">
-                    Default
+                    {t("profile.default")}
                   </span>
                 ) : (
                   <button
@@ -118,7 +117,7 @@ export default function Profile() {
                     onClick={() => makeDefault(card.id)}
                     className="app-btn-ghost h-9 px-3 text-xs"
                   >
-                    Make default
+                    {t("profile.makeDefault")}
                   </button>
                 )}
                 <button
@@ -138,14 +137,11 @@ export default function Profile() {
             )}
           </div>
           <button type="button" onClick={addCard} className="app-btn-ghost h-9 self-start px-4">
-            <Plus className="h-3.5 w-3.5" /> Add payment method
+            <Plus className="h-3.5 w-3.5" /> {t("profile.addPayment")}
           </button>
         </SettingsSection>
 
-        <SettingsSection
-          title="Notifications"
-          description="Decide how SoundAI reaches you."
-        >
+        <SettingsSection title={t("profile.notifications")} description={t("profile.notificationsDesc")}>
           <Toggle
             label="Generation complete (email)"
             description="Get an email when a long-running render finishes."

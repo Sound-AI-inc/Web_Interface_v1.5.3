@@ -1,9 +1,11 @@
 import { LayoutGrid, Lock } from "lucide-react";
 import PageContainer from "../components/PageContainer";
+import { useLanguage } from "../i18n/LanguageProvider";
 
 export default function Arrangement() {
+  const { t } = useLanguage();
   return (
-    <PageContainer title="Arrangement" subtitle="AI-assisted song arrangement (preview)">
+    <PageContainer title={t("arrangement.title")} subtitle={t("arrangement.subtitle")}>
       <div className="relative overflow-hidden rounded-card token-card border border-[var(--border-primary)]">
         {/* Blurred preview of a fake arrangement grid */}
         <div className="pointer-events-none select-none p-8 [filter:blur(6px)_saturate(0.9)] opacity-60">

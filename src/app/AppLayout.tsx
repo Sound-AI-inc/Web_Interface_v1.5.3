@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, Navigate, useLocation, useSearchParams } from "react-router-dom";
 import { X } from "lucide-react";
 import AppHeader from "./components/AppHeader";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -9,19 +9,45 @@ import AnimatedBackground from "./components/AnimatedBackground";
 import SettingsContent from "./components/SettingsContent";
 import UpgradePlanModalContent from "./components/UpgradePlanModalContent";
 import { InterfaceModeContext, type InterfaceMode } from "./hooks/useInterfaceMode";
+import { useAuth } from "./hooks/useAuth";
+import { useWorkspaceStore } from "./state/workspaceStore";
 import { LanguageProvider } from "./i18n/LanguageProvider";
 
 export default function AppLayout() {
   const [mode, setMode] = useState<InterfaceMode>("pro");
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const { session, loading, configured, consumeFreshSession, markFreshSession } = useAuth();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const startNewSession = useWorkspaceStore((s) => s.startNewSession);
   const toggle = useCallback(
     () => setMode((m) => (m === "pro" ? "lite" : "pro")),
     [],
   );
   const ctx = useMemo(() => ({ mode, setMode, toggle }), [mode, toggle]);
-  const location = useLocation();
   const isWorkspaceRoute = location.pathname.includes("/generator");
+
+  useEffect(() => {
+    if (searchParams.get("fresh") === "1") {
+      markFreshSession();
+      window.history.replaceState({}, "", location.pathname);
+    }
+  }, [searchParams, markFreshSession, location.pathname]);
+
+  useEffect(() => {
+    const applyFreshSession = () => {
+      if (consumeFreshSession()) {
+        startNewSession();
+      }
+    };
+
+    if (useWorkspaceStore.persist.hasHydrated()) {
+      applyFreshSession();
+    }
+
+    return useWorkspaceStore.persist.onFinishHydration(applyFreshSession);
+  }, [consumeFreshSession, startNewSession]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -29,6 +55,10 @@ export default function AppLayout() {
     root.classList.add(mode === "pro" ? "theme-pro" : "theme-lite");
     root.setAttribute("data-theme", mode === "pro" ? "pro" : "lite");
   }, [mode]);
+
+  if (configured && !loading && !session) {
+    return <Navigate to="/sign-in" replace />;
+  }
 
   return (
     <LanguageProvider>

@@ -1,8 +1,10 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Suspense, lazy } from "react";
+import { AuthProvider } from "./app/hooks/useAuth";
 
 const AppLayout = lazy(() => import("./app/AppLayout"));
 const AudioGenerator = lazy(() => import("./app/pages/AudioGenerator"));
+const ProjectWorkspace = lazy(() => import("./app/pages/ProjectWorkspace"));
 const Prompts = lazy(() => import("./app/pages/Prompts"));
 const Arrangement = lazy(() => import("./app/pages/Arrangement"));
 const EditorMode = lazy(() => import("./app/pages/EditorMode"));
@@ -27,31 +29,34 @@ function RouteFallback() {
 function App() {
   return (
     <BrowserRouter>
-      <Suspense fallback={<RouteFallback />}>
-        <Routes>
-          <Route path="/" element={<Navigate to="/sign-up" replace />} />
-          <Route path="/auth" element={<OAuthRegistration />} />
-          <Route path="/sign-in" element={<OAuthRegistration />} />
-          <Route path="/sign-up" element={<OAuthRegistration />} />
-          <Route path="/welcome" element={<Navigate to="/sign-up" replace />} />
+      <AuthProvider>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            <Route path="/" element={<Navigate to="/sign-up" replace />} />
+            <Route path="/auth" element={<OAuthRegistration />} />
+            <Route path="/sign-in" element={<OAuthRegistration />} />
+            <Route path="/sign-up" element={<OAuthRegistration />} />
+            <Route path="/welcome" element={<Navigate to="/sign-up" replace />} />
 
-          <Route path="/app" element={<AppLayout />}>
-            <Route index element={<Navigate to="/app/generator" replace />} />
-            <Route path="generator" element={<AudioGenerator />} />
-            <Route path="prompts" element={<Prompts />} />
-            <Route path="arrangement" element={<Arrangement />} />
-            <Route path="editor" element={<EditorMode />} />
-            <Route path="library" element={<Library />} />
-            <Route path="export" element={<Export />} />
-            <Route path="integrations" element={<Integrations />} />
-            <Route path="billing" element={<Billing />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="settings" element={<Settings />} />
-          </Route>
+            <Route path="/app" element={<AppLayout />}>
+              <Route index element={<Navigate to="/app/generator" replace />} />
+              <Route path="generator" element={<AudioGenerator />} />
+              <Route path="projects/:projectId" element={<ProjectWorkspace />} />
+              <Route path="prompts" element={<Prompts />} />
+              <Route path="arrangement" element={<Arrangement />} />
+              <Route path="editor" element={<EditorMode />} />
+              <Route path="library" element={<Library />} />
+              <Route path="export" element={<Export />} />
+              <Route path="integrations" element={<Integrations />} />
+              <Route path="billing" element={<Billing />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="settings" element={<Settings />} />
+            </Route>
 
-          <Route path="*" element={<Navigate to="/app/generator" replace />} />
-        </Routes>
-      </Suspense>
+            <Route path="*" element={<Navigate to="/sign-in" replace />} />
+          </Routes>
+        </Suspense>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

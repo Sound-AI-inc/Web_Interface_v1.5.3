@@ -19,6 +19,7 @@ import type { LucideIcon } from "lucide-react";
 import ThemedLogo from "./ThemedLogo";
 import WorkspaceNav from "./workspace/WorkspaceNav";
 import { useLanguage } from "../i18n/LanguageProvider";
+import { useWorkspaceStore } from "../state/workspaceStore";
 
 interface NavItem {
   labelKey:
@@ -68,6 +69,7 @@ function Item({
   const Icon = item.icon;
   const label = t(item.labelKey);
   const isLiteLocked = mode === "lite" && LITE_LOCKED_KEYS.includes(item.labelKey);
+  const startNewSession = useWorkspaceStore((s) => s.startNewSession);
   const collapsedBase =
     "group flex items-center justify-center rounded-button p-2 transition-colors";
   if (isLiteLocked) {
@@ -113,6 +115,9 @@ function Item({
     <NavLink
       to={item.to}
       title={collapsed ? label : undefined}
+      onClick={() => {
+        if (item.to === "/app/generator") startNewSession();
+      }}
       className={({ isActive }) =>
         `${collapsed ? collapsedBase : NAV_ITEM_BASE} ${
           isActive

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ChevronDown, ChevronRight, FolderKanban, MessageSquare, Pencil, Plus } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ChevronDown, ChevronRight, FolderKanban, MessageSquare, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   selectProjectChats,
   useWorkspaceStore,
@@ -31,6 +31,7 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
   const setActiveChat = useWorkspaceStore((s) => s.setActiveChat);
   const createProject = useWorkspaceStore((s) => s.createProject);
   const renameProject = useWorkspaceStore((s) => s.renameProject);
+  const deleteProject = useWorkspaceStore((s) => s.deleteProject);
   const [projectsOpen, setProjectsOpen] = useState(true);
   const [expandedProjectIds, setExpandedProjectIds] = useState<Set<string>>(
     () => new Set([activeProjectId]),
@@ -54,8 +55,7 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
     return map;
   }, [projects, chats]);
 
-  const toggleProject = (projectId: string) => {
-    setActiveProject(projectId);
+  const toggleExpanded = (projectId: string) => {
     setExpandedProjectIds((prev) => {
       const next = new Set(prev);
       if (next.has(projectId)) next.delete(projectId);
@@ -64,17 +64,28 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
     });
   };
 
+  const openProjectPage = (projectId: string) => {
+    setActiveProject(projectId);
+    navigate(`/app/projects/${projectId}`);
+  };
+
   const startRename = (projectId: string, currentName: string) => {
     setRenamingProjectId(projectId);
     setRenameDraft(currentName);
   };
 
   const commitRename = () => {
-    if (renamingProjectId) {
-      renameProject(renamingProjectId, renameDraft);
-    }
+    if (renamingProjectId) renameProject(renamingProjectId, renameDraft);
     setRenamingProjectId(null);
     setRenameDraft("");
+  };
+
+  const handleDeleteProject = (projectId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (projects.length <= 1) return;
+    if (!window.confirm(t("project.deleteConfirm"))) return;
+    deleteProject(projectId);
+    navigate(GENERATOR_PATH);
   };
 
   if (collapsed) {
@@ -122,9 +133,9 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
                 >
                   <button
                     type="button"
-                    onClick={() => toggleProject(project.id)}
+                    onClick={() => toggleExpanded(project.id)}
                     className="flex h-8 w-7 shrink-0 items-center justify-center text-[var(--text-muted)]"
-                    aria-label={expanded ? "Collapse project" : "Expand project"}
+                    aria-label={expanded ? "Collapse" : "Expand"}
                   >
                     {expanded ? (
                       <ChevronDown className="h-3.5 w-3.5" />
@@ -151,7 +162,7 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => toggleProject(project.id)}
+                      onClick={() => openProjectPage(project.id)}
                       onDoubleClick={() => startRename(project.id, project.name)}
                       className={`min-w-0 flex-1 truncate py-2 text-left font-codec text-[12px] ${
                         isActiveProject
@@ -171,10 +182,28 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
                   >
                     <Pencil className="h-3 w-3" />
                   </button>
+
+                  {projects.length > 1 && (
+                    <button
+                      type="button"
+                      title={t("project.delete")}
+                      onClick={(e) => handleDeleteProject(project.id, e)}
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-button text-[var(--text-muted)] opacity-0 transition-opacity hover:text-[var(--error)] group-hover:opacity-100"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
 
                 {expanded && (
                   <div className="ml-4 border-l border-[var(--border-primary)] pl-2">
+                    <Link
+                      to={`/app/projects/${project.id}`}
+                      onClick={() => setActiveProject(project.id)}
+                      className="mb-1 block px-2 py-1 font-codec text-[10px] font-semibold uppercase tracking-[0.04em] text-primary hover:underline"
+                    >
+                      {t("project.openPage")}
+                    </Link>
                     {projectChats.length === 0 ? (
                       <p className="px-2 py-1.5 font-codec text-[11px] text-[var(--text-muted)]">
                         {t("workspace.noChats")}

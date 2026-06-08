@@ -9,6 +9,7 @@ import {
 import PageContainer from "../components/PageContainer";
 import type { ResultKind } from "../data/mock";
 import { LIBRARY_ROOT_ID, useLibraryStore } from "../state/libraryStore";
+import { useLanguage } from "../i18n/LanguageProvider";
 
 type TypeFilter = "all" | ResultKind;
 
@@ -25,6 +26,7 @@ const TYPE_FILTERS: { value: TypeFilter; label: string }[] = [
  * the chosen files off to downstream DAW / filesystem integrations.
  */
 export default function Export() {
+  const { t } = useLanguage();
   const folders = useLibraryStore((s) => s.folders);
   const assets = useLibraryStore((s) => s.assets);
   const assetFolder = useLibraryStore((s) => s.assetFolder);
@@ -80,8 +82,8 @@ export default function Export() {
 
   return (
     <PageContainer
-      title="Export"
-      subtitle="Send library assets to your local DAW or disk"
+      title={t("export.title")}
+      subtitle={t("export.subtitle")}
       actions={
         <button
           type="button"
@@ -90,24 +92,24 @@ export default function Export() {
           className="app-btn-primary h-9 px-4"
         >
           <Download className="h-3.5 w-3.5" />
-          Export {selected.size > 0 ? `(${selected.size})` : ""}
+          {t("export.exportSelected")} {selected.size > 0 ? `(${selected.size})` : ""}
         </button>
       }
     >
       <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2">
-          {TYPE_FILTERS.map((t) => (
+          {TYPE_FILTERS.map((filter) => (
             <button
-              key={t.value}
+              key={filter.value}
               type="button"
-              onClick={() => setTypeFilter(t.value)}
+              onClick={() => setTypeFilter(filter.value)}
               className={`h-9 rounded-full px-3 font-codec text-xs transition-colors ${
-                typeFilter === t.value
+                typeFilter === filter.value
                   ? "bg-primary/10 text-primary"
                   : "bg-surface-muted text-text/60 hover:bg-surface"
               }`}
             >
-              {t.label}
+              {filter.label}
             </button>
           ))}
         </div>
@@ -118,15 +120,15 @@ export default function Export() {
             className="app-btn-ghost h-9 px-3 text-xs"
           >
             {selected.size === allVisibleIds.length && allVisibleIds.length > 0
-              ? "Deselect all"
-              : "Select all"}
+              ? t("export.deselectAll")
+              : t("export.selectAll")}
           </button>
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text/40" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search files…"
+              placeholder={t("export.search")}
               className="app-input pl-10"
             />
           </div>
@@ -148,7 +150,7 @@ export default function Export() {
 
             {items.length === 0 ? (
               <div className="rounded-card border border-dashed border-surface p-5 text-center font-codec text-xs text-text/40">
-                No matching files in this folder.
+                {t("export.noFiles")}
               </div>
             ) : (
               <div className="flex flex-col divide-y divide-surface">

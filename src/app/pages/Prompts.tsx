@@ -3,6 +3,7 @@ import { Plus, Search, X } from "lucide-react";
 import PageContainer from "../components/PageContainer";
 import PromptCard from "../components/PromptCard";
 import { prompts as promptSeed, type PromptItem } from "../data/mock";
+import { useLanguage } from "../i18n/LanguageProvider";
 
 const GENRES = ["All", "Lo-fi", "Synthwave", "Cinematic", "Hip-hop", "Jazz", "Techno"];
 
@@ -15,6 +16,7 @@ const EMPTY_PROMPT = {
 };
 
 export default function Prompts() {
+  const { t } = useLanguage();
   const [query, setQuery] = useState("");
   const [genre, setGenre] = useState("All");
   const [items, setItems] = useState<PromptItem[]>(promptSeed);
@@ -74,15 +76,15 @@ export default function Prompts() {
   return (
     <>
       <PageContainer
-        title="Prompts"
-        subtitle="Your reusable prompt library"
+        title={t("prompts.title")}
+        subtitle={t("prompts.subtitle")}
         actions={
           <button
             type="button"
             onClick={() => setShowCreateModal(true)}
             className="app-btn-primary h-9"
           >
-            <Plus className="h-4 w-4" /> New Prompt
+            <Plus className="h-4 w-4" /> {t("prompts.new")}
           </button>
         }
       >
@@ -92,7 +94,7 @@ export default function Prompts() {
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search prompts..."
+              placeholder={t("prompts.searchPlaceholder")}
               className="app-input pl-10"
             />
           </div>
@@ -122,8 +124,8 @@ export default function Prompts() {
 
         {filtered.length === 0 && (
           <div className="mt-8 rounded-card border border-dashed border-surface bg-surface-muted p-10 text-center">
-            <p className="font-poppins text-sm font-medium text-text/70">No prompts match your filters.</p>
-            <p className="app-meta mt-1">Try clearing the search or selecting a different genre.</p>
+            <p className="font-poppins text-sm font-medium text-text/70">{t("prompts.noResults")}</p>
+            <p className="app-meta mt-1">{t("prompts.noResultsHint")}</p>
           </div>
         )}
       </PageContainer>
