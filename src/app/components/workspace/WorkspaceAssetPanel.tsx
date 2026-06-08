@@ -9,6 +9,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import type { AudioResult } from "../../data/mock";
+import { useLanguage } from "../../i18n/LanguageProvider";
 
 interface WorkspaceAssetPanelProps {
   sessionAssets: AudioResult[];
@@ -29,29 +30,39 @@ function CollapsibleSection({
   count,
   defaultOpen = true,
   collapsed,
+  flexGrow = false,
   children,
 }: {
   title: string;
   count: number;
   defaultOpen?: boolean;
   collapsed: boolean;
+  flexGrow?: boolean;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   if (collapsed) return null;
   return (
-    <div className="border-b border-[var(--border-primary)] pb-3">
+    <div
+      className={`flex min-h-0 flex-col border-b border-[var(--border-primary)] pb-2 ${
+        flexGrow ? "min-h-0 flex-1" : ""
+      }`}
+    >
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between py-2 font-codec text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-muted)]"
+        className="flex w-full shrink-0 items-center justify-between py-2 font-codec text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-muted)]"
       >
         <span>
           {title} <span className="text-[var(--text-secondary)]">({count})</span>
         </span>
         <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
-      {open && <div className="space-y-1.5">{children}</div>}
+      {open && (
+        <div className={`token-scroll min-h-0 space-y-1 ${flexGrow ? "flex-1 overflow-y-auto" : ""}`}>
+          {children}
+        </div>
+      )}
     </div>
   );
 }
@@ -109,6 +120,7 @@ export default function WorkspaceAssetPanel({
   collapsed,
   onToggleCollapsed,
 }: WorkspaceAssetPanelProps) {
+  const { t } = useLanguage();
   const audio = sessionAssets.filter((a) => a.kind === "audio");
   const midi = sessionAssets.filter((a) => a.kind === "midi");
   const preset = sessionAssets.filter((a) => a.kind === "preset");
@@ -118,13 +130,17 @@ export default function WorkspaceAssetPanel({
   return (
     <aside
       data-collapsed={collapsed ? "true" : "false"}
-      className="workspace-assets hidden shrink-0 flex-col border-l border-[var(--border-primary)] bg-[var(--background-secondary)] lg:flex"
+      className="workspace-assets hidden h-full min-h-0 shrink-0 flex-col border-l border-[var(--border-primary)] bg-[var(--background-secondary)] lg:flex"
     >
-      <div className="flex items-center justify-between border-b border-[var(--border-primary)] px-3 py-3">
+      <div className="flex shrink-0 items-center justify-between border-b border-[var(--border-primary)] px-3 py-3">
         {!collapsed && (
           <div className="min-w-0 px-1">
-            <h2 className="font-syne text-[15px] font-bold text-[var(--text-primary)]">Assets</h2>
-            <p className="mt-0.5 font-codec text-[11px] text-[var(--text-secondary)]">Live session</p>
+            <h2 className="font-syne text-[15px] font-bold text-[var(--text-primary)]">
+              {t("workspace.assets")}
+            </h2>
+            <p className="mt-0.5 font-codec text-[11px] text-[var(--text-secondary)]">
+              {t("workspace.liveSession")}
+            </p>
           </div>
         )}
         <button
@@ -136,7 +152,7 @@ export default function WorkspaceAssetPanel({
           {collapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto px-2 py-3">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 py-2">
         {collapsed ? (
           <div className="flex flex-col items-center gap-1">
             {recent.length === 0 ? (
@@ -154,10 +170,12 @@ export default function WorkspaceAssetPanel({
             )}
           </div>
         ) : (
-          <>
-            <CollapsibleSection title="Recent" count={recent.length} collapsed={collapsed}>
+          <div className="flex min-h-0 flex-1 flex-col">
+            <CollapsibleSection title={t("workspace.recent")} count={recent.length} collapsed={collapsed} flexGrow>
               {recent.length === 0 ? (
-                <p className="px-2 py-1 font-codec text-[12px] text-[var(--text-muted)]">No assets yet</p>
+                <p className="px-2 py-1 font-codec text-[12px] text-[var(--text-muted)]">
+                  {t("workspace.noAssets")}
+                </p>
               ) : (
                 recent.map((item) => (
                   <AssetRow
@@ -169,9 +187,11 @@ export default function WorkspaceAssetPanel({
                 ))
               )}
             </CollapsibleSection>
-            <CollapsibleSection title="Favorites" count={favorites.length} collapsed={collapsed}>
+            <CollapsibleSection title={t("workspace.favorites")} count={favorites.length} collapsed={collapsed}>
               {favorites.length === 0 ? (
-                <p className="px-2 py-1 font-codec text-[12px] text-[var(--text-muted)]">Star results to save</p>
+                <p className="px-2 py-1 font-codec text-[12px] text-[var(--text-muted)]">
+                  {t("workspace.starToSave")}
+                </p>
               ) : (
                 favorites.map((item) => (
                   <AssetRow
@@ -183,37 +203,65 @@ export default function WorkspaceAssetPanel({
                 ))
               )}
             </CollapsibleSection>
-            <CollapsibleSection title="Audio Samples" count={audio.length} defaultOpen={false} collapsed={collapsed}>
-              {audio.map((item) => (
-                <AssetRow
-                  key={item.id}
-                  item={item}
-                  favorited={favoriteIds.has(item.id)}
-                  onToggleFavorite={() => onToggleFavorite(item.id)}
-                />
-              ))}
+            <CollapsibleSection
+              title={t("workspace.audioSamples")}
+              count={audio.length}
+              defaultOpen={false}
+              collapsed={collapsed}
+            >
+              {audio.length === 0 ? (
+                <p className="px-2 py-1 font-codec text-[12px] text-[var(--text-muted)]">—</p>
+              ) : (
+                audio.map((item) => (
+                  <AssetRow
+                    key={item.id}
+                    item={item}
+                    favorited={favoriteIds.has(item.id)}
+                    onToggleFavorite={() => onToggleFavorite(item.id)}
+                  />
+                ))
+              )}
             </CollapsibleSection>
-            <CollapsibleSection title="MIDI Files" count={midi.length} defaultOpen={false} collapsed={collapsed}>
-              {midi.map((item) => (
-                <AssetRow
-                  key={item.id}
-                  item={item}
-                  favorited={favoriteIds.has(item.id)}
-                  onToggleFavorite={() => onToggleFavorite(item.id)}
-                />
-              ))}
+            <CollapsibleSection
+              title={t("workspace.midiFiles")}
+              count={midi.length}
+              defaultOpen={false}
+              collapsed={collapsed}
+            >
+              {midi.length === 0 ? (
+                <p className="px-2 py-1 font-codec text-[12px] text-[var(--text-muted)]">—</p>
+              ) : (
+                midi.map((item) => (
+                  <AssetRow
+                    key={item.id}
+                    item={item}
+                    favorited={favoriteIds.has(item.id)}
+                    onToggleFavorite={() => onToggleFavorite(item.id)}
+                  />
+                ))
+              )}
             </CollapsibleSection>
-            <CollapsibleSection title="VST Presets" count={preset.length} defaultOpen={false} collapsed={collapsed}>
-              {preset.map((item) => (
-                <AssetRow
-                  key={item.id}
-                  item={item}
-                  favorited={favoriteIds.has(item.id)}
-                  onToggleFavorite={() => onToggleFavorite(item.id)}
-                />
-              ))}
+            <CollapsibleSection
+              title={t("workspace.vstPresets")}
+              count={preset.length}
+              defaultOpen={false}
+              collapsed={collapsed}
+              flexGrow
+            >
+              {preset.length === 0 ? (
+                <p className="px-2 py-1 font-codec text-[12px] text-[var(--text-muted)]">—</p>
+              ) : (
+                preset.map((item) => (
+                  <AssetRow
+                    key={item.id}
+                    item={item}
+                    favorited={favoriteIds.has(item.id)}
+                    onToggleFavorite={() => onToggleFavorite(item.id)}
+                  />
+                ))
+              )}
             </CollapsibleSection>
-          </>
+          </div>
         )}
       </div>
     </aside>

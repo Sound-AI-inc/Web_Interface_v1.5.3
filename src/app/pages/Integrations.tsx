@@ -11,7 +11,6 @@ const CATEGORY_ORDER: IntegrationCategory[] = [
   "AI Tools",
   "Distribution",
   "Samples",
-  "Storage",
   "Processing",
 ];
 
@@ -24,14 +23,16 @@ const CATEGORY_LABEL: Record<IntegrationCategory, string> = {
   Processing: "Processing",
 };
 
+const VISIBLE_INTEGRATIONS = integrations.filter((i) => i.category !== "Storage");
+
 export default function Integrations() {
   const [filter, setFilter] = useState<Filter>("All");
 
   const counts = useMemo(() => {
     const map = new Map<Filter, number>();
-    map.set("All", integrations.length);
+    map.set("All", VISIBLE_INTEGRATIONS.length);
     for (const cat of CATEGORY_ORDER) {
-      map.set(cat, integrations.filter((i) => i.category === cat).length);
+      map.set(cat, VISIBLE_INTEGRATIONS.filter((i) => i.category === cat).length);
     }
     return map;
   }, []);
@@ -42,7 +43,7 @@ export default function Integrations() {
     );
     return visible.map((cat) => ({
       category: cat,
-      items: integrations.filter((i) => i.category === cat),
+      items: VISIBLE_INTEGRATIONS.filter((i) => i.category === cat),
     }));
   }, [filter]);
 

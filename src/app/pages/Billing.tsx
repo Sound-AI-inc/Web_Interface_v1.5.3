@@ -11,19 +11,19 @@ export default function Billing() {
   return (
     <PageContainer title="Billing" subtitle="Plan, usage and invoices">
       <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="rounded-card token-card border border-[var(--border-primary)] p-5 shadow-flat-sm">
+        <div className="token-card rounded-card p-5">
           <div className="app-section-title mb-2">Current plan</div>
-          <div className="font-poppins text-xl font-semibold text-text">Standard</div>
+          <div className="font-poppins text-xl font-semibold text-[var(--text-primary)]">Standard</div>
           <p className="app-meta mt-1">Renews on May 14</p>
           <button className="app-btn-ghost mt-4 h-9 w-full">Manage plan</button>
         </div>
-        <div className="rounded-card token-card border border-[var(--border-primary)] p-5 shadow-flat-sm md:col-span-2">
+        <div className="token-card rounded-card p-5 md:col-span-2">
           <div className="app-section-title mb-2">Credits this month</div>
           <div className="flex items-baseline gap-2">
-            <span className="font-poppins text-3xl font-semibold text-text">{usedCredits}</span>
-            <span className="font-codec text-sm text-text/50">/ {totalCredits} generations</span>
+            <span className="font-poppins text-3xl font-semibold text-[var(--text-primary)]">{usedCredits}</span>
+            <span className="font-codec text-sm text-[var(--text-secondary)]">/ {totalCredits} generations</span>
           </div>
-          <div className="mt-4 h-2 w-full rounded-full bg-surface">
+          <div className="mt-4 h-2 w-full rounded-full bg-[var(--surface-secondary)]">
             <div className="h-2 rounded-full bg-primary" style={{ width: `${pct}%` }} />
           </div>
           <p className="app-meta mt-2">Resets on May 14. Upgrade for more headroom.</p>
@@ -41,14 +41,14 @@ export default function Billing() {
       <BillingComparisonTable />
 
       <h2 className="app-section-title mb-4 mt-10">Recent invoices</h2>
-      <div className="overflow-hidden rounded-card token-card border border-[var(--border-primary)]">
+      <div className="token-card overflow-hidden rounded-card">
         <table className="w-full text-left">
           <thead>
-            <tr className="border-b border-surface">
-              <th className="px-5 py-3 font-codec text-xs font-medium uppercase tracking-wider text-text/50">Date</th>
-              <th className="px-5 py-3 font-codec text-xs font-medium uppercase tracking-wider text-text/50">Plan</th>
-              <th className="px-5 py-3 font-codec text-xs font-medium uppercase tracking-wider text-text/50">Amount</th>
-              <th className="px-5 py-3 font-codec text-xs font-medium uppercase tracking-wider text-text/50">Status</th>
+            <tr className="border-b border-[var(--border-primary)]">
+              <th className="px-5 py-3 font-codec text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">Date</th>
+              <th className="px-5 py-3 font-codec text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">Plan</th>
+              <th className="px-5 py-3 font-codec text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">Amount</th>
+              <th className="px-5 py-3 font-codec text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -57,12 +57,12 @@ export default function Billing() {
               { date: "Mar 14, 2026", plan: "Standard", amount: "$19.00", status: "Paid" },
               { date: "Feb 14, 2026", plan: "Standard", amount: "$19.00", status: "Paid" },
             ].map((r) => (
-              <tr key={r.date} className="border-b border-surface last:border-0">
-                <td className="px-5 py-3 font-codec text-sm text-text">{r.date}</td>
-                <td className="px-5 py-3 font-codec text-sm text-text/80">{r.plan}</td>
-                <td className="px-5 py-3 font-codec text-sm text-text/80">{r.amount}</td>
+              <tr key={r.date} className="border-b border-[var(--border-primary)] last:border-0">
+                <td className="px-5 py-3 font-codec text-sm text-[var(--text-primary)]">{r.date}</td>
+                <td className="px-5 py-3 font-codec text-sm text-[var(--text-secondary)]">{r.plan}</td>
+                <td className="px-5 py-3 font-codec text-sm text-[var(--text-secondary)]">{r.amount}</td>
                 <td className="px-5 py-3 font-codec text-sm">
-                  <span className="rounded-full bg-accent-light/40 px-2.5 py-0.5 font-poppins text-[11px] font-medium text-text">
+                  <span className="rounded-full bg-primary/10 px-2.5 py-0.5 font-poppins text-[11px] font-medium text-primary">
                     {r.status}
                   </span>
                 </td>

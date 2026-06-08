@@ -192,12 +192,33 @@ export type TranslationKey =
   | "settings.stemsBundle"
   | "settings.stemsBundleDesc"
   | "settings.preferLossless"
-  | "settings.preferLosslessDesc";
+  | "settings.preferLosslessDesc"
+  // Workspace
+  | "workspace.projects"
+  | "workspace.chats"
+  | "workspace.newChat"
+  | "workspace.newProject"
+  | "workspace.greeting"
+  | "workspace.suggestions"
+  | "workspace.shuffle"
+  | "workspace.generations"
+  | "workspace.create"
+  | "workspace.generating"
+  | "workspace.addToProject"
+  | "workspace.assets"
+  | "workspace.liveSession"
+  | "workspace.recent"
+  | "workspace.favorites"
+  | "workspace.audioSamples"
+  | "workspace.midiFiles"
+  | "workspace.vstPresets"
+  | "workspace.noAssets"
+  | "workspace.starToSave";
 
 type Dict = Partial<Record<TranslationKey, string>>;
 
 const en: Record<TranslationKey, string> = {
-  "nav.audioGenerator": "Audio Generator",
+  "nav.audioGenerator": "Create",
   "nav.prompts": "Prompts",
   "nav.arrangement": "Arrangement",
   "nav.editor": "Editor Mode",
@@ -360,10 +381,30 @@ const en: Record<TranslationKey, string> = {
     "Adds separated stems (drums, bass, melody) to exported projects.",
   "settings.preferLossless": "Prefer lossless formats",
   "settings.preferLosslessDesc": "Use WAV / FLAC when the target supports them.",
+  "workspace.projects": "Projects",
+  "workspace.chats": "Chats",
+  "workspace.newChat": "New chat",
+  "workspace.newProject": "New project",
+  "workspace.greeting": "What would you like to create today?",
+  "workspace.suggestions": "Suggestions",
+  "workspace.shuffle": "Shuffle Suggestions",
+  "workspace.generations": "Generations",
+  "workspace.create": "Create",
+  "workspace.generating": "Generating",
+  "workspace.addToProject": "Add to Project",
+  "workspace.assets": "Assets",
+  "workspace.liveSession": "Live session",
+  "workspace.recent": "Recent",
+  "workspace.favorites": "Favorites",
+  "workspace.audioSamples": "Audio Samples",
+  "workspace.midiFiles": "MIDI Files",
+  "workspace.vstPresets": "VST Presets",
+  "workspace.noAssets": "No assets yet",
+  "workspace.starToSave": "Star results to save",
 };
 
 const ru: Dict = {
-  "nav.audioGenerator": "Генератор",
+  "nav.audioGenerator": "Создать",
   "nav.prompts": "Промпты",
   "nav.arrangement": "Аранжировка",
   "nav.editor": "Редактор",
@@ -527,6 +568,26 @@ const ru: Dict = {
   "settings.preferLossless": "Предпочитать lossless-форматы",
   "settings.preferLosslessDesc":
     "Использовать WAV / FLAC, если формат поддерживается.",
+  "workspace.projects": "Проекты",
+  "workspace.chats": "Чаты",
+  "workspace.newChat": "Новый чат",
+  "workspace.newProject": "Новый проект",
+  "workspace.greeting": "Что хотите создать сегодня?",
+  "workspace.suggestions": "Подсказки",
+  "workspace.shuffle": "Перемешать",
+  "workspace.generations": "Генерации",
+  "workspace.create": "Создать",
+  "workspace.generating": "Генерация",
+  "workspace.addToProject": "В проект",
+  "workspace.assets": "Ассеты",
+  "workspace.liveSession": "Текущая сессия",
+  "workspace.recent": "Недавние",
+  "workspace.favorites": "Избранное",
+  "workspace.audioSamples": "Аудио",
+  "workspace.midiFiles": "MIDI",
+  "workspace.vstPresets": "VST пресеты",
+  "workspace.noAssets": "Пока нет ассетов",
+  "workspace.starToSave": "Отмечайте звёздочкой",
 };
 
 const es: Dict = {

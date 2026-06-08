@@ -24,6 +24,7 @@ interface ResultCardProps {
   onAddToLibrary?: () => void;
   onRemix?: () => void;
   savedToLibrary?: boolean;
+  saveLabel?: string;
   statusLabel?: string;
   statusProgress?: number;
   disableActions?: boolean;
@@ -40,6 +41,7 @@ export default function ResultCard({
   onAddToLibrary,
   onRemix,
   savedToLibrary,
+  saveLabel,
   statusLabel,
   statusProgress,
   disableActions,
@@ -98,7 +100,7 @@ export default function ResultCard({
         <AssetAction
           disabled={savedToLibrary || disableActions}
           icon={Heart}
-          label={savedToLibrary ? "Saved" : "Save"}
+          label={saveLabel ?? (savedToLibrary ? "Saved" : "Save to Library")}
           active={savedToLibrary}
           onClick={onAddToLibrary}
         />

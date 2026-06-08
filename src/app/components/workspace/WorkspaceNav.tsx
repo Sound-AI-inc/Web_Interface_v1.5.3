@@ -1,13 +1,28 @@
-import { useState } from "react";
-import { ChevronDown, FolderKanban, MessageSquare, Plus, Star } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ChevronDown, FolderKanban, MessageSquare, Plus } from "lucide-react";
 import {
   selectProjectChats,
-  selectRecentChats,
   useWorkspaceStore,
 } from "../../state/workspaceStore";
+import { focusComposerInput } from "../../lib/focusComposer";
+import { useLanguage } from "../../i18n/LanguageProvider";
+
+const GENERATOR_PATH = "/app/generator";
+
+function openWorkspaceChat(
+  chatId: string,
+  setActiveChat: (id: string) => void,
+  navigate: (path: string) => void,
+) {
+  setActiveChat(chatId);
+  navigate(GENERATOR_PATH);
+  focusComposerInput();
+}
 
 export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
+  const navigate = useNavigate();
+  const { t } = useLanguage();
   const projects = useWorkspaceStore((s) => s.projects);
   const chats = useWorkspaceStore((s) => s.chats);
   const activeProjectId = useWorkspaceStore((s) => s.activeProjectId);
@@ -23,18 +38,27 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
     () => selectProjectChats({ chats }, activeProjectId),
     [chats, activeProjectId],
   );
-  const recentChats = useMemo(() => selectRecentChats({ chats }), [chats]);
-  const favoriteChats = useMemo(
-    () => recentChats.filter((c) => c.favoriteIds.length > 0 || c.savedIds.length > 0),
-    [recentChats],
-  );
+
+  const handleNewChat = () => {
+    createChat();
+    navigate(GENERATOR_PATH);
+    focusComposerInput();
+  };
+
+  const handleSelectProject = (projectId: string) => {
+    setActiveProject(projectId);
+    const projectChats = selectProjectChats({ chats }, projectId);
+    if (projectChats[0]) {
+      openWorkspaceChat(projectChats[0].id, setActiveChat, navigate);
+    }
+  };
 
   if (collapsed) {
     return (
       <div className="mb-3 flex flex-col items-center gap-2 px-1">
         <button
           type="button"
-          title="Projects"
+          title={t("workspace.projects")}
           onClick={() => setProjectsOpen((v) => !v)}
           className="flex h-9 w-9 items-center justify-center rounded-button text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] hover:text-[var(--text-primary)]"
         >
@@ -42,8 +66,8 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
         </button>
         <button
           type="button"
-          title="New chat"
-          onClick={() => createChat()}
+          title={t("workspace.newChat")}
+          onClick={handleNewChat}
           className="flex h-9 w-9 items-center justify-center rounded-button text-primary hover:bg-[var(--surface-secondary)]"
         >
           <Plus className="h-4 w-4" />
@@ -62,7 +86,7 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
         >
           <span className="flex items-center gap-2">
             <FolderKanban className="h-3.5 w-3.5" />
-            Projects
+            {t("workspace.projects")}
           </span>
           <ChevronDown className={`h-3.5 w-3.5 transition-transform ${projectsOpen ? "rotate-180" : ""}`} />
         </button>
@@ -72,7 +96,7 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
               <button
                 key={p.id}
                 type="button"
-                onClick={() => setActiveProject(p.id)}
+                onClick={() => handleSelectProject(p.id)}
                 className={`w-full truncate rounded-button px-3 py-2 text-left font-codec text-[12px] transition-colors ${
                   p.id === activeProjectId
                     ? "bg-[var(--surface-elevated)] font-semibold text-[var(--text-primary)]"
@@ -88,7 +112,7 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
               className="flex w-full items-center gap-2 px-3 py-2 font-codec text-[12px] text-[var(--text-muted)] hover:text-primary"
             >
               <Plus className="h-3.5 w-3.5" />
-              New project
+              {t("workspace.newProject")}
             </button>
           </div>
         )}
@@ -102,7 +126,7 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
         >
           <span className="flex items-center gap-2">
             <MessageSquare className="h-3.5 w-3.5" />
-            Chats
+            {t("workspace.chats")}
           </span>
           <ChevronDown className={`h-3.5 w-3.5 transition-transform ${chatsOpen ? "rotate-180" : ""}`} />
         </button>
@@ -112,7 +136,7 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
               <button
                 key={chat.id}
                 type="button"
-                onClick={() => setActiveChat(chat.id)}
+                onClick={() => openWorkspaceChat(chat.id, setActiveChat, navigate)}
                 className={`w-full truncate rounded-button px-3 py-2 text-left font-codec text-[12px] transition-colors ${
                   chat.id === activeChatId
                     ? "border-l-2 border-l-primary bg-[var(--surface-elevated)] font-semibold text-[var(--text-primary)]"
@@ -124,36 +148,15 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
             ))}
             <button
               type="button"
-              onClick={() => createChat()}
+              onClick={handleNewChat}
               className="flex w-full items-center gap-2 px-3 py-2 font-codec text-[12px] text-[var(--text-muted)] hover:text-primary"
             >
               <Plus className="h-3.5 w-3.5" />
-              New chat
+              {t("workspace.newChat")}
             </button>
           </div>
         )}
       </div>
-
-      {favoriteChats.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 px-3 py-1.5 font-codec text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--text-muted)]">
-            <Star className="h-3.5 w-3.5" />
-            Favorites
-          </div>
-          <div className="space-y-0.5">
-            {favoriteChats.slice(0, 4).map((chat) => (
-              <button
-                key={chat.id}
-                type="button"
-                onClick={() => setActiveChat(chat.id)}
-                className="w-full truncate rounded-button px-3 py-2 text-left font-codec text-[12px] text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
-              >
-                {chat.title}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

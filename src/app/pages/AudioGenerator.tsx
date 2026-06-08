@@ -7,14 +7,19 @@ import { useInterfaceMode } from "../hooks/useInterfaceMode";
 import type { GenerationType } from "../lib/promptGeneration";
 import { generateResults } from "../lib/generationGateway";
 import ResultCard, { toCardItem } from "../components/ResultCard";
-import TypewriterPlaceholder from "../components/workspace/TypewriterPlaceholder";
-import RecommendationCards, { type Recommendation } from "../components/workspace/RecommendationCards";
+import SuggestionList, { type Suggestion } from "../components/workspace/SuggestionList";
+import WorkspaceGreeting from "../components/workspace/WorkspaceGreeting";
 import WorkspaceAssetPanel from "../components/workspace/WorkspaceAssetPanel";
+import AddToProjectMenu from "../components/workspace/AddToProjectMenu";
+import { COMPOSER_INPUT_ID, focusComposerInput } from "../lib/focusComposer";
+import { useLibraryStore } from "../state/libraryStore";
 import {
   selectActiveChat,
   useWorkspaceStore,
   type GenerationBatch,
+  type WorkspaceProject,
 } from "../state/workspaceStore";
+import { useLanguage } from "../i18n/LanguageProvider";
 
 const LITE_TYPES = ["Audio Sample"] as const;
 const LITE_MODELS_BY_TYPE: Record<(typeof LITE_TYPES)[number], string[]> = {
@@ -58,7 +63,6 @@ const GENERATION_STAGES = [
   "Finalizing results",
 ] as const;
 const MIN_GENERATION_VISUAL_MS = 1800;
-const COMPOSER_INPUT_ID = "generator-composer-input";
 
 interface PendingGeneration {
   id: string;
@@ -91,7 +95,7 @@ function sleep(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
-function mapRecommendationType(rec: Recommendation) {
+function mapSuggestionType(rec: Suggestion) {
   if (rec.type === "MIDI") return "MIDI Melody";
   if (rec.type === "VST Preset") return "VST Preset";
   return "Audio Sample";
@@ -99,10 +103,12 @@ function mapRecommendationType(rec: Recommendation) {
 
 export default function AudioGenerator() {
   const { mode } = useInterfaceMode();
+  const { t } = useLanguage();
   const isPro = mode === "pro";
 
   const activeChatId = useWorkspaceStore((s) => s.activeChatId);
   const chats = useWorkspaceStore((s) => s.chats);
+  const projects = useWorkspaceStore((s) => s.projects);
   const activeChat = useMemo(
     () => selectActiveChat({ chats, activeChatId }),
     [chats, activeChatId],
@@ -111,8 +117,11 @@ export default function AudioGenerator() {
   const appendBatch = useWorkspaceStore((s) => s.appendBatch);
   const createChat = useWorkspaceStore((s) => s.createChat);
   const setActiveChat = useWorkspaceStore((s) => s.setActiveChat);
+  const createProject = useWorkspaceStore((s) => s.createProject);
+  const assignAssetToProject = useWorkspaceStore((s) => s.assignAssetToProject);
   const assetsPanelCollapsed = useWorkspaceStore((s) => s.assetsPanelCollapsed);
   const setAssetsPanelCollapsed = useWorkspaceStore((s) => s.setAssetsPanelCollapsed);
+  const addFromResult = useLibraryStore((s) => s.addFromResult);
 
   useEffect(() => {
     if (chats.length === 0) {
@@ -146,6 +155,7 @@ export default function AudioGenerator() {
     setPrompt("");
     setPending(null);
     setGenerationWarning(null);
+    focusComposerInput();
   }, [activeChatId]);
 
   const modelOptions = useMemo(() => {
@@ -187,17 +197,17 @@ export default function AudioGenerator() {
 
   const promptControls: PromptControlConfig[] = useMemo(
     () => [
-      { label: "Type", value: type, options: typeOptions, onChange: setType },
-      { label: "Model", value: resolvedModel, options: modelOptions, onChange: setModel },
+      { label: t("generator.type"), value: type, options: typeOptions, onChange: setType },
+      { label: t("generator.model"), value: resolvedModel, options: modelOptions, onChange: setModel },
       {
-        label: "Generations",
+        label: t("workspace.generations"),
         value: String(generationCount),
         options: GENERATION_COUNTS,
         onChange: (value: string) => setGenerationCount(Number(value)),
       },
-      { label: "Format", value: resolvedFormat, options: formatOptions, onChange: setFormat },
+      { label: t("generator.outputFormat"), value: resolvedFormat, options: formatOptions, onChange: setFormat },
     ],
-    [type, typeOptions, resolvedModel, modelOptions, generationCount, resolvedFormat, formatOptions],
+    [t, type, typeOptions, resolvedModel, modelOptions, generationCount, resolvedFormat, formatOptions],
   );
 
   const patchChatIds = (field: "favoriteIds" | "savedIds", id: string) => {
@@ -208,6 +218,22 @@ export default function AudioGenerator() {
     updateChat(activeChatId, { [field]: [...current] });
   };
 
+  const handleSaveToLibrary = (item: AudioResult) => {
+    addFromResult(item);
+    patchChatIds("savedIds", item.id);
+  };
+
+  const handleAddToProject = (item: AudioResult, projectId: string) => {
+    addFromResult(item);
+    assignAssetToProject(projectId, item.id);
+    patchChatIds("savedIds", item.id);
+  };
+
+  const handleCreateProjectForAsset = (item: AudioResult) => {
+    const projectId = createProject("New Project");
+    handleAddToProject(item, projectId);
+  };
+
   const handleRemix = (item: AudioResult, batchPrompt?: string) => {
     const base = batchPrompt ?? prompt;
     setPrompt(
@@ -215,18 +241,18 @@ export default function AudioGenerator() {
         ? `${base} — make ${item.title} harder and more aggressive`
         : `Make ${item.title} harder and more aggressive`,
     );
-    document.getElementById(COMPOSER_INPUT_ID)?.focus();
+    focusComposerInput();
   };
 
   const handleRegenerate = (batch: GenerationBatch) => {
     setPrompt(batch.prompt);
-    document.getElementById(COMPOSER_INPUT_ID)?.focus();
+    focusComposerInput();
   };
 
-  const handleRecommendation = (rec: Recommendation) => {
+  const handleSuggestion = (rec: Suggestion) => {
     setPrompt(rec.prompt);
-    setType(mapRecommendationType(rec));
-    document.getElementById(COMPOSER_INPUT_ID)?.focus();
+    setType(mapSuggestionType(rec));
+    focusComposerInput();
   };
 
   const handleGenerate = async () => {
@@ -316,17 +342,14 @@ export default function AudioGenerator() {
   );
 
   const dock = (
-    <div
-      className="prompt-dock-wrap"
-      data-state={hasFeed ? "docked" : "centered"}
-    >
+    <div className="prompt-dock-wrap" data-state={hasFeed ? "docked" : "centered"}>
       <PromptInput
         value={prompt}
         onChange={setPrompt}
         onGenerate={handleGenerate}
         disabled={isGenerating}
         loading={isGenerating}
-        generateLabel={isGenerating ? "Generating" : "Create"}
+        generateLabel={isGenerating ? t("workspace.generating") : t("workspace.create")}
         mode={isPro ? "pro" : "lite"}
         layout="dock"
         controls={controls}
@@ -336,23 +359,15 @@ export default function AudioGenerator() {
   );
 
   return (
-    <div className="workspace-layout flex h-[calc(100vh-64px)] flex-col">
-      <div className="flex min-h-0 flex-1">
-        <section className="workspace-conversation relative flex min-w-0 flex-1 flex-col">
+    <div className="workspace-layout flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <section className="workspace-conversation relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {!hasFeed ? (
-            <div className="flex flex-1 flex-col items-center justify-center px-4 py-8">
-              <h1 className="generator-hero-title mb-2 font-syne text-[32px] font-bold tracking-[-0.03em] sm:text-[40px]">
-                What do you want to create?
-              </h1>
-              <p className="mb-8 max-w-md text-center font-codec text-[15px] text-[var(--text-secondary)]">
-                Describe your idea — SoundAI will generate production-ready assets.
-              </p>
+            <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-4 py-6">
+              <WorkspaceGreeting />
               {dock}
-              <div className="mt-8 w-full max-w-2xl px-2">
-                <div className="mb-4 rounded-[12px] border border-[var(--border-primary)] bg-[var(--surface-primary)] px-4 py-3">
-                  <TypewriterPlaceholder />
-                </div>
-                <RecommendationCards onSelect={handleRecommendation} />
+              <div className="mt-6 w-full max-w-xl px-2">
+                <SuggestionList onSelect={handleSuggestion} />
               </div>
               {generationWarning && (
                 <p className="mt-4 font-codec text-sm text-primary">{generationWarning}</p>
@@ -360,15 +375,18 @@ export default function AudioGenerator() {
             </div>
           ) : (
             <>
-              <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
-                <div className="feed-enter mx-auto flex w-full max-w-4xl flex-col gap-8 pb-6">
+              <div className="token-scroll min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6">
+                <div className="feed-enter mx-auto flex w-full max-w-4xl flex-col gap-8 pb-4">
                   {history.map((batch) => (
                     <GenerationTimeline
                       key={batch.id}
                       batch={batch}
                       saved={savedIds}
                       favorites={favoriteIds}
-                      onAddToLibrary={(item) => patchChatIds("savedIds", item.id)}
+                      projects={projects}
+                      onSaveToLibrary={handleSaveToLibrary}
+                      onAddToProject={handleAddToProject}
+                      onCreateProjectForAsset={handleCreateProjectForAsset}
                       onToggleFavorite={(id) => patchChatIds("favoriteIds", id)}
                       onRemix={(item) => handleRemix(item, batch.prompt)}
                       onRegenerate={() => handleRegenerate(batch)}
@@ -384,7 +402,7 @@ export default function AudioGenerator() {
               </div>
               <div
                 id="audio-generator-composer"
-                className="workspace-dock composer-dock-enter shrink-0 border-t border-[var(--border-primary)] px-4 pb-4 pt-3 sm:px-6"
+                className="workspace-dock composer-dock-enter shrink-0 border-t border-[var(--border-primary)] px-4 pb-3 pt-2 sm:px-6"
               >
                 {dock}
               </div>
@@ -406,15 +424,15 @@ export default function AudioGenerator() {
 
 function PromptControl({ label, value, options, onChange }: PromptControlConfig) {
   return (
-    <div className="min-w-[136px] shrink-0">
-      <div className="mb-1 px-1 font-codec text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--text-muted)]">
+    <div className="min-w-[124px] shrink-0">
+      <div className="mb-0.5 px-1 font-codec text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--text-muted)]">
         {label}
       </div>
       <BrandSelect
         value={value}
         options={options}
         onChange={onChange}
-        className="min-w-[136px]"
+        className="min-w-[124px]"
       />
     </div>
   );
@@ -424,7 +442,10 @@ function GenerationTimeline({
   batch,
   saved,
   favorites,
-  onAddToLibrary,
+  projects,
+  onSaveToLibrary,
+  onAddToProject,
+  onCreateProjectForAsset,
   onToggleFavorite,
   onRemix,
   onRegenerate,
@@ -432,7 +453,10 @@ function GenerationTimeline({
   batch: GenerationBatch;
   saved: Set<string>;
   favorites: Set<string>;
-  onAddToLibrary: (item: AudioResult) => void;
+  projects: WorkspaceProject[];
+  onSaveToLibrary: (item: AudioResult) => void;
+  onAddToProject: (item: AudioResult, projectId: string) => void;
+  onCreateProjectForAsset: (item: AudioResult) => void;
   onToggleFavorite: (id: string) => void;
   onRemix: (item: AudioResult) => void;
   onRegenerate: () => void;
@@ -477,10 +501,16 @@ function GenerationTimeline({
                 <ResultCard
                   item={toCardItem(item)}
                   savedToLibrary={saved.has(item.id)}
-                  onAddToLibrary={() => onAddToLibrary(item)}
+                  onAddToLibrary={() => onSaveToLibrary(item)}
                   onRemix={() => onRemix(item)}
+                  saveLabel={saved.has(item.id) ? "Saved" : "Save to Library"}
                 />
-                <div className="mt-2 flex flex-wrap gap-2 pl-1">
+                <div className="mt-2 flex flex-wrap items-center gap-2 pl-1">
+                  <AddToProjectMenu
+                    projects={projects}
+                    onAssign={(projectId) => onAddToProject(item, projectId)}
+                    onCreateProject={() => onCreateProjectForAsset(item)}
+                  />
                   <TimelineAction icon={Pencil} label="Edit" onClick={() => onRemix(item)} />
                   {favorites.has(item.id) ? (
                     <span className="font-codec text-[11px] text-primary">Favorited</span>

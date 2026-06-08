@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, Check } from "lucide-react";
 
 export interface BrandSelectOption {
@@ -20,12 +21,6 @@ function normalize(o: string | BrandSelectOption): BrandSelectOption {
   return { value: o.value, label: o.label ?? o.value };
 }
 
-/**
- * Branded, accessible dropdown that mirrors the visual language of the rest
- * of the dashboard (Codec Pro, primary accent, soft hover, flat shadow).
- * Not a full ARIA listbox — keyboard navigation is intentionally minimal
- * (Enter / Escape + click), which is fine for short option lists.
- */
 export default function BrandSelect({
   value,
   options,
@@ -35,51 +30,77 @@ export default function BrandSelect({
   menuClassName = "",
 }: BrandSelectProps) {
   const [open, setOpen] = useState(false);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
+  const [openUpward, setOpenUpward] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLUListElement>(null);
   const normalized = options.map(normalize);
   const current = normalized.find((o) => o.value === value);
 
+  const updatePosition = () => {
+    const trigger = wrapRef.current;
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
+    const estimatedHeight = Math.min(288, normalized.length * 36 + 12);
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const upward = spaceBelow < estimatedHeight + 12 && spaceAbove > spaceBelow;
+    setOpenUpward(upward);
+    const measured = menuRef.current?.getBoundingClientRect().height ?? estimatedHeight;
+    setMenuStyle({
+      position: "fixed",
+      left: rect.left,
+      width: rect.width,
+      top: upward ? rect.top - measured - 6 : rect.bottom + 6,
+      zIndex: "var(--z-dropdown)",
+    });
+  };
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    updatePosition();
+    const menu = menuRef.current;
+    if (menu) {
+      const measured = menu.getBoundingClientRect().height;
+      const rect = wrapRef.current!.getBoundingClientRect();
+      if (openUpward) {
+        setMenuStyle((prev) => ({ ...prev, top: rect.top - measured - 6 }));
+      }
+    }
+  }, [open, normalized.length, openUpward]);
+
   useEffect(() => {
     if (!open) return;
+    const onScroll = () => updatePosition();
+    const onResize = () => updatePosition();
     const onClick = (e: MouseEvent) => {
-      if (!wrapRef.current) return;
-      if (!wrapRef.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (wrapRef.current?.contains(target)) return;
+      if (menuRef.current?.contains(target)) return;
+      setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onResize);
     document.addEventListener("mousedown", onClick);
     document.addEventListener("keydown", onKey);
     return () => {
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onResize);
       document.removeEventListener("mousedown", onClick);
       document.removeEventListener("keydown", onKey);
     };
   }, [open]);
 
-  return (
-    <div ref={wrapRef} className={`relative ${className}`} style={{ zIndex: "var(--z-dropdown)" }}>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        data-open={open ? "true" : "false"}
-        className={`composer-control flex h-9 w-full items-center justify-between gap-2 px-3 font-codec text-[13px] focus:outline-none focus:ring-0 ${
-          open ? "border-primary/60" : ""
-        }`}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-      >
-        <span className="truncate">{current?.label ?? placeholder}</span>
-        <ChevronDown
-          className={`h-3.5 w-3.5 shrink-0 text-text/50 transition-transform ${
-            open ? "rotate-180 text-primary" : ""
-          }`}
-        />
-      </button>
-      {open && (
+  const menu = open
+    ? createPortal(
         <ul
+          ref={menuRef}
           role="listbox"
-          className={`token-menu absolute mt-1.5 max-h-72 w-full overflow-auto rounded-[12px] p-1 ${menuClassName}`}
-          style={{ zIndex: "calc(var(--z-dropdown) + 1)" }}
+          className={`token-menu max-h-72 overflow-auto rounded-[12px] p-1 shadow-[var(--ui-shadow-floating)] ${menuClassName}`}
+          style={menuStyle}
         >
           {normalized.map((o) => {
             const active = o.value === value;
@@ -94,7 +115,7 @@ export default function BrandSelect({
                   className={`flex w-full items-center gap-2 rounded-button px-2.5 py-1.5 text-left font-codec text-xs transition-colors ${
                     active
                       ? "bg-primary/10 text-primary"
-                      : "text-text/70 hover:bg-[var(--ui-input)] hover:text-text"
+                      : "text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] hover:text-[var(--text-primary)]"
                   }`}
                   role="option"
                   aria-selected={active}
@@ -105,8 +126,31 @@ export default function BrandSelect({
               </li>
             );
           })}
-        </ul>
-      )}
+        </ul>,
+        document.body,
+      )
+    : null;
+
+  return (
+    <div ref={wrapRef} className={`relative ${className}`}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        data-open={open ? "true" : "false"}
+        className={`composer-control flex h-8 w-full items-center justify-between gap-2 px-3 font-codec text-[12px] focus:outline-none focus:ring-0 ${
+          open ? "border-[var(--border-secondary)]" : ""
+        }`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span className="truncate">{current?.label ?? placeholder}</span>
+        <ChevronDown
+          className={`h-3.5 w-3.5 shrink-0 text-[var(--text-muted)] transition-transform ${
+            open ? "rotate-180 text-primary" : ""
+          }`}
+        />
+      </button>
+      {menu}
     </div>
   );
 }

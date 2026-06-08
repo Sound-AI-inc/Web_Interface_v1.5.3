@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { Outlet } from "react-router-dom";
 import { X } from "lucide-react";
 import AppHeader from "./components/AppHeader";
@@ -33,7 +34,7 @@ export default function AppLayout() {
         <AnimatedBackground />
         <div
           data-theme={mode === "pro" ? "pro" : "lite"}
-          className={`relative flex min-h-screen bg-transparent font-codec text-text ${
+          className={`relative flex h-screen min-h-0 overflow-hidden bg-transparent font-codec text-text ${
             mode === "pro" ? "theme-pro" : "theme-lite"
           }`}
         >
@@ -41,9 +42,9 @@ export default function AppLayout() {
             onOpenSettings={() => setSettingsModalOpen(true)}
             onOpenUpgrade={() => setUpgradeModalOpen(true)}
           />
-          <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             <AppHeader />
-            <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[var(--background-primary)]">
+            <main className="min-h-0 flex-1 overflow-hidden bg-[var(--background-primary)]">
               <ErrorBoundary fallbackTitle="Workspace failed to load">
                 <Outlet />
               </ErrorBoundary>
@@ -74,26 +75,30 @@ function ShellModal({
 }) {
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+  return createPortal(
+    <div
+      className="shell-modal-root fixed inset-0 flex items-center justify-center p-6"
+      style={{ zIndex: "var(--z-modal)" }}
+    >
       <button
         type="button"
         aria-label="Close modal"
-        className="token-overlay absolute inset-0 backdrop-blur-[3px]"
+        className="token-overlay absolute inset-0"
         onClick={onClose}
       />
-      <div className={`relative z-10 max-h-[88vh] w-full overflow-hidden ${widthClassName}`}>
+      <div className={`relative max-h-[88vh] w-full overflow-hidden ${widthClassName}`} style={{ zIndex: 1 }}>
         <button
           type="button"
           onClick={onClose}
-          className="ui-surface-1 ui-interactive absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full text-text/60 transition-colors hover:text-primary"
+          className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-primary)] bg-[var(--surface-floating)] text-[var(--text-secondary)] transition-colors hover:text-primary"
         >
           <X className="h-4 w-4" />
         </button>
-        <div className="ui-modal-surface token-modal max-h-[88vh] overflow-y-auto rounded-[24px] p-2">
+        <div className="token-modal token-scroll max-h-[88vh] overflow-y-auto rounded-[24px] p-2 shadow-[var(--ui-shadow-floating)]">
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -25,7 +25,9 @@ import {
   Shield,
   Terminal,
   Info,
+  Lock,
 } from "lucide-react";
+import { useInterfaceMode } from "../hooks/useInterfaceMode";
 import type { LucideIcon } from "lucide-react";
 import ThemedLogo from "./ThemedLogo";
 import WorkspaceNav from "./workspace/WorkspaceNav";
@@ -62,18 +64,48 @@ const assetsSystem: NavItem[] = [
   { labelKey: "nav.billing", to: "/app/billing", icon: CreditCard },
 ];
 
+const LITE_LOCKED_KEYS: NavItem["labelKey"][] = ["nav.editor", "nav.library", "nav.export"];
+
 const NAV_ITEM_BASE =
   "group flex items-center gap-3 border-l-2 border-transparent px-3 py-2.5 font-codec text-[12px] font-semibold transition-colors";
 const WEBSITE_BASE =
   (import.meta.env.VITE_WEBSITE_URL as string | undefined)?.replace(/\/$/, "") ??
   "http://127.0.0.1:4174";
 
-function Item({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
+function Item({
+  item,
+  collapsed,
+  onOpenUpgrade,
+}: {
+  item: NavItem;
+  collapsed: boolean;
+  onOpenUpgrade: () => void;
+}) {
   const { t } = useLanguage();
+  const { mode } = useInterfaceMode();
   const Icon = item.icon;
   const label = t(item.labelKey);
+  const isLiteLocked = mode === "lite" && LITE_LOCKED_KEYS.includes(item.labelKey);
   const collapsedBase =
     "group flex items-center justify-center rounded-button p-2 transition-colors";
+  if (isLiteLocked) {
+    return (
+      <button
+        type="button"
+        onClick={onOpenUpgrade}
+        title={collapsed ? `${label} — ${t("sidebar.pro")}` : undefined}
+        className={`${collapsed ? collapsedBase : NAV_ITEM_BASE} text-text/45 hover:bg-[var(--surface-secondary)] hover:text-text`}
+      >
+        <Icon className="h-4 w-4" />
+        {!collapsed && (
+          <>
+            <span className="flex-1 text-left">{label}</span>
+            <Lock className="h-3.5 w-3.5 text-[var(--text-muted)]" />
+          </>
+        )}
+      </button>
+    );
+  }
   if (item.disabled) {
     return (
       <div
@@ -165,7 +197,7 @@ function UserMenu({
 
   return (
     <div
-      className={`ui-floating-menu token-menu absolute bottom-full mb-2 w-[240px] rounded-card p-1.5 ${
+      className={`token-menu absolute bottom-full mb-2 w-[240px] rounded-card p-1.5 ${
         collapsed ? "left-full ml-2" : "left-3 right-3 w-auto"
       }`}
       style={{ zIndex: "var(--z-dropdown)" }}
@@ -186,7 +218,7 @@ function UserMenu({
           <ChevronRight className="h-3 w-3 text-text/40" />
         </button>
         {subOpen === "language" && (
-          <div className="ui-floating-menu absolute bottom-0 left-full ml-1 w-[200px] rounded-card p-1.5">
+          <div className="token-menu absolute bottom-0 left-full ml-1 w-[200px] rounded-card p-1.5" style={{ zIndex: "var(--z-dropdown)" }}>
             {LANGUAGES.map((l) => (
               <button
                 key={l.code}
@@ -215,7 +247,7 @@ function UserMenu({
           <ChevronRight className="h-3 w-3 text-text/40" />
         </button>
         {subOpen === "help" && (
-          <div className="ui-floating-menu absolute bottom-0 left-full ml-1 w-[220px] rounded-card p-1.5">
+          <div className="token-menu absolute bottom-0 left-full ml-1 w-[220px] rounded-card p-1.5" style={{ zIndex: "var(--z-dropdown)" }}>
             <div className="px-2 py-1 font-poppins text-[9px] font-bold uppercase tracking-wider text-text/40">
               {t("menu.learnMore")}
             </div>
@@ -353,7 +385,7 @@ export default function Sidebar({
       </div>
 
       <nav
-        className={`flex flex-1 flex-col overflow-y-auto ${
+        className={`token-scroll flex flex-1 flex-col overflow-y-auto ${
           collapsed ? "px-2" : "px-3"
         } pb-4 pt-2`}
       >
@@ -366,7 +398,7 @@ export default function Sidebar({
         )}
         <div className="flex flex-col gap-1">
           {coreProduct.map((i) => (
-            <Item key={i.to} item={i} collapsed={collapsed} />
+            <Item key={i.to} item={i} collapsed={collapsed} onOpenUpgrade={onOpenUpgrade} />
           ))}
         </div>
 
@@ -374,7 +406,7 @@ export default function Sidebar({
 
         <div className="flex flex-col gap-1">
           {assetsSystem.map((i) => (
-            <Item key={i.to} item={i} collapsed={collapsed} />
+            <Item key={i.to} item={i} collapsed={collapsed} onOpenUpgrade={onOpenUpgrade} />
           ))}
         </div>
       </nav>

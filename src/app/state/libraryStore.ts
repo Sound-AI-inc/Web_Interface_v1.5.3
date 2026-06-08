@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { library as seedLibrary, type LibraryAsset } from "../data/mock";
+import { library as seedLibrary, type AudioResult, type LibraryAsset } from "../data/mock";
 
 export interface LibraryFolder {
   id: string;
@@ -17,6 +17,7 @@ interface LibraryState {
   deleteFolder: (id: string) => void;
   moveAsset: (assetId: string, folderId: string) => void;
   assetsInFolder: (folderId: string) => LibraryAsset[];
+  addFromResult: (item: AudioResult) => void;
 }
 
 const ROOT_ID = "root";
@@ -68,6 +69,30 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   assetsInFolder: (folderId) => {
     const { assets, assetFolder } = get();
     return assets.filter((a) => (assetFolder[a.id] ?? ROOT_ID) === folderId);
+  },
+
+  addFromResult: (item) => {
+    set((s) => {
+      if (s.assets.some((a) => a.id === item.id)) return s;
+      const asset: LibraryAsset = {
+        id: item.id,
+        title: item.title,
+        kind: item.kind,
+        format: item.format,
+        durationSeconds: item.durationSeconds,
+        tags: item.tags ?? [],
+        createdAt: new Date().toISOString().slice(0, 10),
+        audioSeed: item.audioSeed,
+        notes: item.notes,
+        preset: item.preset,
+        waveformHue: item.waveformHue,
+        metadata: item.metadata,
+      };
+      return {
+        assets: [asset, ...s.assets],
+        assetFolder: { ...s.assetFolder, [item.id]: ROOT_ID },
+      };
+    });
   },
 }));
 

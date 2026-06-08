@@ -37,6 +37,8 @@ interface WorkspaceState {
   activeProjectId: string;
   activeChatId: string;
   assetsPanelCollapsed: boolean;
+  /** projectId → asset ids linked from generation results */
+  projectAssetIds: Record<string, string[]>;
 
   setAssetsPanelCollapsed: (collapsed: boolean) => void;
   createProject: (name: string) => string;
@@ -45,11 +47,17 @@ interface WorkspaceState {
   setActiveChat: (id: string) => void;
   updateChat: (chatId: string, patch: Partial<WorkspaceChat>) => void;
   appendBatch: (chatId: string, batch: GenerationBatch, assets: AudioResult[]) => void;
+  assignAssetToProject: (projectId: string, assetId: string) => void;
 }
 
 type PersistedWorkspaceState = Pick<
   WorkspaceState,
-  "projects" | "chats" | "activeProjectId" | "activeChatId" | "assetsPanelCollapsed"
+  | "projects"
+  | "chats"
+  | "activeProjectId"
+  | "activeChatId"
+  | "assetsPanelCollapsed"
+  | "projectAssetIds"
 >;
 
 const DEFAULT_PROJECT_ID = "project-default";
@@ -79,6 +87,7 @@ function createSeed(): PersistedWorkspaceState & { assetsPanelCollapsed: boolean
     activeProjectId: DEFAULT_PROJECT_ID,
     activeChatId: chatId,
     assetsPanelCollapsed: false,
+    projectAssetIds: {},
   };
 }
 
@@ -134,6 +143,10 @@ function repairPersistedState(
     activeProjectId,
     activeChatId,
     assetsPanelCollapsed: Boolean(state.assetsPanelCollapsed),
+    projectAssetIds:
+      state.projectAssetIds && typeof state.projectAssetIds === "object"
+        ? state.projectAssetIds
+        : {},
   };
 }
 
@@ -218,6 +231,19 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           }),
         }));
       },
+
+      assignAssetToProject: (projectId, assetId) => {
+        set((s) => {
+          const current = s.projectAssetIds[projectId] ?? [];
+          if (current.includes(assetId)) return s;
+          return {
+            projectAssetIds: {
+              ...s.projectAssetIds,
+              [projectId]: [...current, assetId],
+            },
+          };
+        });
+      },
     }),
     {
       name: "soundai-workspace-v1",
@@ -228,6 +254,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         activeProjectId: state.activeProjectId,
         activeChatId: state.activeChatId,
         assetsPanelCollapsed: state.assetsPanelCollapsed,
+        projectAssetIds: state.projectAssetIds,
       }),
       migrate: (persisted) => repairPersistedState(persisted as Partial<PersistedWorkspaceState>),
       merge: (persisted, current) => ({
