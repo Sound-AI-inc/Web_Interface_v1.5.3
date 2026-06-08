@@ -2,13 +2,25 @@ import PageContainer from "../components/PageContainer";
 import BillingCard from "../components/BillingCard";
 import BillingComparisonTable from "../components/BillingComparisonTable";
 import { plans } from "../data/mock";
+import { useAuth } from "../hooks/useAuth";
+import { useCredits } from "../hooks/useCredits";
+import { grantPlanCredits } from "../lib/creditsService";
 import { useLanguage } from "../i18n/LanguageProvider";
 
 export default function Billing() {
   const { t } = useLanguage();
-  const usedCredits = 58;
-  const totalCredits = 100;
-  const pct = (usedCredits / totalCredits) * 100;
+  const { user } = useAuth();
+  const { remaining, total, applyGrant, refresh } = useCredits();
+  const usedCredits = Math.max(0, total - remaining);
+  const totalCredits = total;
+  const pct = totalCredits > 0 ? (usedCredits / totalCredits) * 100 : 0;
+
+  const handleSubscribe = async (planId: string, packageCredits?: number) => {
+    if (!user) return;
+    const grant = await grantPlanCredits(user.id, planId, packageCredits);
+    applyGrant(grant.balance, grant.quota);
+    await refresh();
+  };
 
   return (
     <PageContainer title={t("billing.title")} subtitle={t("billing.subtitle")}>
@@ -23,7 +35,9 @@ export default function Billing() {
           <div className="token-card rounded-card p-5 md:col-span-2">
             <div className="app-section-title mb-2">{t("billing.credits")}</div>
             <div className="flex items-baseline gap-2">
-              <span className="font-poppins text-3xl font-semibold text-[var(--text-primary)]">{usedCredits}</span>
+              <span className="font-poppins text-3xl font-semibold text-[var(--text-primary)]">
+                {remaining}
+              </span>
               <span className="font-codec text-sm text-[var(--text-secondary)]">
                 / {totalCredits} {t("billing.creditsSuffix")}
               </span>
@@ -38,7 +52,12 @@ export default function Billing() {
         <h2 className="app-section-title mb-4">{t("billing.plans")}</h2>
         <div className="grid grid-cols-1 items-stretch gap-5 md:grid-cols-2 xl:grid-cols-4">
           {plans.map((p) => (
-            <BillingCard key={p.id} plan={p} current={p.id === "free"} />
+            <BillingCard
+              key={p.id}
+              plan={p}
+              current={p.id === "trial"}
+              onSubscribe={handleSubscribe}
+            />
           ))}
         </div>
 

@@ -148,17 +148,23 @@ export default function ItemContextMenu({
         </button>
       )}
 
-      {target.kind === "chat" && onPin && (
+      {(onPin || onArchive) && (
         <>
           <div className="my-1 mx-1 h-px bg-[var(--border-primary)]" />
-          <button type="button" className="menu-row" onClick={() => { onPin(); onClose(); }}>
-            <Pin className="h-4 w-4 text-[var(--text-muted)]" />
-            <span className="flex-1 text-left">{t("context.pinChat")}</span>
-          </button>
+          {onPin && (
+            <button type="button" className="menu-row" onClick={() => { onPin(); onClose(); }}>
+              <Pin className="h-4 w-4 text-[var(--text-muted)]" />
+              <span className="flex-1 text-left">
+                {target.kind === "project" ? t("context.pinProject") : t("context.pinChat")}
+              </span>
+            </button>
+          )}
           {onArchive && (
             <button type="button" className="menu-row" onClick={() => { onArchive(); onClose(); }}>
               <Archive className="h-4 w-4 text-[var(--text-muted)]" />
-              <span className="flex-1 text-left">{t("context.archive")}</span>
+              <span className="flex-1 text-left">
+                {target.kind === "project" ? t("context.archiveProject") : t("context.archive")}
+              </span>
             </button>
           )}
         </>

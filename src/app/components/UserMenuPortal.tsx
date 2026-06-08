@@ -95,7 +95,7 @@ export default function UserMenuPortal({
   };
 
   const handleHelpNav = (slug: string) => {
-    window.open(`${window.location.origin}/app/help/${slug}`, "_blank", "noopener,noreferrer");
+    window.open(`${window.location.origin}/help/${slug}`, "_blank", "noopener,noreferrer");
     onClose();
   };
 

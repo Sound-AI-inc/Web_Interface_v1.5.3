@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import ProBadge from "./ProBadge";
 
 interface PageContainerProps {
   title: string;
@@ -40,7 +39,6 @@ export default function PageContainer({
                 <h1 className="font-syne text-[20px] font-bold leading-tight tracking-[-0.02em] text-text">
                   {title}
                 </h1>
-                <ProBadge />
               </div>
             ) : null}
             {subtitle && (
@@ -72,7 +70,6 @@ export default function PageContainer({
             <h1 className="font-syne text-[20px] font-bold leading-tight tracking-[-0.02em] text-text">
               {title}
             </h1>
-            <ProBadge />
           </div>
           {subtitle && (
             <p className="mt-1 font-codec text-[13px] text-text/60">{subtitle}</p>

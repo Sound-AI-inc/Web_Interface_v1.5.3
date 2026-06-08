@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { AuthProvider } from "./app/hooks/useAuth";
+import { LanguageProvider } from "./app/i18n/LanguageProvider";
 
 const AppLayout = lazy(() => import("./app/AppLayout"));
 const AudioGenerator = lazy(() => import("./app/pages/AudioGenerator"));
@@ -54,8 +55,16 @@ function App() {
               <Route path="profile" element={<Profile />} />
               <Route path="settings" element={<Settings />} />
               <Route path="notifications" element={<Notifications />} />
-              <Route path="help/:slug" element={<HelpPage />} />
             </Route>
+
+            <Route
+              path="/help/:slug"
+              element={
+                <LanguageProvider>
+                  <HelpPage />
+                </LanguageProvider>
+              }
+            />
 
             <Route path="*" element={<Navigate to="/sign-in" replace />} />
           </Routes>

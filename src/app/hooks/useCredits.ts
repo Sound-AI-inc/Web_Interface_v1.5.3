@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { getSupabase } from "../lib/supabase";
+import {
+  DEFAULT_QUOTA,
+  SIGNUP_CREDITS,
+  fetchUserCredits,
+  upsertUserCredits,
+} from "../lib/creditsService";
 import { useAuth } from "./useAuth";
-
-const DEFAULT_CREDITS = 42;
-const DEFAULT_TOTAL = 50;
 
 export interface CreditsState {
   remaining: number;
@@ -12,53 +14,36 @@ export interface CreditsState {
   low: boolean;
   refresh: () => Promise<void>;
   deduct: (amount: number) => Promise<boolean>;
+  applyGrant: (balance: number, quota: number) => void;
 }
 
 export function useCredits(): CreditsState {
   const { user } = useAuth();
-  const [remaining, setRemaining] = useState(DEFAULT_CREDITS);
-  const [total, setTotal] = useState(DEFAULT_TOTAL);
+  const [remaining, setRemaining] = useState(SIGNUP_CREDITS);
+  const [total, setTotal] = useState(DEFAULT_QUOTA);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    const supabase = getSupabase();
-    if (!supabase || !user) {
-      setRemaining(DEFAULT_CREDITS);
-      setTotal(DEFAULT_TOTAL);
+    if (!user) {
+      setRemaining(SIGNUP_CREDITS);
+      setTotal(DEFAULT_QUOTA);
       setLoading(false);
       return;
     }
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("user_credits")
-        .select("balance, quota")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (!error && data) {
-        setRemaining(typeof data.balance === "number" ? data.balance : DEFAULT_CREDITS);
-        setTotal(typeof data.quota === "number" ? data.quota : DEFAULT_TOTAL);
+      const data = await fetchUserCredits(user.id);
+      if (data) {
+        setRemaining(data.balance);
+        setTotal(data.quota);
       } else {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("credits_balance, credits_quota")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (profile) {
-          setRemaining(
-            typeof profile.credits_balance === "number" ? profile.credits_balance : DEFAULT_CREDITS,
-          );
-          setTotal(
-            typeof profile.credits_quota === "number" ? profile.credits_quota : DEFAULT_TOTAL,
-          );
-        }
+        setRemaining(SIGNUP_CREDITS);
+        setTotal(DEFAULT_QUOTA);
       }
     } catch {
-      setRemaining(DEFAULT_CREDITS);
-      setTotal(DEFAULT_TOTAL);
+      setRemaining(SIGNUP_CREDITS);
+      setTotal(DEFAULT_QUOTA);
     } finally {
       setLoading(false);
     }
@@ -68,6 +53,11 @@ export function useCredits(): CreditsState {
     void refresh();
   }, [refresh]);
 
+  const applyGrant = useCallback((balance: number, quota: number) => {
+    setRemaining(balance);
+    setTotal(quota);
+  }, []);
+
   const deduct = useCallback(
     async (amount: number): Promise<boolean> => {
       if (amount <= 0) return true;
@@ -76,17 +66,13 @@ export function useCredits(): CreditsState {
       const next = remaining - amount;
       setRemaining(next);
 
-      const supabase = getSupabase();
-      if (supabase && user) {
-        void supabase
-          .from("user_credits")
-          .upsert({ user_id: user.id, balance: next, updated_at: new Date().toISOString() })
-          .then(() => undefined);
+      if (user) {
+        void upsertUserCredits(user.id, next, total);
       }
 
       return true;
     },
-    [remaining, user],
+    [remaining, total, user],
   );
 
   return {
@@ -96,5 +82,6 @@ export function useCredits(): CreditsState {
     low: remaining / Math.max(total, 1) < 0.2,
     refresh,
     deduct,
+    applyGrant,
   };
 }

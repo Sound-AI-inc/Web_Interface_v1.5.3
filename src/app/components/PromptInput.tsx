@@ -1,5 +1,4 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { Sparkles } from "lucide-react";
 import GenerateButton from "./GenerateButton";
 import VoiceCaptureButton from "./VoiceCaptureButton";
 
@@ -43,8 +42,8 @@ export default function PromptInput({
 
   return (
     <div
-      className={`composer-shell rounded-[20px] ${
-        isDock ? "rounded-b-none px-3 py-3 md:px-5 md:py-3" : "px-5 py-5 md:px-6 md:py-5"
+      className={`composer-shell rounded-[18px] ${
+        isDock ? "rounded-b-none px-3 py-2.5 md:px-4 md:py-2.5" : "px-4 py-4 md:px-5 md:py-4"
       }`}
     >
       <div className="relative z-[1]">
@@ -64,14 +63,6 @@ export default function PromptInput({
             {controls}
           </div>
           <div className="flex shrink-0 items-center justify-end gap-2">
-            <button
-              type="button"
-              aria-label="Creation assist"
-              disabled={disabled}
-              className="composer-control flex h-9 w-9 items-center justify-center rounded-full text-text/60 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Sparkles className="h-4 w-4" />
-            </button>
             <VoiceCaptureButton
               disabled={disabled}
               onTranscript={(text) => onChange(value ? `${value} ${text}` : text)}

@@ -13,6 +13,7 @@ import ItemContextMenu, { type ContextMenuTarget } from "./ItemContextMenu";
 import {
   selectProjectChats,
   selectStandaloneChats,
+  selectVisibleProjects,
   useWorkspaceStore,
 } from "../../state/workspaceStore";
 import { focusComposerInput } from "../../lib/focusComposer";
@@ -92,6 +93,8 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
   const moveChatToProject = useWorkspaceStore((s) => s.moveChatToProject);
   const togglePinChat = useWorkspaceStore((s) => s.togglePinChat);
   const toggleArchiveChat = useWorkspaceStore((s) => s.toggleArchiveChat);
+  const togglePinProject = useWorkspaceStore((s) => s.togglePinProject);
+  const toggleArchiveProject = useWorkspaceStore((s) => s.toggleArchiveProject);
 
   const [chatsOpen, setChatsOpen] = useState(true);
   const [projectsOpen, setProjectsOpen] = useState(true);
@@ -111,15 +114,16 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
     });
   }, [activeProjectId]);
 
+  const visibleProjects = useMemo(() => selectVisibleProjects({ projects }), [projects]);
   const standaloneChats = useMemo(() => selectStandaloneChats({ chats }), [chats]);
 
   const chatsByProject = useMemo(() => {
     const map = new Map<string, ReturnType<typeof selectProjectChats>>();
-    for (const project of projects) {
+    for (const project of visibleProjects) {
       map.set(project.id, selectProjectChats({ chats }, project.id));
     }
     return map;
-  }, [projects, chats]);
+  }, [visibleProjects, chats]);
 
   const openMenu = (target: ContextMenuTarget, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -158,13 +162,11 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
 
   const handleDeleteTarget = (target: ContextMenuTarget) => {
     if (target.kind === "project") {
-      if (projects.length <= 1) return;
       if (!window.confirm(t("project.deleteConfirm"))) return;
       deleteProject(target.id);
       navigate(GENERATOR_PATH);
       return;
     }
-    if (chats.length <= 1) return;
     if (!window.confirm(t("context.deleteChatConfirm"))) return;
     deleteChat(target.id);
     if (activeChatId === target.id) navigate(GENERATOR_PATH);
@@ -210,15 +212,15 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
           onMoveToProject={(projectId) => {
             if (menuTarget.kind === "chat") moveChatToProject(menuTarget.id, projectId);
           }}
-          onPin={
+          onPin={() =>
             menuTarget.kind === "chat"
-              ? () => togglePinChat(menuTarget.id)
-              : undefined
+              ? togglePinChat(menuTarget.id)
+              : togglePinProject(menuTarget.id)
           }
-          onArchive={
+          onArchive={() =>
             menuTarget.kind === "chat"
-              ? () => toggleArchiveChat(menuTarget.id)
-              : undefined
+              ? toggleArchiveChat(menuTarget.id)
+              : toggleArchiveProject(menuTarget.id)
           }
         />
       )}
@@ -290,7 +292,7 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
 
         {projectsOpen && (
           <div className="mt-1 space-y-1">
-            {projects.map((project) => {
+            {visibleProjects.map((project) => {
               const expanded = expandedProjectIds.has(project.id);
               const projectChats = chatsByProject.get(project.id) ?? [];
               const isActiveProject = project.id === activeProjectId;

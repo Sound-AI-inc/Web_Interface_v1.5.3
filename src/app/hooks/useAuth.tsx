@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
+import { ensureSignupCredits } from "../lib/creditsService";
 import { getSupabase, supabaseConfigured } from "../lib/supabase";
 
 const FRESH_SESSION_KEY = "soundai:fresh-session";
@@ -46,9 +47,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
       setLoading(false);
+      if (nextSession?.user && (event === "SIGNED_IN" || event === "USER_UPDATED")) {
+        void ensureSignupCredits(nextSession.user.id);
+      }
     });
 
     return () => {

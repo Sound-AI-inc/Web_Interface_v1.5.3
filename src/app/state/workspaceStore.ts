@@ -31,6 +31,8 @@ export interface WorkspaceProject {
   id: string;
   name: string;
   createdAt: number;
+  pinned?: boolean;
+  archived?: boolean;
 }
 
 interface WorkspaceState {
@@ -52,6 +54,8 @@ interface WorkspaceState {
   moveChatToProject: (chatId: string, projectId: string | null) => void;
   togglePinChat: (id: string) => void;
   toggleArchiveChat: (id: string) => void;
+  togglePinProject: (id: string) => void;
+  toggleArchiveProject: (id: string) => void;
   setActiveProject: (id: string) => void;
   setActiveChat: (id: string) => void;
   updateChat: (chatId: string, patch: Partial<WorkspaceChat>) => void;
@@ -205,13 +209,12 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
       deleteProject: (id) => {
         set((s) => {
-          if (s.projects.length <= 1) return s;
           const projects = s.projects.filter((p) => p.id !== id);
           const chats = s.chats.filter((c) => c.projectId !== id);
           const { [id]: _removed, ...projectAssetIds } = s.projectAssetIds;
           void _removed;
           const activeProjectId =
-            s.activeProjectId === id ? projects[0].id : s.activeProjectId;
+            s.activeProjectId === id ? (projects[0]?.id ?? "") : s.activeProjectId;
           const activeChatId = chats.some((c) => c.id === s.activeChatId)
             ? s.activeChatId
             : chats[0]?.id ?? s.activeChatId;
@@ -248,10 +251,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
       deleteChat: (id) => {
         set((s) => {
-          if (s.chats.length <= 1) return s;
           const chats = s.chats.filter((c) => c.id !== id);
           const activeChatId =
-            s.activeChatId === id ? pickNextActiveChat(s.chats, id) : s.activeChatId;
+            s.activeChatId === id
+              ? (pickNextActiveChat(s.chats, id) || chats[0]?.id || "")
+              : s.activeChatId;
           return { chats, activeChatId };
         });
       },
@@ -287,6 +291,22 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set((s) => ({
           chats: s.chats.map((c) =>
             c.id === id ? { ...c, archived: !c.archived, updatedAt: Date.now() } : c,
+          ),
+        }));
+      },
+
+      togglePinProject: (id) => {
+        set((s) => ({
+          projects: s.projects.map((p) =>
+            p.id === id ? { ...p, pinned: !p.pinned } : p,
+          ),
+        }));
+      },
+
+      toggleArchiveProject: (id) => {
+        set((s) => ({
+          projects: s.projects.map((p) =>
+            p.id === id ? { ...p, archived: !p.archived } : p,
           ),
         }));
       },
@@ -369,6 +389,15 @@ export function selectActiveChat(state: {
   activeChatId: string;
 }): WorkspaceChat | undefined {
   return state.chats.find((c) => c.id === state.activeChatId);
+}
+
+export function selectVisibleProjects(state: { projects: WorkspaceProject[] }): WorkspaceProject[] {
+  return [...state.projects]
+    .filter((p) => !p.archived)
+    .sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      return b.createdAt - a.createdAt;
+    });
 }
 
 export function selectProjectChats(

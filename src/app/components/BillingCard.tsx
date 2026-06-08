@@ -6,9 +6,10 @@ import { useLanguage } from "../i18n/LanguageProvider";
 interface BillingCardProps {
   plan: Plan;
   current?: boolean;
+  onSubscribe?: (planId: string, packageCredits?: number) => void | Promise<void>;
 }
 
-export default function BillingCard({ plan, current }: BillingCardProps) {
+export default function BillingCard({ plan, current, onSubscribe }: BillingCardProps) {
   const { t } = useLanguage();
   const isHighlight = plan.highlight;
   const [selectedPkg, setSelectedPkg] = useState(
@@ -142,8 +143,13 @@ export default function BillingCard({ plan, current }: BillingCardProps) {
         </ul>
 
         <button
+          type="button"
           className={`mt-auto shrink-0 ${isHighlight ? "app-btn-primary h-10" : "app-btn-ghost h-10"}`}
           disabled={current}
+          onClick={() => {
+            if (current) return;
+            void onSubscribe?.(plan.id, selectedPkg?.credits);
+          }}
         >
           {current ? t("billing.currentPlanLabel") : plan.cta}
         </button>

@@ -234,7 +234,9 @@ export type TranslationKey =
   | "context.noProject"
   | "context.removeFromProject"
   | "context.pinChat"
+  | "context.pinProject"
   | "context.archive"
+  | "context.archiveProject"
   | "context.delete"
   | "context.deleteChatConfirm"
   | "context.shareCopied"
@@ -267,6 +269,40 @@ export type TranslationKey =
   | "help.supportChat.placeholder"
   | "help.supportChat.inputPlaceholder"
   | "help.supportChat.send"
+  | "help.supportChat.hero"
+  | "help.supportChat.b1"
+  | "help.supportChat.b2"
+  | "help.supportChat.b3"
+  | "help.api.hero"
+  | "help.api.b1"
+  | "help.api.b2"
+  | "help.api.b3"
+  | "help.about.hero"
+  | "help.about.b1"
+  | "help.about.b2"
+  | "help.about.b3"
+  | "help.tutorials.hero"
+  | "help.tutorials.b1"
+  | "help.tutorials.b2"
+  | "help.tutorials.b3"
+  | "help.courses.hero"
+  | "help.courses.b1"
+  | "help.courses.b2"
+  | "help.courses.b3"
+  | "help.usage.hero"
+  | "help.usage.b1"
+  | "help.usage.b2"
+  | "help.usage.b3"
+  | "help.privacy.hero"
+  | "help.privacy.b1"
+  | "help.privacy.b2"
+  | "help.privacy.b3"
+  | "help.privacyChoices.hero"
+  | "help.privacyChoices.b1"
+  | "help.privacyChoices.b2"
+  | "help.privacyChoices.b3"
+  | "help.openApp"
+  | "help.contactEmail"
   // Project workspace
   | "project.notFound"
   | "project.backToCreate"
@@ -482,7 +518,9 @@ const en: Record<TranslationKey, string> = {
   "context.noProject": "No project (sidebar)",
   "context.removeFromProject": "Remove from project",
   "context.pinChat": "Pin chat",
+  "context.pinProject": "Pin project",
   "context.archive": "Archive",
+  "context.archiveProject": "Archive project",
   "context.delete": "Delete",
   "context.deleteChatConfirm": "Delete this chat and its generations?",
   "context.shareCopied": "Share link copied to clipboard.",
@@ -495,20 +533,54 @@ const en: Record<TranslationKey, string> = {
   "menu.supportChat": "Support chat",
   "help.api.title": "API Console",
   "help.api.body": "Manage API keys, monitor usage and connect SoundAI to your production stack.",
+  "help.api.hero": "Build with SoundAI in your stack.",
+  "help.api.b1": "Create and rotate API keys securely.",
+  "help.api.b2": "Track generation usage and credit spend.",
+  "help.api.b3": "Connect webhooks for async renders.",
   "help.about.title": "About SoundAI",
   "help.about.body": "SoundAI helps producers generate audio samples, MIDI and VST presets with AI.",
+  "help.about.hero": "AI audio production for every DAW.",
+  "help.about.b1": "Generate samples, MIDI and presets from prompts.",
+  "help.about.b2": "Lite and Pro workflows for every skill level.",
+  "help.about.b3": "Built for producers, composers and studios.",
   "help.tutorials.title": "Tutorials",
   "help.tutorials.body": "Step-by-step guides for Create, projects, library and export workflows.",
+  "help.tutorials.hero": "Learn SoundAI step by step.",
+  "help.tutorials.b1": "Start with Create and voice prompts.",
+  "help.tutorials.b2": "Organize work in projects and chats.",
+  "help.tutorials.b3": "Export assets to your DAW.",
   "help.courses.title": "Courses",
   "help.courses.body": "Structured learning paths for sound design and AI-assisted production.",
+  "help.courses.hero": "Level up your AI sound design skills.",
+  "help.courses.b1": "Foundations of prompt-based music.",
+  "help.courses.b2": "Advanced MIDI and preset workflows.",
+  "help.courses.b3": "Studio-ready mixing with AI assets.",
   "help.usage.title": "Usage Policy",
   "help.usage.body": "Fair-use rules for generations, sharing and commercial output.",
+  "help.usage.hero": "Use SoundAI responsibly.",
+  "help.usage.b1": "Respect copyright and likeness rights.",
+  "help.usage.b2": "Commercial use depends on your plan.",
+  "help.usage.b3": "Do not abuse generation endpoints.",
   "help.privacy.title": "Privacy Policy",
   "help.privacy.body": "How SoundAI collects, stores and protects your data.",
+  "help.privacy.hero": "Your data, your control.",
+  "help.privacy.b1": "We store account and generation metadata securely.",
+  "help.privacy.b2": "You can request export or deletion.",
+  "help.privacy.b3": "We never sell personal data.",
   "help.privacyChoices.title": "Your Privacy Choices",
   "help.privacyChoices.body": "Control analytics, marketing and third-party integrations.",
+  "help.privacyChoices.hero": "Choose how SoundAI uses your data.",
+  "help.privacyChoices.b1": "Opt out of product analytics.",
+  "help.privacyChoices.b2": "Manage marketing email preferences.",
+  "help.privacyChoices.b3": "Control third-party integrations.",
   "help.supportChat.title": "Support chat",
   "help.supportChat.body": "Message our team — we typically reply within one business day.",
+  "help.supportChat.hero": "We're here to help.",
+  "help.supportChat.b1": "Billing, credits and plan questions.",
+  "help.supportChat.b2": "Generation quality and model help.",
+  "help.supportChat.b3": "Bug reports and feature requests.",
+  "help.openApp": "Open SoundAI",
+  "help.contactEmail": "Email support",
   "help.supportChat.placeholder": "Describe your issue or question.",
   "help.supportChat.inputPlaceholder": "Type your message…",
   "help.supportChat.send": "Send message",
@@ -726,7 +798,9 @@ const ru: Dict = {
   "context.noProject": "Без проекта (сайдбар)",
   "context.removeFromProject": "Убрать из проекта",
   "context.pinChat": "Закрепить чат",
+  "context.pinProject": "Закрепить проект",
   "context.archive": "Архивировать",
+  "context.archiveProject": "Архивировать проект",
   "context.delete": "Удалить",
   "context.deleteChatConfirm": "Удалить этот чат и все генерации?",
   "context.shareCopied": "Ссылка для sharing скопирована.",
