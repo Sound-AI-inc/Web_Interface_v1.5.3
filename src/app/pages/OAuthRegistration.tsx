@@ -11,8 +11,7 @@ const WEBSITE_URL =
 
 const oauthProviders: Array<{ label: string; provider: Provider }> = [
   { label: "Google", provider: "google" },
-  { label: "Apple", provider: "apple" },
-  { label: "Microsoft", provider: "azure" },
+  { label: "Spotify", provider: "spotify" },
 ];
 
 export default function OAuthRegistration() {

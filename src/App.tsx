@@ -14,6 +14,8 @@ const Integrations = lazy(() => import("./app/pages/Integrations"));
 const Billing = lazy(() => import("./app/pages/Billing"));
 const Profile = lazy(() => import("./app/pages/Profile"));
 const Settings = lazy(() => import("./app/pages/Settings"));
+const Notifications = lazy(() => import("./app/pages/Notifications"));
+const HelpPage = lazy(() => import("./app/pages/help/HelpPage"));
 const OAuthRegistration = lazy(() => import("./app/pages/OAuthRegistration"));
 
 function RouteFallback() {
@@ -51,6 +53,8 @@ function App() {
               <Route path="billing" element={<Billing />} />
               <Route path="profile" element={<Profile />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="notifications" element={<Notifications />} />
+              <Route path="help/:slug" element={<HelpPage />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/sign-in" replace />} />

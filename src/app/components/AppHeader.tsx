@@ -1,15 +1,15 @@
+import { useNavigate } from "react-router-dom";
 import { Bell, Coins } from "lucide-react";
 import ThemedLogo from "./ThemedLogo";
 import { useInterfaceMode } from "../hooks/useInterfaceMode";
 import { useLanguage } from "../i18n/LanguageProvider";
-
-const CREDITS_REMAINING = 42;
-const CREDITS_TOTAL = 50;
+import { useCredits } from "../hooks/useCredits";
 
 export default function AppHeader() {
   const { mode, setMode } = useInterfaceMode();
   const { t } = useLanguage();
-  const creditsLow = CREDITS_REMAINING / CREDITS_TOTAL < 0.2;
+  const navigate = useNavigate();
+  const { remaining, low, loading } = useCredits();
 
   return (
     <header className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-[var(--border-primary)] bg-[var(--background-primary)] px-4 sm:px-6">
@@ -37,19 +37,22 @@ export default function AppHeader() {
       </div>
 
       <div className="flex min-w-0 items-center justify-end gap-2">
-        <div
-          className={`credits-pill flex items-center gap-2 ${creditsLow ? "credits-pill--low" : ""}`}
-          title={creditsLow ? t("header.lowCredits") : undefined}
+        <button
+          type="button"
+          onClick={() => navigate("/app/billing")}
+          className={`credits-pill flex items-center gap-2 ${low ? "credits-pill--low" : ""}`}
+          title={low ? t("header.lowCredits") : undefined}
         >
           <Coins className="h-4 w-4 text-primary" />
           <span>
-            <span className={creditsLow ? "text-primary" : ""}>{CREDITS_REMAINING}</span>{" "}
+            <span className={low ? "text-primary" : ""}>{loading ? "…" : remaining}</span>{" "}
             <span className="text-[var(--text-secondary)]">{t("generator.credits")}</span>
           </span>
-        </div>
+        </button>
         <button
           type="button"
           aria-label={t("header.notifications")}
+          onClick={() => navigate("/app/notifications")}
           className="composer-control flex h-9 w-9 items-center justify-center rounded-full text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
         >
           <Bell className="h-4 w-4" />

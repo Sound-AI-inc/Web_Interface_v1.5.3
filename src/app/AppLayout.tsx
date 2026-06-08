@@ -1,32 +1,46 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 import { Outlet, Navigate, useLocation, useSearchParams } from "react-router-dom";
-import { X } from "lucide-react";
 import AppHeader from "./components/AppHeader";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Sidebar from "./components/Sidebar";
 import AnimatedBackground from "./components/AnimatedBackground";
 import SettingsContent from "./components/SettingsContent";
 import UpgradePlanModalContent from "./components/UpgradePlanModalContent";
+import ShellModal from "./components/ShellModal";
 import { InterfaceModeContext, type InterfaceMode } from "./hooks/useInterfaceMode";
 import { useAuth } from "./hooks/useAuth";
 import { useWorkspaceStore } from "./state/workspaceStore";
 import { LanguageProvider } from "./i18n/LanguageProvider";
 
+const MODE_STORAGE_KEY = "soundai:interface-mode";
+
+function readStoredMode(): InterfaceMode {
+  if (typeof window === "undefined") return "lite";
+  const stored = window.localStorage.getItem(MODE_STORAGE_KEY);
+  return stored === "pro" || stored === "lite" ? stored : "lite";
+}
+
 export default function AppLayout() {
-  const [mode, setMode] = useState<InterfaceMode>("pro");
+  const [mode, setModeState] = useState<InterfaceMode>(readStoredMode);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const { session, loading, configured, consumeFreshSession, markFreshSession } = useAuth();
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const startNewSession = useWorkspaceStore((s) => s.startNewSession);
-  const toggle = useCallback(
-    () => setMode((m) => (m === "pro" ? "lite" : "pro")),
-    [],
-  );
-  const ctx = useMemo(() => ({ mode, setMode, toggle }), [mode, toggle]);
   const isWorkspaceRoute = location.pathname.includes("/generator");
+
+  const setMode = useCallback((next: InterfaceMode) => {
+    setModeState(next);
+    window.localStorage.setItem(MODE_STORAGE_KEY, next);
+  }, []);
+
+  const toggle = useCallback(
+    () => setMode(mode === "pro" ? "lite" : "pro"),
+    [mode, setMode],
+  );
+
+  const ctx = useMemo(() => ({ mode, setMode, toggle }), [mode, setMode, toggle]);
 
   useEffect(() => {
     if (searchParams.get("fresh") === "1") {
@@ -39,6 +53,7 @@ export default function AppLayout() {
     const applyFreshSession = () => {
       if (consumeFreshSession()) {
         startNewSession();
+        setMode("lite");
       }
     };
 
@@ -47,7 +62,7 @@ export default function AppLayout() {
     }
 
     return useWorkspaceStore.persist.onFinishHydration(applyFreshSession);
-  }, [consumeFreshSession, startNewSession]);
+  }, [consumeFreshSession, startNewSession, setMode]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -95,46 +110,5 @@ export default function AppLayout() {
         </div>
       </InterfaceModeContext.Provider>
     </LanguageProvider>
-  );
-}
-
-function ShellModal({
-  open,
-  onClose,
-  children,
-  widthClassName,
-}: {
-  open: boolean;
-  onClose: () => void;
-  children: React.ReactNode;
-  widthClassName: string;
-}) {
-  if (!open) return null;
-
-  return createPortal(
-    <div
-      className="shell-modal-root fixed inset-0 flex items-center justify-center p-6"
-      style={{ zIndex: "var(--z-modal)" }}
-    >
-      <button
-        type="button"
-        aria-label="Close modal"
-        className="token-overlay absolute inset-0"
-        onClick={onClose}
-      />
-      <div className={`relative max-h-[88vh] w-full overflow-hidden ${widthClassName}`} style={{ zIndex: 1 }}>
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-primary)] bg-[var(--surface-floating)] text-[var(--text-secondary)] transition-colors hover:text-primary"
-        >
-          <X className="h-4 w-4" />
-        </button>
-        <div className="shell-modal-panel token-modal token-scroll max-h-[88vh] overflow-y-auto rounded-[24px] border border-[var(--border-primary)] p-2 shadow-[var(--ui-shadow-floating)]">
-          {children}
-        </div>
-      </div>
-    </div>,
-    document.body,
   );
 }

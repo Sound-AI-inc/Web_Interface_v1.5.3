@@ -82,6 +82,7 @@ export type TranslationKey =
   | "generator.smartNote"
   | "generator.liteNote"
   | "generator.results"
+  | "generator.insufficientCredits"
   // Prompts
   | "prompts.title"
   | "prompts.subtitle"
@@ -225,6 +226,47 @@ export type TranslationKey =
   | "workspace.starToSave"
   | "workspace.renameProject"
   | "workspace.noChats"
+  | "workspace.noChatsInProject"
+  // Context menu
+  | "context.share"
+  | "context.rename"
+  | "context.moveToProject"
+  | "context.noProject"
+  | "context.removeFromProject"
+  | "context.pinChat"
+  | "context.archive"
+  | "context.delete"
+  | "context.deleteChatConfirm"
+  | "context.shareCopied"
+  // Voice
+  | "voice.start"
+  | "voice.stop"
+  | "voice.notSupported"
+  // Notifications
+  | "notifications.title"
+  | "notifications.subtitle"
+  // Help
+  | "help.notFound"
+  | "menu.supportChat"
+  | "help.api.title"
+  | "help.api.body"
+  | "help.about.title"
+  | "help.about.body"
+  | "help.tutorials.title"
+  | "help.tutorials.body"
+  | "help.courses.title"
+  | "help.courses.body"
+  | "help.usage.title"
+  | "help.usage.body"
+  | "help.privacy.title"
+  | "help.privacy.body"
+  | "help.privacyChoices.title"
+  | "help.privacyChoices.body"
+  | "help.supportChat.title"
+  | "help.supportChat.body"
+  | "help.supportChat.placeholder"
+  | "help.supportChat.inputPlaceholder"
+  | "help.supportChat.send"
   // Project workspace
   | "project.notFound"
   | "project.backToCreate"
@@ -294,6 +336,7 @@ const en: Record<TranslationKey, string> = {
   "generator.liteNote":
     "Lite mode: Audio Sample only · Hugging Face models · MP3 output. Switch to Pro to unlock MIDI and VST generation.",
   "generator.results": "Results",
+  "generator.insufficientCredits": "Not enough credits for this generation.",
   "prompts.title": "Prompts",
   "prompts.subtitle": "Your reusable prompt library",
   "prompts.new": "New prompt",
@@ -432,6 +475,43 @@ const en: Record<TranslationKey, string> = {
   "workspace.starToSave": "Star results to save",
   "workspace.renameProject": "Rename project",
   "workspace.noChats": "No chats yet — create from Create",
+  "workspace.noChatsInProject": "No chats in this project yet",
+  "context.share": "Share",
+  "context.rename": "Rename",
+  "context.moveToProject": "Move to project",
+  "context.noProject": "No project (sidebar)",
+  "context.removeFromProject": "Remove from project",
+  "context.pinChat": "Pin chat",
+  "context.archive": "Archive",
+  "context.delete": "Delete",
+  "context.deleteChatConfirm": "Delete this chat and its generations?",
+  "context.shareCopied": "Share link copied to clipboard.",
+  "voice.start": "Voice input — hum, dictate MIDI or prompt",
+  "voice.stop": "Stop recording",
+  "voice.notSupported": "Voice input is not supported in this browser.",
+  "notifications.title": "Notifications",
+  "notifications.subtitle": "Updates about generations, billing and product news.",
+  "help.notFound": "Help page not found",
+  "menu.supportChat": "Support chat",
+  "help.api.title": "API Console",
+  "help.api.body": "Manage API keys, monitor usage and connect SoundAI to your production stack.",
+  "help.about.title": "About SoundAI",
+  "help.about.body": "SoundAI helps producers generate audio samples, MIDI and VST presets with AI.",
+  "help.tutorials.title": "Tutorials",
+  "help.tutorials.body": "Step-by-step guides for Create, projects, library and export workflows.",
+  "help.courses.title": "Courses",
+  "help.courses.body": "Structured learning paths for sound design and AI-assisted production.",
+  "help.usage.title": "Usage Policy",
+  "help.usage.body": "Fair-use rules for generations, sharing and commercial output.",
+  "help.privacy.title": "Privacy Policy",
+  "help.privacy.body": "How SoundAI collects, stores and protects your data.",
+  "help.privacyChoices.title": "Your Privacy Choices",
+  "help.privacyChoices.body": "Control analytics, marketing and third-party integrations.",
+  "help.supportChat.title": "Support chat",
+  "help.supportChat.body": "Message our team — we typically reply within one business day.",
+  "help.supportChat.placeholder": "Describe your issue or question.",
+  "help.supportChat.inputPlaceholder": "Type your message…",
+  "help.supportChat.send": "Send message",
   "project.notFound": "Project not found",
   "project.backToCreate": "Back to Create",
   "project.subtitle": "Generation chats in this project",
@@ -499,6 +579,7 @@ const ru: Dict = {
   "generator.liteNote":
     "Lite: только Audio Sample · модели Hugging Face · экспорт MP3. Pro разблокирует MIDI и VST.",
   "generator.results": "Результаты",
+  "generator.insufficientCredits": "Недостаточно кредитов для генерации.",
   "prompts.title": "Промпты",
   "prompts.subtitle": "Библиотека готовых промптов",
   "prompts.new": "Новый промпт",
@@ -638,6 +719,29 @@ const ru: Dict = {
   "workspace.starToSave": "Отмечайте звёздочкой",
   "workspace.renameProject": "Переименовать проект",
   "workspace.noChats": "Чатов пока нет — создайте в Create",
+  "workspace.noChatsInProject": "В проекте пока нет чатов",
+  "context.share": "Поделиться",
+  "context.rename": "Переименовать",
+  "context.moveToProject": "Переместить в проект",
+  "context.noProject": "Без проекта (сайдбар)",
+  "context.removeFromProject": "Убрать из проекта",
+  "context.pinChat": "Закрепить чат",
+  "context.archive": "Архивировать",
+  "context.delete": "Удалить",
+  "context.deleteChatConfirm": "Удалить этот чат и все генерации?",
+  "context.shareCopied": "Ссылка для sharing скопирована.",
+  "voice.start": "Голосовой ввод — напев, MIDI, промпт",
+  "voice.stop": "Остановить запись",
+  "voice.notSupported": "Голосовой ввод не поддерживается в этом браузере.",
+  "notifications.title": "Уведомления",
+  "notifications.subtitle": "Генерации, биллинг и новости продукта.",
+  "help.notFound": "Страница помощи не найдена",
+  "menu.supportChat": "Чат поддержки",
+  "help.supportChat.title": "Чат поддержки",
+  "help.supportChat.body": "Напишите команде — обычно отвечаем в течение рабочего дня.",
+  "help.supportChat.placeholder": "Опишите проблему или вопрос.",
+  "help.supportChat.inputPlaceholder": "Введите сообщение…",
+  "help.supportChat.send": "Отправить",
   "project.notFound": "Проект не найден",
   "project.backToCreate": "Вернуться к Create",
   "project.subtitle": "Чаты генераций в этом проекте",

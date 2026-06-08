@@ -21,6 +21,7 @@ import {
   type WorkspaceProject,
 } from "../state/workspaceStore";
 import { useLanguage } from "../i18n/LanguageProvider";
+import { useCredits } from "../hooks/useCredits";
 
 const LITE_TYPES = ["Audio Sample"] as const;
 const LITE_MODELS_BY_TYPE: Record<(typeof LITE_TYPES)[number], string[]> = {
@@ -124,6 +125,7 @@ export default function AudioGenerator() {
   const assetsPanelCollapsed = useWorkspaceStore((s) => s.assetsPanelCollapsed);
   const setAssetsPanelCollapsed = useWorkspaceStore((s) => s.setAssetsPanelCollapsed);
   const addFromResult = useLibraryStore((s) => s.addFromResult);
+  const { remaining, deduct } = useCredits();
 
   useEffect(() => {
     if (chats.length === 0) {
@@ -271,6 +273,12 @@ export default function AudioGenerator() {
   const handleGenerate = async () => {
     if (isGenerating || prompt.trim().length < 3 || !activeChat) return;
 
+    const creditCost = generationCount;
+    if (remaining < creditCost) {
+      setGenerationWarning(t("generator.insufficientCredits"));
+      return;
+    }
+
     const promptValue = prompt.trim();
     const pendingId = `${Date.now()}`;
     setIsGenerating(true);
@@ -331,6 +339,13 @@ export default function AudioGenerator() {
         createdAt: formatBatchTimestamp(new Date()),
         items: response.items,
       };
+
+      const charged = await deduct(creditCost);
+      if (!charged) {
+        setGenerationWarning(t("generator.insufficientCredits"));
+        setPending(null);
+        return;
+      }
 
       appendBatch(activeChatId, batch, response.items);
       setPrompt("");

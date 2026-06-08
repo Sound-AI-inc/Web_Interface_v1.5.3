@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { Sparkles } from "lucide-react";
 import GenerateButton from "./GenerateButton";
+import VoiceCaptureButton from "./VoiceCaptureButton";
 
 interface PromptInputProps {
   value: string;
@@ -71,6 +72,10 @@ export default function PromptInput({
             >
               <Sparkles className="h-4 w-4" />
             </button>
+            <VoiceCaptureButton
+              disabled={disabled}
+              onTranscript={(text) => onChange(value ? `${value} ${text}` : text)}
+            />
             <GenerateButton
               onClick={onGenerate}
               disabled={disabled}

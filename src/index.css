@@ -202,21 +202,28 @@
     border: 1px solid var(--border-primary);
     z-index: var(--z-modal);
   }
-  .shell-modal-root .token-overlay {
-    backdrop-filter: blur(6px);
+  .shell-modal-backdrop {
+    border: none;
+    cursor: pointer;
+    background: rgba(15, 15, 18, 0.72);
   }
-  .theme-lite .shell-modal-root .token-overlay {
-    background: rgba(244, 245, 247, 0.86);
-    backdrop-filter: blur(3px);
-  }
-  .theme-pro .shell-modal-root .token-overlay {
-    background: rgba(15, 15, 18, 0.8);
-    backdrop-filter: blur(6px);
+  .theme-lite .shell-modal-backdrop {
+    background: rgba(244, 245, 247, 0.92);
   }
   .shell-modal-panel {
-    background: var(--surface-modal);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    background: var(--surface-modal) !important;
+    border: 1px solid var(--border-primary);
+    box-shadow: var(--ui-shadow-floating);
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    filter: none !important;
+    isolation: isolate;
+  }
+  .theme-lite .shell-modal-panel {
+    background: #ffffff !important;
+  }
+  .theme-pro .shell-modal-panel {
+    background: #18181c !important;
   }
   .theme-lite .token-menu,
   .token-menu.theme-lite,

@@ -18,12 +18,9 @@ import {
   Info,
 } from "lucide-react";
 import { useInterfaceMode } from "../hooks/useInterfaceMode";
+import { useAuth } from "../hooks/useAuth";
 import { useLanguage } from "../i18n/LanguageProvider";
 import { LANGUAGES, type LanguageCode } from "../i18n/translations";
-
-const WEBSITE_BASE =
-  (import.meta.env.VITE_WEBSITE_URL as string | undefined)?.replace(/\/$/, "") ??
-  "http://127.0.0.1:4174";
 
 interface UserMenuPortalProps {
   open: boolean;
@@ -44,6 +41,7 @@ export default function UserMenuPortal({
 }: UserMenuPortalProps) {
   const { language, setLanguage, t } = useLanguage();
   const { mode } = useInterfaceMode();
+  const { signOut } = useAuth();
   const themeClass = mode === "lite" ? "theme-lite" : "theme-pro";
   const navigate = useNavigate();
   const [subOpen, setSubOpen] = useState<"language" | "help" | null>(null);
@@ -96,7 +94,16 @@ export default function UserMenuPortal({
     onClose();
   };
 
-  const websiteHref = (path: string) => `${WEBSITE_BASE}${path}`;
+  const handleHelpNav = (slug: string) => {
+    window.open(`${window.location.origin}/app/help/${slug}`, "_blank", "noopener,noreferrer");
+    onClose();
+  };
+
+  const handleLogout = async () => {
+    onClose();
+    await signOut();
+    navigate("/sign-in", { replace: true });
+  };
 
   return createPortal(
     <div data-user-menu data-theme={mode} className={`token-menu ${themeClass} rounded-card p-1.5 shadow-[var(--ui-shadow-floating)]`} style={menuStyle}>
@@ -153,35 +160,39 @@ export default function UserMenuPortal({
             <div className="px-2 py-1 font-codec text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
               {t("menu.learnMore")}
             </div>
-            <a href={websiteHref("/api")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
+            <button type="button" className="menu-row" onClick={() => handleHelpNav("api")}>
               <Terminal className="h-4 w-4 text-[var(--text-muted)]" />
               <span className="flex-1 text-left">{t("menu.apiConsole")}</span>
-            </a>
-            <a href={websiteHref("/about")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
+            </button>
+            <button type="button" className="menu-row" onClick={() => handleHelpNav("about")}>
               <Info className="h-4 w-4 text-[var(--text-muted)]" />
               <span className="flex-1 text-left">{t("menu.aboutSoundAI")}</span>
-            </a>
-            <a href={websiteHref("/docs")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
+            </button>
+            <button type="button" className="menu-row" onClick={() => handleHelpNav("tutorials")}>
               <BookOpen className="h-4 w-4 text-[var(--text-muted)]" />
               <span className="flex-1 text-left">{t("menu.tutorials")}</span>
-            </a>
-            <a href={websiteHref("/faq")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
+            </button>
+            <button type="button" className="menu-row" onClick={() => handleHelpNav("courses")}>
               <GraduationCap className="h-4 w-4 text-[var(--text-muted)]" />
               <span className="flex-1 text-left">{t("menu.courses")}</span>
-            </a>
+            </button>
+            <button type="button" className="menu-row" onClick={() => handleHelpNav("support-chat")}>
+              <HelpCircle className="h-4 w-4 text-[var(--text-muted)]" />
+              <span className="flex-1 text-left">{t("menu.supportChat")}</span>
+            </button>
             <div className="my-1 mx-1 h-px bg-[var(--border-primary)]" aria-hidden />
-            <a href={websiteHref("/legal/terms")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
+            <button type="button" className="menu-row" onClick={() => handleHelpNav("usage")}>
               <FileText className="h-4 w-4 text-[var(--text-muted)]" />
               <span className="flex-1 text-left">{t("menu.usagePolicy")}</span>
-            </a>
-            <a href={websiteHref("/legal/privacy")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
+            </button>
+            <button type="button" className="menu-row" onClick={() => handleHelpNav("privacy")}>
               <Shield className="h-4 w-4 text-[var(--text-muted)]" />
               <span className="flex-1 text-left">{t("menu.privacyPolicy")}</span>
-            </a>
-            <a href={websiteHref("/legal/info")} target="_blank" rel="noreferrer" className="menu-row" onClick={onClose}>
+            </button>
+            <button type="button" className="menu-row" onClick={() => handleHelpNav("privacy-choices")}>
               <Shield className="h-4 w-4 text-[var(--text-muted)]" />
               <span className="flex-1 text-left">{t("menu.privacyChoices")}</span>
-            </a>
+            </button>
           </div>
         )}
       </div>
@@ -203,7 +214,7 @@ export default function UserMenuPortal({
 
       <div className="my-1 mx-1 h-px bg-[var(--border-primary)]" aria-hidden />
 
-      <button type="button" className="menu-row" onClick={onClose}>
+      <button type="button" className="menu-row" onClick={() => void handleLogout()}>
         <LogOut className="h-4 w-4 text-[var(--text-muted)]" />
         <span className="flex-1 text-left">{t("menu.logOut")}</span>
       </button>
