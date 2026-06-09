@@ -1,8 +1,8 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { Plus, Search, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import PageContainer from "../components/PageContainer";
 import PromptCard from "../components/PromptCard";
+import WorkspacePageShell from "../components/workspace/WorkspacePageShell";
 import { prompts as promptSeed, type PromptItem } from "../data/mock";
 import { setComposerPrefill } from "../lib/composerPrefill";
 import { useLanguage } from "../i18n/LanguageProvider";
@@ -27,6 +27,15 @@ export default function Prompts() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState(EMPTY_PROMPT);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const stats = useMemo(
+    () => [
+      { label: "Prompts", value: items.length },
+      { label: "Total runs", value: items.reduce((sum, p) => sum + p.runs, 0) },
+      { label: "Genres", value: new Set(items.map((p) => p.genre)).size },
+    ],
+    [items],
+  );
 
   const filtered = useMemo(() => {
     return items.filter((prompt) => {
@@ -136,10 +145,11 @@ export default function Prompts() {
   };
 
   return (
-    <div className="premium-workspace pb-8">
-      <PageContainer
+    <>
+      <WorkspacePageShell
         title={t("prompts.title")}
         subtitle={t("prompts.subtitle")}
+        stats={stats}
         actions={
           <button type="button" onClick={openCreate} className="app-btn-primary h-9">
             <Plus className="h-4 w-4" /> {t("prompts.new")}
@@ -170,7 +180,7 @@ export default function Prompts() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="premium-prompts-grid">
           {filtered.map((prompt) => (
             <PromptCard
               key={prompt.id}
@@ -196,7 +206,7 @@ export default function Prompts() {
             Prompt copied to clipboard
           </div>
         )}
-      </PageContainer>
+      </WorkspacePageShell>
 
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--surface-overlay)] px-4 backdrop-blur-sm">
@@ -292,6 +302,6 @@ export default function Prompts() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

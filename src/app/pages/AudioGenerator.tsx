@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Pencil, RefreshCw, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Check, RefreshCw, Sparkles } from "lucide-react";
 import PromptInput from "../components/PromptInput";
 import BrandSelect from "../components/BrandSelect";
 import type { AudioResult } from "../data/mock";
@@ -12,6 +13,7 @@ import WorkspaceGreeting from "../components/workspace/WorkspaceGreeting";
 import WorkspaceAssetPanel from "../components/workspace/WorkspaceAssetPanel";
 import AddToProjectMenu from "../components/workspace/AddToProjectMenu";
 import { consumeComposerPrefill } from "../lib/composerPrefill";
+import { setEditorIntent } from "../lib/editorIntent";
 import { COMPOSER_INPUT_ID, focusComposerInput } from "../lib/focusComposer";
 import { toModelSelectOptions } from "../lib/modelOptions";
 import { useLibraryStore } from "../state/libraryStore";
@@ -106,6 +108,7 @@ function mapSuggestionType(rec: Suggestion) {
 }
 
 export default function AudioGenerator() {
+  const navigate = useNavigate();
   const { mode } = useInterfaceMode();
   const { t } = useLanguage();
   const isPro = mode === "pro";
@@ -261,6 +264,17 @@ export default function AudioGenerator() {
   const handleCreateProjectForAsset = (item: AudioResult) => {
     const projectId = createProject("New Project");
     handleAddToProject(item, projectId);
+  };
+
+  const handleEditInEditor = (item: AudioResult) => {
+    setEditorIntent({
+      assetId: item.id,
+      kind: item.kind,
+      title: item.title,
+      chatId: activeChatId || undefined,
+      projectId: activeChat?.projectId ?? undefined,
+    });
+    navigate("/app/editor");
   };
 
   const handleRemix = (item: AudioResult, batchPrompt?: string) => {
@@ -432,6 +446,7 @@ export default function AudioGenerator() {
                       onCreateProjectForAsset={handleCreateProjectForAsset}
                       onToggleFavorite={(id) => patchChatIds("favoriteIds", id)}
                       onRemix={(item) => handleRemix(item, batch.prompt)}
+                      onEditInEditor={handleEditInEditor}
                       onRegenerate={() => handleRegenerate(batch)}
                     />
                   ))}
@@ -491,6 +506,7 @@ function GenerationTimeline({
   onCreateProjectForAsset,
   onToggleFavorite,
   onRemix,
+  onEditInEditor,
   onRegenerate,
 }: {
   batch: GenerationBatch;
@@ -502,6 +518,7 @@ function GenerationTimeline({
   onCreateProjectForAsset: (item: AudioResult) => void;
   onToggleFavorite: (id: string) => void;
   onRemix: (item: AudioResult) => void;
+  onEditInEditor: (item: AudioResult) => void;
   onRegenerate: () => void;
 }) {
   const label =
@@ -546,6 +563,7 @@ function GenerationTimeline({
                   savedToLibrary={saved.has(item.id)}
                   onAddToLibrary={() => onSaveToLibrary(item)}
                   onRemix={() => onRemix(item)}
+                  onEdit={() => onEditInEditor(item)}
                   saveLabel={saved.has(item.id) ? "Saved" : "Save to Library"}
                 />
                 <div className="mt-2 flex flex-wrap items-center gap-2 pl-1">
@@ -554,7 +572,6 @@ function GenerationTimeline({
                     onAssign={(projectId) => onAddToProject(item, projectId)}
                     onCreateProject={() => onCreateProjectForAsset(item)}
                   />
-                  <TimelineAction icon={Pencil} label="Edit" onClick={() => onRemix(item)} />
                   {favorites.has(item.id) ? (
                     <span className="font-codec text-[11px] text-primary">Favorited</span>
                   ) : (

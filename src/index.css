@@ -1147,3 +1147,166 @@
   max-height: calc(100dvh - 12rem);
   overflow-y: auto;
 }
+.premium-workspace-shell {
+  background: var(--background-primary);
+}
+.premium-workspace-header {
+  background: linear-gradient(180deg, var(--surface-primary) 0%, transparent 100%);
+}
+.premium-stat-chip {
+  @apply inline-flex flex-col gap-0.5 rounded-[12px] px-3 py-2;
+  border: 1px solid var(--border-primary);
+  background: var(--surface-secondary);
+  min-width: 88px;
+}
+.premium-workspace-body {
+  padding-bottom: 2rem;
+}
+.premium-editor-workspace {
+  background: linear-gradient(180deg, var(--surface-primary) 0%, var(--surface-secondary) 100%);
+}
+.premium-editor-context {
+  background: var(--surface-secondary);
+}
+.premium-library-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 1280px) {
+  .premium-library-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.premium-prompts-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 768px) {
+  .premium-prompts-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1280px) {
+  .premium-prompts-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.premium-prompt-card {
+  @apply flex flex-col gap-4 rounded-[18px] p-5;
+  border: 1px solid var(--border-primary);
+  background: linear-gradient(180deg, var(--surface-primary) 0%, var(--surface-secondary) 100%);
+  box-shadow: var(--ui-shadow-soft), var(--ui-shadow-inset);
+  transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+.premium-prompt-card:hover {
+  border-color: var(--border-secondary);
+  transform: translateY(-1px);
+  box-shadow: var(--ui-shadow-floating);
+}
+.premium-prompt-card-body {
+  @apply line-clamp-3 font-codec text-[13px] leading-relaxed;
+  color: var(--text-secondary);
+}
+.premium-prompt-card-footer {
+  @apply mt-auto flex items-center justify-between border-t pt-3;
+  border-color: var(--border-primary);
+}
+.premium-asset-card {
+  @apply rounded-[18px] p-4 md:p-5;
+  border: 1px solid var(--border-primary);
+  background: linear-gradient(180deg, var(--surface-primary) 0%, var(--surface-secondary) 100%);
+  box-shadow: var(--ui-shadow-soft), var(--ui-shadow-inset);
+  transition: border-color 180ms ease, transform 180ms ease;
+}
+.premium-asset-card:hover {
+  border-color: var(--border-secondary);
+  transform: translateY(-1px);
+}
+.premium-asset-card-feed {
+  border-left: 3px solid rgba(var(--color-primary-rgb), 0.35);
+}
+.premium-asset-card-library {
+  min-height: 100%;
+}
+.premium-asset-card-header {
+  @apply mb-4 flex flex-wrap items-start justify-between gap-3;
+}
+.premium-asset-kind {
+  @apply mb-2 inline-flex items-center gap-2 rounded-full px-2.5 py-1 font-codec text-[11px] font-semibold uppercase tracking-[0.08em];
+  border: 1px solid var(--border-primary);
+  background: var(--surface-secondary);
+  color: var(--text-secondary);
+}
+.premium-asset-kind svg {
+  color: rgb(var(--color-primary));
+}
+.premium-asset-title {
+  @apply truncate font-codec text-[15px] font-semibold;
+  color: var(--text-primary);
+}
+.premium-asset-meta {
+  @apply mt-1 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px];
+  color: var(--text-muted);
+}
+.premium-asset-status {
+  @apply rounded-full px-2.5 py-1 font-codec text-[11px] font-semibold;
+  background: rgba(var(--color-primary-rgb), 0.1);
+  color: rgb(var(--color-primary));
+}
+.premium-asset-preview {
+  @apply rounded-[14px] border p-3;
+  border-color: var(--border-primary);
+  background: var(--ui-input);
+}
+.premium-asset-card[data-pro="true"] .premium-asset-preview {
+  background: rgba(0, 0, 0, 0.28);
+}
+.premium-asset-progress {
+  @apply mt-3 h-1.5 overflow-hidden rounded-full;
+  background: var(--surface-secondary);
+}
+.premium-asset-progress-bar {
+  @apply h-full rounded-full;
+  background: var(--ui-create-gradient);
+  transition: width 300ms ease;
+}
+.premium-asset-actions {
+  @apply mt-4 flex flex-wrap gap-2;
+}
+.premium-asset-action {
+  @apply inline-flex h-9 items-center justify-center gap-2 rounded-full px-3 font-codec text-[12px] font-semibold;
+  border: 1px solid var(--border-primary);
+  background: var(--surface-secondary);
+  color: var(--text-secondary);
+  transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
+}
+.premium-asset-action:hover {
+  border-color: var(--border-secondary);
+  color: var(--text-primary);
+}
+.premium-export-group {
+  @apply rounded-[18px] border p-5;
+  border-color: var(--border-primary);
+  background: linear-gradient(180deg, var(--surface-primary) 0%, var(--surface-secondary) 100%);
+  box-shadow: var(--ui-shadow-soft);
+}
+.premium-export-group-header {
+  @apply mb-3 flex items-center gap-2;
+}
+.premium-export-row {
+  @apply flex items-center gap-3 border-t py-3;
+  border-color: var(--border-primary);
+}
+.premium-export-row:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+.premium-search {
+  background: var(--surface-secondary);
+  border-color: var(--border-primary);
+}
+.premium-empty {
+  background: var(--surface-secondary);
+}

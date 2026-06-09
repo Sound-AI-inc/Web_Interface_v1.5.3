@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   Folder as FolderIcon,
@@ -10,10 +11,13 @@ import {
   ChevronRight,
   ChevronDown,
 } from "lucide-react";
-import PageContainer from "../components/PageContainer";
+import ProGate from "../components/ProGate";
 import ResultCard, { toCardItem } from "../components/ResultCard";
 import FolderFilePlayer from "../components/FolderFilePlayer";
+import WorkspacePageShell from "../components/workspace/WorkspacePageShell";
 import type { LibraryAsset, ResultKind } from "../data/mock";
+import { setEditorIntent } from "../lib/editorIntent";
+import { useInterfaceMode } from "../hooks/useInterfaceMode";
 import { LIBRARY_ROOT_ID, useLibraryStore } from "../state/libraryStore";
 import { useLanguage } from "../i18n/LanguageProvider";
 
@@ -26,8 +30,9 @@ const TYPE_FILTERS: { value: TypeFilter; label: string }[] = [
   { value: "preset", label: "Preset" },
 ];
 
-export default function Library() {
+function LibraryWorkspace() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const folders = useLibraryStore((s) => s.folders);
   const assets = useLibraryStore((s) => s.assets);
   const assetFolder = useLibraryStore((s) => s.assetFolder);
@@ -46,6 +51,16 @@ export default function Library() {
   const [renameValue, setRenameValue] = useState("");
   const [moveMenuFor, setMoveMenuFor] = useState<string | null>(null);
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
+
+  const stats = useMemo(
+    () => [
+      { label: "Total assets", value: assets.length },
+      { label: "Audio", value: assets.filter((a) => a.kind === "audio").length },
+      { label: "MIDI", value: assets.filter((a) => a.kind === "midi").length },
+      { label: "Presets", value: assets.filter((a) => a.kind === "preset").length },
+    ],
+    [assets],
+  );
 
   const onDragStartAsset = (e: React.DragEvent, assetId: string) => {
     e.dataTransfer.effectAllowed = "move";
@@ -81,10 +96,7 @@ export default function Library() {
       if (type !== "all" && a.kind !== type) return false;
       if (!query) return true;
       const q = query.toLowerCase();
-      return (
-        a.title.toLowerCase().includes(q) ||
-        a.tags.some((t) => t.includes(q))
-      );
+      return a.title.toLowerCase().includes(q) || a.tags.some((tag) => tag.includes(q));
     });
   }, [assets, assetFolder, selectedFolder, type, query]);
 
@@ -113,21 +125,24 @@ export default function Library() {
   const countFor = (fid: string) =>
     assets.filter((a) => (assetFolder[a.id] ?? LIBRARY_ROOT_ID) === fid).length;
 
+  const openInEditor = (asset: LibraryAsset) => {
+    setEditorIntent({ assetId: asset.id, kind: asset.kind, title: asset.title });
+    navigate("/app/editor");
+  };
+
   return (
-    <div className="premium-workspace pb-8">
-      <PageContainer title={t("library.title")} subtitle={t("library.subtitle")}>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
-          <aside className="premium-library-sidebar flex flex-col gap-2 rounded-[18px] border border-[var(--border-primary)] bg-[var(--surface-primary)] p-4 shadow-[var(--ui-shadow-soft)]">
+    <WorkspacePageShell
+      title={t("library.title")}
+      subtitle={t("library.subtitle")}
+      stats={stats}
+    >
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[280px_1fr]">
+        <aside className="premium-library-sidebar flex flex-col gap-2 rounded-[18px] border border-[var(--border-primary)] bg-[var(--surface-primary)] p-4 shadow-[var(--ui-shadow-soft)]">
           <div className="flex items-center justify-between">
             <h3 className="font-codec text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
               Folders
             </h3>
-            <button
-              type="button"
-              onClick={onCreateFolder}
-              className="app-btn-ghost h-8 px-2 text-[11px]"
-              title="Create folder"
-            >
+            <button type="button" onClick={onCreateFolder} className="premium-icon-btn h-8 w-auto px-2 text-[11px]">
               <FolderPlus className="h-3.5 w-3.5" /> New
             </button>
           </div>
@@ -145,31 +160,18 @@ export default function Library() {
                     onDragOver={(e) => onDragOverFolder(e, f.id)}
                     onDragLeave={() => setDragOverFolder(null)}
                     onDrop={(e) => onDropOnFolder(e, f.id)}
-                    className={`group flex items-center gap-1 rounded-button px-2 py-1.5 font-codec text-xs transition-colors ${
+                    className={`group flex items-center gap-1 rounded-[10px] px-2 py-1.5 font-codec text-xs transition-colors ${
                       isDragTarget
                         ? "bg-primary/15 text-primary ring-1 ring-primary"
                         : active
                           ? "bg-primary/10 text-primary"
-                          : "text-text/70 hover:bg-surface-muted"
+                          : "text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
                     }`}
                   >
-                    <button
-                      type="button"
-                      onClick={() => toggleFolder(f.id)}
-                      className="shrink-0 text-text/40 hover:text-text"
-                      aria-label={expanded ? "Collapse" : "Expand"}
-                    >
-                      {expanded ? (
-                        <ChevronDown className="h-3 w-3" />
-                      ) : (
-                        <ChevronRight className="h-3 w-3" />
-                      )}
+                    <button type="button" onClick={() => toggleFolder(f.id)} className="shrink-0 opacity-50 hover:opacity-100">
+                      {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                     </button>
-                    <FolderIcon
-                      className={`h-3.5 w-3.5 shrink-0 ${
-                        active ? "text-primary" : "text-text/50"
-                      }`}
-                    />
+                    <FolderIcon className={`h-3.5 w-3.5 shrink-0 ${active ? "text-primary" : ""}`} />
                     {renaming ? (
                       <input
                         autoFocus
@@ -182,73 +184,41 @@ export default function Library() {
                         className="app-input h-6 flex-1 px-1 py-0 text-xs"
                       />
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => setSelectedFolder(f.id)}
-                        className="flex-1 truncate text-left"
-                      >
+                      <button type="button" onClick={() => setSelectedFolder(f.id)} className="flex-1 truncate text-left">
                         {f.name}
                       </button>
                     )}
-                    <span className="font-codec text-[10px] text-text/40">
-                      {countFor(f.id)}
-                    </span>
+                    <span className="font-codec text-[10px] opacity-40">{countFor(f.id)}</span>
                     {!isRoot && !renaming && (
                       <div className="flex shrink-0 items-center opacity-0 transition-opacity group-hover:opacity-100">
-                        <button
-                          type="button"
-                          onClick={() => startRename(f.id, f.name)}
-                          className="rounded p-1 text-text/50 hover:bg-surface hover:text-text"
-                          aria-label="Rename folder"
-                        >
+                        <button type="button" onClick={() => startRename(f.id, f.name)} className="premium-icon-btn h-6 w-6">
                           <Pencil className="h-3 w-3" />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => onDeleteFolder(f.id)}
-                          className="rounded p-1 text-text/50 hover:bg-surface hover:text-primary"
-                          aria-label="Delete folder"
-                        >
+                        <button type="button" onClick={() => onDeleteFolder(f.id)} className="premium-icon-btn h-6 w-6">
                           <Trash2 className="h-3 w-3" />
                         </button>
                       </div>
                     )}
                     {renaming && (
                       <div className="flex shrink-0 items-center">
-                        <button
-                          type="button"
-                          onClick={commitRename}
-                          className="rounded p-1 text-primary hover:bg-primary/10"
-                          aria-label="Confirm rename"
-                        >
+                        <button type="button" onClick={commitRename} className="premium-icon-btn h-6 w-6 text-primary">
                           <Check className="h-3 w-3" />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => setRenamingId(null)}
-                          className="rounded p-1 text-text/50 hover:bg-surface"
-                          aria-label="Cancel rename"
-                        >
+                        <button type="button" onClick={() => setRenamingId(null)} className="premium-icon-btn h-6 w-6">
                           <X className="h-3 w-3" />
                         </button>
                       </div>
                     )}
                   </div>
-
                   {expanded && (
-                    <div className="ml-4 mt-0.5 flex flex-col gap-0.5 border-l border-surface pl-2">
+                    <div className="ml-4 mt-0.5 flex flex-col gap-0.5 border-l border-[var(--border-primary)] pl-2">
                       {assets
-                        .filter(
-                          (a) =>
-                            (assetFolder[a.id] ?? LIBRARY_ROOT_ID) === f.id,
-                        )
+                        .filter((a) => (assetFolder[a.id] ?? LIBRARY_ROOT_ID) === f.id)
                         .map((a) => (
                           <FolderFilePlayer key={a.id} asset={a} />
                         ))}
                       {countFor(f.id) === 0 && (
-                        <div className="px-2 py-0.5 font-codec text-[11px] text-text/30">
-                          empty
-                        </div>
+                        <div className="px-2 py-0.5 font-codec text-[11px] text-[var(--text-muted)]">empty</div>
                       )}
                     </div>
                   )}
@@ -256,24 +226,22 @@ export default function Library() {
               );
             })}
           </div>
-
-          <p className="mt-2 font-codec text-[11px] italic text-text/40">
-            Tip: drag items into folders or use the move button on each card to
-            organize assets for faster export.
+          <p className="mt-2 font-codec text-[11px] italic text-[var(--text-muted)]">
+            Tip: drag items into folders or use the move button on each card to organize assets for faster export.
           </p>
         </aside>
 
         <div className="min-w-0">
           <div className="premium-toolbar mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap items-center gap-2">
-              {TYPE_FILTERS.map((t) => (
+              {TYPE_FILTERS.map((filter) => (
                 <button
-                  key={t.value}
+                  key={filter.value}
                   type="button"
-                  onClick={() => setType(t.value)}
-                  className={`premium-filter-chip ${t.value === type ? "is-active" : ""}`}
+                  onClick={() => setType(filter.value)}
+                  className={`premium-filter-chip ${filter.value === type ? "is-active" : ""}`}
                 >
-                  {t.label}
+                  {filter.label}
                 </button>
               ))}
             </div>
@@ -288,32 +256,33 @@ export default function Library() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-4">
+          <div className="premium-library-grid">
             {filtered.map((a) => (
               <div
                 key={a.id}
                 draggable
                 onDragStart={(e) => onDragStartAsset(e, a.id)}
-                className="relative cursor-grab active:cursor-grabbing"
+                className="premium-library-card-wrap relative cursor-grab active:cursor-grabbing"
               >
-                <ResultCard item={toCardItem(a)} savedToLibrary />
-                <div className="absolute right-4 top-4 z-10">
+                <ResultCard
+                  item={toCardItem(a)}
+                  savedToLibrary
+                  variant="library"
+                  onEdit={() => openInEditor(a)}
+                />
+                <div className="absolute right-5 top-5 z-10">
                   <button
                     type="button"
-                    onClick={() =>
-                      setMoveMenuFor(moveMenuFor === a.id ? null : a.id)
-                    }
-                    className="app-btn-ghost h-7 px-2 text-[10px]"
-                    title="Move to folder"
+                    onClick={() => setMoveMenuFor(moveMenuFor === a.id ? null : a.id)}
+                    className="premium-asset-action h-7 px-2 text-[10px]"
                   >
                     <FolderIcon className="h-3 w-3" />
                     Move
                   </button>
                   {moveMenuFor === a.id && (
-                    <div className="absolute right-0 top-8 z-20 w-52 rounded-card token-card border border-[var(--border-primary)] p-1 shadow-flat">
+                    <div className="absolute right-0 top-8 z-20 w-52 rounded-[14px] border border-[var(--border-primary)] bg-[var(--surface-elevated)] p-1 shadow-[var(--ui-shadow-floating)]">
                       {folders.map((f) => {
-                        const current =
-                          (assetFolder[a.id] ?? LIBRARY_ROOT_ID) === f.id;
+                        const current = (assetFolder[a.id] ?? LIBRARY_ROOT_ID) === f.id;
                         return (
                           <button
                             key={f.id}
@@ -322,10 +291,10 @@ export default function Library() {
                               moveAsset(a.id, f.id);
                               setMoveMenuFor(null);
                             }}
-                            className={`flex w-full items-center gap-2 rounded-button px-2 py-1.5 text-left font-codec text-xs transition-colors ${
+                            className={`flex w-full items-center gap-2 rounded-[8px] px-2 py-1.5 text-left font-codec text-xs transition-colors ${
                               current
                                 ? "bg-primary/10 text-primary"
-                                : "text-text/70 hover:bg-surface-muted"
+                                : "text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
                             }`}
                           >
                             <FolderIcon className="h-3 w-3" />
@@ -339,15 +308,32 @@ export default function Library() {
                 </div>
               </div>
             ))}
-            {filtered.length === 0 && (
-              <div className="premium-empty rounded-[18px] border border-dashed border-[var(--border-primary)] p-10 text-center font-codec text-sm text-[var(--text-secondary)]">
-                No assets match your filters.
-              </div>
-            )}
           </div>
+
+          {filtered.length === 0 && (
+            <div className="premium-empty rounded-[18px] border border-dashed border-[var(--border-primary)] p-10 text-center font-codec text-sm text-[var(--text-secondary)]">
+              No assets match your filters.
+            </div>
+          )}
         </div>
-        </div>
-      </PageContainer>
-    </div>
+      </div>
+    </WorkspacePageShell>
   );
+}
+
+export default function Library() {
+  const { t } = useLanguage();
+  const { mode } = useInterfaceMode();
+
+  if (mode !== "pro") {
+    return (
+      <ProGate
+        title={t("library.title")}
+        subtitle={t("library.subtitle")}
+        feature="Library organizes your generated audio, MIDI, and preset assets across folders."
+      />
+    );
+  }
+
+  return <LibraryWorkspace />;
 }

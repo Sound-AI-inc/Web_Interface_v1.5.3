@@ -1,4 +1,12 @@
-import { Heart, KeyboardMusic, Play, Repeat, SlidersHorizontal } from "lucide-react";
+import {
+  Heart,
+  KeyboardMusic,
+  Pencil,
+  Play,
+  Repeat,
+  SlidersHorizontal,
+} from "lucide-react";
+import { useInterfaceMode } from "../hooks/useInterfaceMode";
 import type { AudioResult, LibraryAsset, ResultKind } from "../data/mock";
 import AudioPreview from "./previews/AudioPreview";
 import MidiPreview from "./previews/MidiPreview";
@@ -23,11 +31,13 @@ interface ResultCardProps {
   item: ResultCardItem;
   onAddToLibrary?: () => void;
   onRemix?: () => void;
+  onEdit?: () => void;
   savedToLibrary?: boolean;
   saveLabel?: string;
   statusLabel?: string;
   statusProgress?: number;
   disableActions?: boolean;
+  variant?: "feed" | "library";
 }
 
 const kindCopy: Record<ResultKind, { label: string; icon: typeof Play; action: string }> = {
@@ -40,38 +50,42 @@ export default function ResultCard({
   item,
   onAddToLibrary,
   onRemix,
+  onEdit,
   savedToLibrary,
   saveLabel,
   statusLabel,
   statusProgress,
   disableActions,
+  variant = "feed",
 }: ResultCardProps) {
+  const { mode } = useInterfaceMode();
+  const isPro = mode === "pro";
   const Icon = kindCopy[item.kind].icon;
   const meta = buildMetadata(item);
 
   return (
-    <div className="asset-card premium-result-card asset-enter rounded-[20px] p-4 md:p-5">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[var(--ui-border-soft)] bg-[var(--ui-input)] px-2.5 py-1 font-codec text-[11px] font-semibold uppercase tracking-[0.08em] text-text/60">
-            <Icon className="h-3.5 w-3.5 text-primary" />
+    <article
+      className={`premium-asset-card asset-enter ${variant === "library" ? "premium-asset-card-library" : "premium-asset-card-feed"}`}
+      data-kind={item.kind}
+      data-pro={isPro ? "true" : "false"}
+    >
+      <div className="premium-asset-card-header">
+        <div className="min-w-0 flex-1">
+          <div className="premium-asset-kind">
+            <Icon className="h-3.5 w-3.5" />
             {kindCopy[item.kind].label}
           </div>
-          <h3 className="truncate font-codec text-[15px] font-semibold text-text">{item.title}</h3>
-          <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px] text-text/50">
+          <h3 className="premium-asset-title">{item.title}</h3>
+          <div className="premium-asset-meta">
             {meta.map((entry) => (
               <span key={entry}>{entry}</span>
             ))}
           </div>
         </div>
-        {statusLabel && (
-          <div className="rounded-full bg-primary/10 px-2.5 py-1 font-codec text-[11px] font-semibold text-primary">
-            {statusLabel}
-          </div>
-        )}
+        {statusLabel && <span className="premium-asset-status">{statusLabel}</span>}
       </div>
 
-      <div className="rounded-[16px] border border-[var(--ui-border-soft)] bg-[var(--ui-input)] p-3">
+      <div className="premium-asset-preview">
         {item.kind === "audio" && (
           <AudioPreview
             seed={item.audioSeed ?? 1}
@@ -86,15 +100,15 @@ export default function ResultCard({
       </div>
 
       {typeof statusProgress === "number" && statusProgress < 1 && (
-        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--ui-input)]">
+        <div className="premium-asset-progress">
           <div
-            className="h-full rounded-full bg-[var(--ui-create-gradient)] transition-[width] duration-300"
+            className="premium-asset-progress-bar"
             style={{ width: `${Math.max(8, Math.round(statusProgress * 100))}%` }}
           />
         </div>
       )}
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="premium-asset-actions">
         <AssetAction disabled={disableActions} icon={Icon} label={kindCopy[item.kind].action} />
         <AssetAction
           disabled={savedToLibrary || disableActions}
@@ -104,8 +118,11 @@ export default function ResultCard({
           onClick={onAddToLibrary}
         />
         <AssetAction disabled={disableActions} icon={Repeat} label="Reuse" onClick={onRemix} />
+        {isPro && onEdit && (
+          <AssetAction disabled={disableActions} icon={Pencil} label="Edit" onClick={onEdit} />
+        )}
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -127,7 +144,7 @@ function AssetAction({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="composer-control inline-flex h-9 items-center justify-center gap-2 rounded-full px-3 font-codec text-[12px] font-semibold disabled:cursor-not-allowed disabled:opacity-45"
+      className="premium-asset-action disabled:cursor-not-allowed disabled:opacity-45"
     >
       <Icon className={`h-3.5 w-3.5 ${active ? "fill-primary text-primary" : ""}`} />
       {label}

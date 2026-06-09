@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as Tone from "tone";
 import { Play, Pause } from "lucide-react";
+import { useInterfaceMode } from "../../hooks/useInterfaceMode";
 import { getPianoSampler, midiToNoteName } from "../../lib/pianoSampler";
 import type { MidiNoteLite } from "../../data/mock";
 
@@ -15,6 +16,11 @@ interface MidiPreviewProps {
  * Tone.Sampler. Shows the moving playhead and highlights currently active notes.
  */
 export default function MidiPreview({ notes, durationSeconds, className = "" }: MidiPreviewProps) {
+  const { mode } = useInterfaceMode();
+  const isPro = mode === "pro";
+  const noteActive = isPro ? "rgba(255,255,255,0.95)" : "rgb(var(--color-primary))";
+  const noteIdle = isPro ? "rgba(255,255,255,0.35)" : "rgb(var(--color-primary-soft))";
+  const gridStroke = isPro ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.06)";
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -107,7 +113,9 @@ export default function MidiPreview({ notes, durationSeconds, className = "" }: 
           <Play className="h-4 w-4" />
         )}
       </button>
-      <div className="relative h-14 flex-1 overflow-hidden rounded-input token-card border border-[var(--border-primary)]">
+      <div
+        className={`relative h-14 flex-1 overflow-hidden rounded-input border border-[var(--border-primary)] ${isPro ? "waveform-shell-pro bg-black/35" : "bg-[var(--ui-input)]"}`}
+      >
         {/* Horizontal pitch grid */}
         <svg
           viewBox={`0 0 100 ${pitchRange}`}
@@ -121,7 +129,7 @@ export default function MidiPreview({ notes, durationSeconds, className = "" }: 
                 x2={100}
                 y1={i}
               y2={i}
-              stroke="#EFF3F6"
+              stroke={gridStroke}
               strokeWidth={0.05}
             />
           ))}
@@ -140,7 +148,7 @@ export default function MidiPreview({ notes, durationSeconds, className = "" }: 
                 height={0.8}
                 rx={0.2}
                 ry={0.2}
-                fill={active ? "rgb(var(--color-primary))" : "rgb(var(--color-primary-soft))"}
+                fill={active ? noteActive : noteIdle}
               />
             );
           })}

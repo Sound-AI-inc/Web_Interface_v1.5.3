@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as Tone from "tone";
 import { Play, Pause } from "lucide-react";
+import { useInterfaceMode } from "../../hooks/useInterfaceMode";
 import type { PresetGlance } from "../../data/mock";
 import { midiToNoteName } from "../../lib/pianoSampler";
 
@@ -17,6 +18,8 @@ const demoPhrase: { pitch: number; start: number; duration: number }[] = [
 ];
 
 export default function PresetPreview({ preset, className = "" }: PresetPreviewProps) {
+  const { mode } = useInterfaceMode();
+  const isPro = mode === "pro";
   const [playing, setPlaying] = useState(false);
   const synthRef = useRef<Tone.PolySynth<Tone.MonoSynth> | null>(null);
   const filterRef = useRef<Tone.Filter | null>(null);
@@ -97,8 +100,10 @@ export default function PresetPreview({ preset, className = "" }: PresetPreviewP
       >
         {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
       </button>
-      <div className="grid h-14 flex-1 grid-cols-6 gap-2 rounded-input border border-surface bg-surface-muted p-2 font-codec text-[10px] text-text/70">
-        <EnvGlance preset={preset} />
+      <div
+        className={`grid h-14 flex-1 grid-cols-6 gap-2 rounded-input border border-[var(--border-primary)] p-2 font-codec text-[10px] ${isPro ? "waveform-shell-pro bg-black/35 text-white/80" : "bg-[var(--ui-input)] text-text/70"}`}
+      >
+        <EnvGlance preset={preset} isPro={isPro} />
         <ParamGlance label="Osc" value={preset.oscillator} />
         <ParamGlance label="Cutoff" value={`${Math.round(preset.filterCutoff)}Hz`} />
         <ParamGlance label="Res" value={preset.filterResonance.toFixed(2)} />
@@ -109,7 +114,7 @@ export default function PresetPreview({ preset, className = "" }: PresetPreviewP
   );
 }
 
-function EnvGlance({ preset }: { preset: PresetGlance }) {
+function EnvGlance({ preset, isPro }: { preset: PresetGlance; isPro: boolean }) {
   const total = preset.attack + preset.decay + 0.4 + preset.release;
   const ax = (preset.attack / total) * 100;
   const dx = ((preset.attack + preset.decay) / total) * 100;
@@ -121,7 +126,7 @@ function EnvGlance({ preset }: { preset: PresetGlance }) {
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-5 w-full">
         <polyline
           fill="none"
-          stroke="rgb(var(--color-primary))"
+          stroke={isPro ? "rgba(255,255,255,0.9)" : "rgb(var(--color-primary))"}
           strokeWidth={3}
           points={`0,100 ${ax},0 ${dx},${sy} ${sx},${sy} 100,100`}
           vectorEffect="non-scaling-stroke"
