@@ -85,7 +85,7 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
   const setActiveProject = useWorkspaceStore((s) => s.setActiveProject);
   const setActiveChat = useWorkspaceStore((s) => s.setActiveChat);
   const createProject = useWorkspaceStore((s) => s.createProject);
-  const createChat = useWorkspaceStore((s) => s.createChat);
+  const startNewSession = useWorkspaceStore((s) => s.startNewSession);
   const renameProject = useWorkspaceStore((s) => s.renameProject);
   const deleteProject = useWorkspaceStore((s) => s.deleteProject);
   const deleteChat = useWorkspaceStore((s) => s.deleteChat);
@@ -263,7 +263,7 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
             <button
               type="button"
               onClick={() => {
-                createChat(null);
+                startNewSession();
                 navigate(GENERATOR_PATH);
                 focusComposerInput();
               }}

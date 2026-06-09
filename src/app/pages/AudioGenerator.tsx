@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Pencil, RefreshCw, Sparkles } from "lucide-react";
 import PromptInput from "../components/PromptInput";
 import BrandSelect from "../components/BrandSelect";
@@ -11,6 +11,7 @@ import SuggestionList, { type Suggestion } from "../components/workspace/Suggest
 import WorkspaceGreeting from "../components/workspace/WorkspaceGreeting";
 import WorkspaceAssetPanel from "../components/workspace/WorkspaceAssetPanel";
 import AddToProjectMenu from "../components/workspace/AddToProjectMenu";
+import { consumeComposerPrefill } from "../lib/composerPrefill";
 import { COMPOSER_INPUT_ID, focusComposerInput } from "../lib/focusComposer";
 import { toModelSelectOptions } from "../lib/modelOptions";
 import { useLibraryStore } from "../state/libraryStore";
@@ -119,23 +120,13 @@ export default function AudioGenerator() {
   const updateChat = useWorkspaceStore((s) => s.updateChat);
   const appendBatch = useWorkspaceStore((s) => s.appendBatch);
   const createChat = useWorkspaceStore((s) => s.createChat);
-  const setActiveChat = useWorkspaceStore((s) => s.setActiveChat);
+  const pendingChatProjectId = useWorkspaceStore((s) => s.pendingChatProjectId);
   const createProject = useWorkspaceStore((s) => s.createProject);
   const assignAssetToProject = useWorkspaceStore((s) => s.assignAssetToProject);
   const assetsPanelCollapsed = useWorkspaceStore((s) => s.assetsPanelCollapsed);
   const setAssetsPanelCollapsed = useWorkspaceStore((s) => s.setAssetsPanelCollapsed);
   const addFromResult = useLibraryStore((s) => s.addFromResult);
   const { remaining, deduct } = useCredits();
-
-  useEffect(() => {
-    if (chats.length === 0) {
-      createChat();
-      return;
-    }
-    if (!chats.some((c) => c.id === activeChatId)) {
-      setActiveChat(chats[0].id);
-    }
-  }, [chats, activeChatId, createChat, setActiveChat]);
 
   const history = activeChat?.history ?? [];
   const sessionAssets = activeChat?.sessionAssets ?? [];
@@ -155,12 +146,25 @@ export default function AudioGenerator() {
     if (!typeOptions.includes(type)) setType(typeOptions[0]);
   }, [typeOptions, type]);
 
+  const isFirstSessionMount = useRef(true);
   useEffect(() => {
+    if (isFirstSessionMount.current) {
+      isFirstSessionMount.current = false;
+      const prefill = consumeComposerPrefill();
+      if (prefill?.prompt) {
+        setPrompt(prefill.prompt);
+        if (prefill.type && typeOptions.includes(prefill.type)) {
+          setType(prefill.type);
+        }
+        focusComposerInput();
+        return;
+      }
+    }
     setPrompt("");
     setPending(null);
     setGenerationWarning(null);
     focusComposerInput();
-  }, [activeChatId]);
+  }, [activeChatId, typeOptions]);
 
   const modelOptions = useMemo(() => {
     if (isPro) {
@@ -226,11 +230,21 @@ export default function AudioGenerator() {
   );
 
   const patchChatIds = (field: "favoriteIds" | "savedIds", id: string) => {
-    if (!activeChat) return;
+    if (!activeChat || !activeChatId) return;
     const current = new Set(activeChat[field]);
     if (current.has(id)) current.delete(id);
     else current.add(id);
     updateChat(activeChatId, { [field]: [...current] });
+  };
+
+  const ensureActiveChat = (): string => {
+    if (activeChatId && chats.some((c) => c.id === activeChatId)) {
+      return activeChatId;
+    }
+    const projectId = pendingChatProjectId;
+    const id = createChat(projectId ?? null);
+    useWorkspaceStore.setState({ pendingChatProjectId: null });
+    return id;
   };
 
   const handleSaveToLibrary = (item: AudioResult) => {
@@ -271,8 +285,9 @@ export default function AudioGenerator() {
   };
 
   const handleGenerate = async () => {
-    if (isGenerating || prompt.trim().length < 3 || !activeChat) return;
+    if (isGenerating || prompt.trim().length < 3) return;
 
+    const chatId = ensureActiveChat();
     const creditCost = generationCount;
     if (remaining < creditCost) {
       setGenerationWarning(t("generator.insufficientCredits"));
@@ -347,7 +362,7 @@ export default function AudioGenerator() {
         return;
       }
 
-      appendBatch(activeChatId, batch, response.items);
+      appendBatch(chatId, batch, response.items);
       setPrompt("");
       setPending(null);
     } catch (error) {
@@ -504,7 +519,7 @@ function GenerationTimeline({
         </div>
       </div>
       <div className="flex justify-start">
-        <div className="assistant-bubble max-w-full space-y-4 md:max-w-[95%]">
+        <div className="assistant-bubble premium-generation-bubble max-w-full space-y-4 md:max-w-[95%]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="font-codec text-sm font-semibold text-[var(--text-primary)]">
@@ -570,7 +585,7 @@ function PendingTimeline({ pending }: { pending: PendingGeneration }) {
         </div>
       </div>
       <div className="flex justify-start">
-        <div className="assistant-bubble max-w-full space-y-4 md:max-w-[95%]">
+        <div className="assistant-bubble premium-generation-bubble max-w-full space-y-4 md:max-w-[95%]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="font-codec text-sm font-semibold text-[var(--text-primary)]">

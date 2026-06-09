@@ -116,7 +116,9 @@ function Item({
       to={item.to}
       title={collapsed ? label : undefined}
       onClick={() => {
-        if (item.to === "/app/generator") startNewSession();
+        if (item.to === "/app/generator") {
+          startNewSession();
+        }
       }}
       className={({ isActive }) =>
         `${collapsed ? collapsedBase : NAV_ITEM_BASE} ${

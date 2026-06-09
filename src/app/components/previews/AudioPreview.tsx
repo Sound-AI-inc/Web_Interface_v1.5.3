@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Play, Pause } from "lucide-react";
+import { useInterfaceMode } from "../../hooks/useInterfaceMode";
 
 interface AudioPreviewProps {
   seed?: number;
@@ -8,8 +9,10 @@ interface AudioPreviewProps {
   className?: string;
 }
 
-const PRIMARY = "rgb(var(--color-primary))";
-const PRIMARY_SOFT = "rgb(var(--color-primary-soft))";
+const LITE_PLAYED = "rgb(var(--color-primary))";
+const LITE_UNPLAYED = "rgb(var(--color-primary-soft))";
+const PRO_PLAYED = "rgba(255, 255, 255, 0.95)";
+const PRO_UNPLAYED = "rgba(255, 255, 255, 0.32)";
 
 /**
  * Plays real demo assets when a preview URL is available. If not, it falls back
@@ -22,6 +25,9 @@ export default function AudioPreview({
   durationSeconds,
   className = "",
 }: AudioPreviewProps) {
+  const { mode } = useInterfaceMode();
+  const playedColor = mode === "pro" ? PRO_PLAYED : LITE_PLAYED;
+  const unplayedColor = mode === "pro" ? PRO_UNPLAYED : LITE_UNPLAYED;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -55,10 +61,10 @@ export default function AudioPreview({
       const barH = Math.max(2, peak * h * 0.9);
       const y = (h - barH) / 2;
       const played = x / w <= progressRef.current;
-      ctx.fillStyle = played ? PRIMARY : PRIMARY_SOFT;
+      ctx.fillStyle = played ? playedColor : unplayedColor;
       ctx.fillRect(x, y, barW, barH);
     });
-  }, [peaks]);
+  }, [peaks, playedColor, unplayedColor]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -217,7 +223,7 @@ export default function AudioPreview({
       </button>
       <div
         ref={containerRef}
-        className="relative h-14 flex-1 overflow-hidden rounded-input bg-surface-muted"
+        className={`waveform-shell relative h-14 flex-1 overflow-hidden rounded-input ${mode === "pro" ? "waveform-shell-pro" : "waveform-shell-lite"}`}
       >
         <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
       </div>

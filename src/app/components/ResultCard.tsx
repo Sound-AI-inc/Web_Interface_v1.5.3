@@ -50,7 +50,7 @@ export default function ResultCard({
   const meta = buildMetadata(item);
 
   return (
-    <div className="asset-card asset-enter rounded-[20px] p-4 md:p-5">
+    <div className="asset-card premium-result-card asset-enter rounded-[20px] p-4 md:p-5">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[var(--ui-border-soft)] bg-[var(--ui-input)] px-2.5 py-1 font-codec text-[11px] font-semibold uppercase tracking-[0.08em] text-text/60">

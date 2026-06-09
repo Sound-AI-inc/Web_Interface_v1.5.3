@@ -19,7 +19,7 @@ export default function ProjectWorkspace() {
   const activeChatId = useWorkspaceStore((s) => s.activeChatId);
   const setActiveProject = useWorkspaceStore((s) => s.setActiveProject);
   const setActiveChat = useWorkspaceStore((s) => s.setActiveChat);
-  const createChat = useWorkspaceStore((s) => s.createChat);
+  const startNewSession = useWorkspaceStore((s) => s.startNewSession);
   const deleteProject = useWorkspaceStore((s) => s.deleteProject);
   const deleteChat = useWorkspaceStore((s) => s.deleteChat);
   const renameChat = useWorkspaceStore((s) => s.renameChat);
@@ -97,7 +97,7 @@ export default function ProjectWorkspace() {
 
   const startNewChat = () => {
     setActiveProject(project.id);
-    createChat(project.id);
+    startNewSession(project.id);
     navigate("/app/generator");
     focusComposerInput();
   };

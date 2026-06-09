@@ -40,6 +40,7 @@ interface WorkspaceState {
   chats: WorkspaceChat[];
   activeProjectId: string;
   activeChatId: string;
+  pendingChatProjectId: string | null;
   assetsPanelCollapsed: boolean;
   projectAssetIds: Record<string, string[]>;
 
@@ -48,7 +49,7 @@ interface WorkspaceState {
   renameProject: (id: string, name: string) => void;
   deleteProject: (id: string) => void;
   createChat: (projectId?: string | null, title?: string) => string;
-  startNewSession: () => string;
+  startNewSession: (projectId?: string | null) => string;
   deleteChat: (id: string) => void;
   renameChat: (id: string, title: string) => void;
   moveChatToProject: (chatId: string, projectId: string | null) => void;
@@ -77,30 +78,15 @@ const DEFAULT_PROJECT_ID = "project-default";
 
 function createSeed(): PersistedWorkspaceState & { assetsPanelCollapsed: boolean } {
   const now = Date.now();
-  const chatId = `chat-${now}`;
   return {
     projects: [
       { id: DEFAULT_PROJECT_ID, name: "Techno EP", createdAt: now },
       { id: "project-ambient", name: "Ambient Pack", createdAt: now - 1000 },
       { id: "project-serum", name: "Serum Presets", createdAt: now - 2000 },
     ],
-    chats: [
-      {
-        id: chatId,
-        projectId: null,
-        title: "New chat",
-        history: [],
-        sessionAssets: [],
-        favoriteIds: [],
-        savedIds: [],
-        pinned: false,
-        archived: false,
-        createdAt: now,
-        updatedAt: now,
-      },
-    ],
+    chats: [],
     activeProjectId: DEFAULT_PROJECT_ID,
-    activeChatId: chatId,
+    activeChatId: "",
     assetsPanelCollapsed: false,
     projectAssetIds: {},
   };
@@ -146,17 +132,13 @@ function repairPersistedState(
     ? state.chats.map((c) => normalizeChat(c as Partial<WorkspaceChat>, projectIds))
     : seed.chats;
 
-  if (chats.length === 0) {
-    chats = seed.chats;
-  }
-
   const activeProjectId = projectIds.has(state.activeProjectId ?? "")
     ? (state.activeProjectId as string)
     : fallbackProjectId;
 
   const activeChatId = chats.some((c) => c.id === state.activeChatId)
     ? (state.activeChatId as string)
-    : chats[0].id;
+    : "";
 
   return {
     projects,
@@ -187,6 +169,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
   persist(
     (set, get) => ({
       ...createSeed(),
+      pendingChatProjectId: null,
 
       setAssetsPanelCollapsed: (collapsed) => set({ assetsPanelCollapsed: collapsed }),
 
@@ -247,7 +230,13 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         return id;
       },
 
-      startNewSession: () => get().createChat(null),
+      startNewSession: (projectId) => {
+        set({
+          activeChatId: "",
+          pendingChatProjectId: projectId === undefined ? null : projectId,
+        });
+        return "";
+      },
 
       deleteChat: (id) => {
         set((s) => {
@@ -366,7 +355,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
     }),
     {
       name: "soundai-workspace-v1",
-      version: 3,
+      version: 4,
       partialize: (state): PersistedWorkspaceState & { assetsPanelCollapsed: boolean } => ({
         projects: state.projects,
         chats: state.chats,
@@ -375,10 +364,21 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         assetsPanelCollapsed: state.assetsPanelCollapsed,
         projectAssetIds: state.projectAssetIds,
       }),
-      migrate: (persisted) => repairPersistedState(persisted as Partial<PersistedWorkspaceState>),
+      migrate: (persisted, version) => {
+        const repaired = repairPersistedState(persisted as Partial<PersistedWorkspaceState>);
+        if (version < 4) {
+          const chats = repaired.chats.filter((c) => c.history.length > 0);
+          const activeChatId = chats.some((c) => c.id === repaired.activeChatId)
+            ? repaired.activeChatId
+            : "";
+          return { ...repaired, chats, activeChatId };
+        }
+        return repaired;
+      },
       merge: (persisted, current) => ({
         ...current,
         ...repairPersistedState(persisted as Partial<PersistedWorkspaceState>),
+        pendingChatProjectId: null,
       }),
     },
   ),
@@ -405,12 +405,16 @@ export function selectProjectChats(
   projectId: string,
 ): WorkspaceChat[] {
   return sortChats(
-    state.chats.filter((c) => c.projectId === projectId && !c.archived),
+    state.chats.filter((c) => c.projectId === projectId && isVisibleChat(c)),
   );
 }
 
+function isVisibleChat(chat: WorkspaceChat): boolean {
+  return !chat.archived && chat.history.length > 0;
+}
+
 export function selectStandaloneChats(state: { chats: WorkspaceChat[] }): WorkspaceChat[] {
-  return sortChats(state.chats.filter((c) => !c.projectId && !c.archived));
+  return sortChats(state.chats.filter((c) => !c.projectId && isVisibleChat(c)));
 }
 
 export function selectRecentChats(state: { chats: WorkspaceChat[] }, limit = 6): WorkspaceChat[] {

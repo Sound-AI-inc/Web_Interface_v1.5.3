@@ -1,8 +1,10 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { Plus, Search, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import PageContainer from "../components/PageContainer";
 import PromptCard from "../components/PromptCard";
 import { prompts as promptSeed, type PromptItem } from "../data/mock";
+import { setComposerPrefill } from "../lib/composerPrefill";
 import { useLanguage } from "../i18n/LanguageProvider";
 
 const GENRES = ["All", "Lo-fi", "Synthwave", "Cinematic", "Hip-hop", "Jazz", "Techno"];
@@ -17,11 +19,14 @@ const EMPTY_PROMPT = {
 
 export default function Prompts() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [genre, setGenre] = useState("All");
   const [items, setItems] = useState<PromptItem[]>(promptSeed);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState(EMPTY_PROMPT);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     return items.filter((prompt) => {
@@ -39,13 +44,70 @@ export default function Prompts() {
   const resetDraft = () => {
     setDraft(EMPTY_PROMPT);
     setShowCreateModal(false);
+    setEditingId(null);
   };
 
-  const createPrompt = (event: FormEvent<HTMLFormElement>) => {
+  const openCreate = () => {
+    setDraft(EMPTY_PROMPT);
+    setEditingId(null);
+    setShowCreateModal(true);
+  };
+
+  const openEdit = (prompt: PromptItem) => {
+    setDraft({
+      title: prompt.title,
+      body: prompt.body,
+      genre: prompt.genre,
+      mood: prompt.mood,
+      useCase: prompt.useCase,
+    });
+    setEditingId(prompt.id);
+    setShowCreateModal(true);
+  };
+
+  const generateFromPrompt = (prompt: PromptItem) => {
+    setComposerPrefill({ prompt: prompt.body });
+    setItems((current) =>
+      current.map((p) => (p.id === prompt.id ? { ...p, runs: p.runs + 1 } : p)),
+    );
+    navigate("/app/generator");
+  };
+
+  const copyPromptBody = async (prompt: PromptItem) => {
+    try {
+      await navigator.clipboard.writeText(prompt.body);
+      setCopiedId(prompt.id);
+      window.setTimeout(() => setCopiedId(null), 1600);
+    } catch {
+      window.alert(prompt.body);
+    }
+  };
+
+  const savePrompt = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const title = draft.title.trim();
     const body = draft.body.trim();
     if (!title || !body) return;
+
+    if (editingId) {
+      setItems((current) =>
+        current.map((p) =>
+          p.id === editingId
+            ? {
+                ...p,
+                title,
+                body,
+                genre: draft.genre,
+                mood: draft.mood,
+                useCase: draft.useCase,
+                updatedAt: "just now",
+              }
+            : p,
+        ),
+      );
+      resetDraft();
+      return;
+    }
 
     const nextPrompt: PromptItem = {
       id: `prompt-${Date.now()}`,
@@ -74,28 +136,24 @@ export default function Prompts() {
   };
 
   return (
-    <>
+    <div className="premium-workspace pb-8">
       <PageContainer
         title={t("prompts.title")}
         subtitle={t("prompts.subtitle")}
         actions={
-          <button
-            type="button"
-            onClick={() => setShowCreateModal(true)}
-            className="app-btn-primary h-9"
-          >
+          <button type="button" onClick={openCreate} className="app-btn-primary h-9">
             <Plus className="h-4 w-4" /> {t("prompts.new")}
           </button>
         }
       >
-        <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="premium-toolbar mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="relative max-w-md flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text/40" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("prompts.searchPlaceholder")}
-              className="app-input pl-10"
+              className="app-input premium-search pl-10"
             />
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -104,11 +162,7 @@ export default function Prompts() {
                 key={value}
                 type="button"
                 onClick={() => setGenre(value)}
-                className={`rounded-full px-3 py-1.5 font-codec text-xs transition-colors ${
-                  value === genre
-                    ? "bg-primary/10 text-primary"
-                    : "bg-surface-muted text-text/60 hover:bg-surface"
-                }`}
+                className={`premium-filter-chip ${value === genre ? "is-active" : ""}`}
               >
                 {value}
               </button>
@@ -118,43 +172,59 @@ export default function Prompts() {
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((prompt) => (
-            <PromptCard key={prompt.id} prompt={prompt} />
+            <PromptCard
+              key={prompt.id}
+              prompt={prompt}
+              onEdit={() => openEdit(prompt)}
+              onCopy={() => copyPromptBody(prompt)}
+              onGenerate={() => generateFromPrompt(prompt)}
+            />
           ))}
         </div>
 
         {filtered.length === 0 && (
-          <div className="mt-8 rounded-card border border-dashed border-surface bg-surface-muted p-10 text-center">
-            <p className="font-poppins text-sm font-medium text-text/70">{t("prompts.noResults")}</p>
+          <div className="premium-empty mt-8 rounded-[18px] border border-dashed border-[var(--border-primary)] p-10 text-center">
+            <p className="font-poppins text-sm font-medium text-[var(--text-secondary)]">
+              {t("prompts.noResults")}
+            </p>
             <p className="app-meta mt-1">{t("prompts.noResultsHint")}</p>
+          </div>
+        )}
+
+        {copiedId && (
+          <div className="premium-toast fixed bottom-6 right-6 z-50 rounded-full px-4 py-2 font-codec text-xs">
+            Prompt copied to clipboard
           </div>
         )}
       </PageContainer>
 
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-text/20 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-2xl rounded-card border border-primary/20 bg-[var(--surface-primary)] p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--surface-overlay)] px-4 backdrop-blur-sm">
+          <div className="ui-modal-surface relative w-full max-w-2xl rounded-[20px] p-6">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
-                <h2 className="font-poppins text-lg font-semibold text-text">Create a new prompt</h2>
+                <h2 className="font-poppins text-lg font-semibold text-[var(--text-primary)]">
+                  {editingId ? "Edit prompt" : "Create a new prompt"}
+                </h2>
                 <p className="app-meta mt-1">
-                  Add a reusable prompt and place it directly into your prompt library.
+                  {editingId
+                    ? "Update this reusable prompt in your library."
+                    : "Add a reusable prompt and place it directly into your prompt library."}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={resetDraft}
-                className="flex h-9 w-9 items-center justify-center rounded-button border border-surface text-text/60 transition-colors hover:border-primary/30 hover:text-primary"
+                className="premium-icon-btn h-9 w-9"
                 aria-label="Close modal"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form className="space-y-4" onSubmit={createPrompt}>
+            <form className="space-y-4" onSubmit={savePrompt}>
               <div>
-                <label className="mb-1.5 block font-poppins text-xs font-medium uppercase tracking-[0.08em] text-text/50">
-                  Prompt name
-                </label>
+                <label className="premium-field-label">Prompt name</label>
                 <input
                   value={draft.title}
                   onChange={(event) =>
@@ -166,9 +236,7 @@ export default function Prompts() {
               </div>
 
               <div>
-                <label className="mb-1.5 block font-poppins text-xs font-medium uppercase tracking-[0.08em] text-text/50">
-                  Prompt text
-                </label>
+                <label className="premium-field-label">Prompt text</label>
                 <textarea
                   value={draft.body}
                   onChange={(event) =>
@@ -181,9 +249,7 @@ export default function Prompts() {
 
               <div className="grid gap-4 md:grid-cols-3">
                 <div>
-                  <label className="mb-1.5 block font-poppins text-xs font-medium uppercase tracking-[0.08em] text-text/50">
-                    Genre
-                  </label>
+                  <label className="premium-field-label">Genre</label>
                   <input
                     value={draft.genre}
                     onChange={(event) =>
@@ -193,9 +259,7 @@ export default function Prompts() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block font-poppins text-xs font-medium uppercase tracking-[0.08em] text-text/50">
-                    Mood
-                  </label>
+                  <label className="premium-field-label">Mood</label>
                   <input
                     value={draft.mood}
                     onChange={(event) =>
@@ -205,9 +269,7 @@ export default function Prompts() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block font-poppins text-xs font-medium uppercase tracking-[0.08em] text-text/50">
-                    Use case
-                  </label>
+                  <label className="premium-field-label">Use case</label>
                   <input
                     value={draft.useCase}
                     onChange={(event) =>
@@ -219,21 +281,17 @@ export default function Prompts() {
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={resetDraft}
-                  className="app-btn-ghost h-10 px-4"
-                >
+                <button type="button" onClick={resetDraft} className="app-btn-ghost h-10 px-4">
                   Cancel
                 </button>
                 <button type="submit" className="app-btn-primary h-10 px-4">
-                  Add prompt
+                  {editingId ? "Save changes" : "Add prompt"}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

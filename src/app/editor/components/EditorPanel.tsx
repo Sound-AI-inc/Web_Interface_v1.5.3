@@ -93,10 +93,10 @@ export default function EditorPanel() {
       }}
       onDragLeave={() => setDragOver(false)}
       onDrop={onDrop}
-      className={`relative ${dragOver ? "ring-2 ring-primary/40" : ""}`}
+      className={`premium-editor-shell relative ${dragOver ? "ring-2 ring-primary/40" : ""}`}
     >
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="inline-flex rounded-button token-card border border-[var(--border-primary)] p-1">
+      <div className="premium-editor-toolbar mb-4 flex flex-wrap items-center gap-2">
+        <div className="premium-tab-rail inline-flex rounded-[12px] border border-[var(--border-primary)] bg-[var(--surface-secondary)] p-1">
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = tab === t.id;
@@ -151,7 +151,7 @@ export default function EditorPanel() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
-          <div className="app-card min-w-0 overflow-hidden p-4">
+          <div className="premium-editor-canvas min-w-0 overflow-hidden rounded-[18px] border border-[var(--border-primary)] bg-[var(--surface-primary)] p-4 shadow-[var(--ui-shadow-soft)]">
             {tab === "audio" && (
               <WaveformEditor
                 onReady={() => undefined}
@@ -162,7 +162,7 @@ export default function EditorPanel() {
             {tab === "synth" && <SynthEditor />}
           </div>
           <aside className="flex min-w-0 flex-col gap-4">
-            <div className="app-card min-w-0 overflow-hidden p-4">
+            <div className="premium-editor-side min-w-0 overflow-hidden rounded-[18px] border border-[var(--border-primary)] bg-[var(--surface-primary)] p-4 shadow-[var(--ui-shadow-soft)]">
               {tab === "audio" && <EffectsPanel />}
               {tab === "midi" && <MidiToolsPanel />}
               {tab === "synth" && <SynthPresetsPanel />}

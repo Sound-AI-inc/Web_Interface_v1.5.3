@@ -1066,3 +1066,84 @@
     transform: scale(1.04) translateY(-8px);
   }
 }
+
+/* Premium workspace surfaces */
+.premium-workspace {
+  min-height: calc(100dvh - 4rem);
+}
+.premium-filter-chip {
+  @apply h-9 rounded-full px-3 font-codec text-xs transition-colors;
+  border: 1px solid var(--border-primary);
+  background: var(--surface-secondary);
+  color: var(--text-secondary);
+}
+.premium-filter-chip:hover {
+  border-color: var(--border-secondary);
+  color: var(--text-primary);
+}
+.premium-filter-chip.is-active {
+  border-color: rgba(var(--color-primary-rgb), 0.28);
+  background: rgba(var(--color-primary-rgb), 0.1);
+  color: rgb(var(--color-primary));
+}
+.premium-chip {
+  @apply rounded-full px-2 py-0.5 font-mono text-[10px];
+  border: 1px solid var(--border-primary);
+  background: var(--surface-secondary);
+  color: var(--text-muted);
+}
+.premium-icon-btn {
+  @apply flex h-8 w-8 items-center justify-center rounded-[10px] transition-colors;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+}
+.premium-icon-btn:hover {
+  border-color: var(--border-primary);
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+}
+.premium-field-label {
+  @apply mb-1.5 block font-poppins text-xs font-medium uppercase tracking-[0.08em];
+  color: var(--text-muted);
+}
+.premium-toast {
+  border: 1px solid var(--border-primary);
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  box-shadow: var(--ui-shadow-floating);
+}
+.premium-result-card {
+  border-color: var(--border-primary);
+  background: linear-gradient(180deg, var(--ui-card) 0%, var(--surface-secondary) 100%);
+  box-shadow: var(--ui-shadow-soft), var(--ui-shadow-inset);
+}
+.premium-generation-bubble {
+  border-color: var(--border-primary);
+  background: var(--surface-primary);
+  box-shadow: var(--ui-shadow-soft);
+}
+.waveform-shell {
+  background: var(--ui-input);
+  border: 1px solid var(--ui-border-soft);
+}
+.waveform-shell-pro {
+  background: rgba(0, 0, 0, 0.35);
+  --waveform-bar-played: rgba(255, 255, 255, 0.95);
+  --waveform-bar-unplayed: rgba(255, 255, 255, 0.32);
+}
+.waveform-shell-lite {
+  --waveform-bar-played: rgb(var(--color-primary));
+  --waveform-bar-unplayed: rgb(var(--color-primary-soft));
+}
+.premium-editor-canvas,
+.premium-editor-side {
+  background: linear-gradient(180deg, var(--surface-primary) 0%, var(--surface-secondary) 100%);
+}
+.premium-gate {
+  background: linear-gradient(180deg, var(--surface-primary) 0%, var(--surface-secondary) 100%);
+  box-shadow: var(--ui-shadow-soft);
+}
+.premium-library-sidebar {
+  max-height: calc(100dvh - 12rem);
+  overflow-y: auto;
+}

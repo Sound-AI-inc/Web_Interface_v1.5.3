@@ -114,12 +114,14 @@ export default function Library() {
     assets.filter((a) => (assetFolder[a.id] ?? LIBRARY_ROOT_ID) === fid).length;
 
   return (
-    <PageContainer title={t("library.title")} subtitle={t("library.subtitle")}>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[240px_1fr]">
-        {/* Folders sidebar */}
-        <aside className="app-card flex flex-col gap-2 p-4">
+    <div className="premium-workspace pb-8">
+      <PageContainer title={t("library.title")} subtitle={t("library.subtitle")}>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
+          <aside className="premium-library-sidebar flex flex-col gap-2 rounded-[18px] border border-[var(--border-primary)] bg-[var(--surface-primary)] p-4 shadow-[var(--ui-shadow-soft)]">
           <div className="flex items-center justify-between">
-            <h3 className="app-section-title">Folders</h3>
+            <h3 className="font-codec text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
+              Folders
+            </h3>
             <button
               type="button"
               onClick={onCreateFolder}
@@ -261,38 +263,32 @@ export default function Library() {
           </p>
         </aside>
 
-        {/* Assets list */}
-        <div>
-          <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-2">
+        <div className="min-w-0">
+          <div className="premium-toolbar mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
               {TYPE_FILTERS.map((t) => (
                 <button
                   key={t.value}
+                  type="button"
                   onClick={() => setType(t.value)}
-                  className={`h-9 rounded-full px-3 font-codec text-xs transition-colors ${
-                    t.value === type
-                      ? "bg-primary/10 text-primary"
-                      : "bg-surface-muted text-text/60 hover:bg-surface"
-                  }`}
+                  className={`premium-filter-chip ${t.value === type ? "is-active" : ""}`}
                 >
                   {t.label}
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text/40" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search library…"
-                  className="app-input pl-10"
-                />
-              </div>
+            <div className="relative max-w-sm flex-1 md:max-w-xs">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search library…"
+                className="app-input premium-search pl-10"
+              />
             </div>
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             {filtered.map((a) => (
               <div
                 key={a.id}
@@ -344,13 +340,14 @@ export default function Library() {
               </div>
             ))}
             {filtered.length === 0 && (
-              <div className="rounded-card border border-surface bg-surface-muted p-8 text-center font-codec text-sm text-text/60">
+              <div className="premium-empty rounded-[18px] border border-dashed border-[var(--border-primary)] p-10 text-center font-codec text-sm text-[var(--text-secondary)]">
                 No assets match your filters.
               </div>
             )}
           </div>
         </div>
-      </div>
-    </PageContainer>
+        </div>
+      </PageContainer>
+    </div>
   );
 }
