@@ -15,6 +15,10 @@ export interface OnboardingRecord extends OnboardingData {
 
 const localKey = (userId: string) => `soundai:onboarding:${userId}`;
 const BYPASS_KEY = "soundai:onboarding-bypass";
+const NEEDS_KEY = "soundai:needs-onboarding";
+
+/** Account created within this window is treated as a new registration. */
+const NEW_USER_WINDOW_MS = 15 * 60 * 1000;
 
 function readLocal(userId: string): OnboardingRecord | null {
   try {
@@ -29,6 +33,32 @@ function writeLocal(userId: string, data: OnboardingRecord) {
   localStorage.setItem(localKey(userId), JSON.stringify(data));
 }
 
+export function isOnboardingCompleteSync(userId: string): boolean {
+  return Boolean(readLocal(userId)?.completedAt);
+}
+
+export function isRecentlyCreatedUser(createdAt: string | undefined): boolean {
+  if (!createdAt) return false;
+  const created = new Date(createdAt).getTime();
+  if (Number.isNaN(created)) return false;
+  return Date.now() - created < NEW_USER_WINDOW_MS;
+}
+
+/** Set when the user starts sign-up (email or OAuth from /sign-up). */
+export function markNeedsOnboarding(userId: string) {
+  sessionStorage.setItem(NEEDS_KEY, userId);
+}
+
+export function clearNeedsOnboarding(userId: string) {
+  if (sessionStorage.getItem(NEEDS_KEY) === userId) {
+    sessionStorage.removeItem(NEEDS_KEY);
+  }
+}
+
+export function requiresOnboarding(userId: string): boolean {
+  return sessionStorage.getItem(NEEDS_KEY) === userId;
+}
+
 /** Immediate bypass so AppLayout does not block navigation after finishing onboarding. */
 export function markOnboardingBypass(userId: string) {
   sessionStorage.setItem(BYPASS_KEY, userId);
@@ -41,6 +71,16 @@ export function consumeOnboardingBypass(userId: string): boolean {
     return true;
   }
   return false;
+}
+
+/**
+ * Only brand-new sign-ups should see the survey.
+ * Existing users signing in are never gated.
+ */
+export function shouldRequireOnboarding(userId: string, createdAt?: string): boolean {
+  if (isOnboardingCompleteSync(userId)) return false;
+  if (requiresOnboarding(userId)) return true;
+  return isRecentlyCreatedUser(createdAt);
 }
 
 function mapRow(data: Record<string, unknown>): OnboardingRecord | null {
@@ -65,7 +105,7 @@ async function fetchFromSupabase(userId: string): Promise<OnboardingRecord | nul
     const { data, error } = await Promise.race([
       supabase.from("user_onboarding").select("*").eq("user_id", userId).maybeSingle(),
       new Promise<{ data: null; error: { message: string } }>((_, reject) => {
-        window.setTimeout(() => reject(new Error("timeout")), 6000);
+        window.setTimeout(() => reject(new Error("timeout")), 5000);
       }),
     ]);
     if (error) {
@@ -91,6 +131,7 @@ export async function fetchOnboardingStatus(userId: string): Promise<OnboardingR
   const remote = await fetchFromSupabase(userId);
   if (remote) {
     writeLocal(userId, remote);
+    clearNeedsOnboarding(userId);
     return remote;
   }
 
@@ -133,6 +174,7 @@ export async function saveOnboarding(userId: string, payload: OnboardingData): P
   const record: OnboardingRecord = { ...payload, completedAt };
   writeLocal(userId, record);
   markOnboardingBypass(userId);
+  clearNeedsOnboarding(userId);
   void syncToSupabase(userId, payload, completedAt);
 }
 

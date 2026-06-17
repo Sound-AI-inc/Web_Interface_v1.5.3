@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, LockKeyhole, Mail } from "lucide-react";
 import type { Provider } from "@supabase/supabase-js";
 import { getSupabase, supabaseConfigured } from "../lib/supabase";
 import { ensureSignupCredits } from "../lib/creditsService";
+import { markNeedsOnboarding } from "../lib/onboardingService";
 import { useAuth } from "../hooks/useAuth";
 
 const WEBSITE_URL =
@@ -46,23 +47,32 @@ export default function OAuthRegistration() {
     [isSignUp],
   );
 
-  const redirectToApp = () => {
+  const redirectAfterSignUp = (userId?: string) => {
+    if (userId) markNeedsOnboarding(userId);
     markFreshSession();
-    navigate("/onboarding", { replace: true });
+    navigate("/onboarding?signup=1", { replace: true });
+  };
+
+  const redirectAfterSignIn = () => {
+    markFreshSession();
+    navigate("/app/generator?fresh=1", { replace: true });
   };
 
   const startOAuth = async (provider: Provider) => {
     setError(null);
     const supabase = getSupabase();
     if (!supabase) {
-      redirectToApp();
+      if (isSignUp) redirectAfterSignUp();
+      else redirectAfterSignIn();
       return;
     }
 
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/onboarding?fresh=1`,
+        redirectTo: isSignUp
+          ? `${window.location.origin}/onboarding?fresh=1&signup=1`
+          : `${window.location.origin}/app/generator?fresh=1`,
         queryParams: provider === "google" ? { access_type: "offline", prompt: "consent" } : undefined,
       },
     });
@@ -78,7 +88,8 @@ export default function OAuthRegistration() {
     try {
       const supabase = getSupabase();
       if (!supabase) {
-        redirectToApp();
+        if (isSignUp) redirectAfterSignUp();
+        else redirectAfterSignIn();
         return;
       }
 
@@ -88,21 +99,23 @@ export default function OAuthRegistration() {
           password,
           options: {
             data: { full_name: fullName },
-            emailRedirectTo: `${window.location.origin}/app/generator?fresh=1`,
+            emailRedirectTo: `${window.location.origin}/onboarding?signup=1&fresh=1`,
           },
         });
         if (signUpError) throw signUpError;
         const { data: sessionData } = await supabase.auth.getSession();
         if (sessionData.session?.user) {
           await ensureSignupCredits(sessionData.session.user.id);
+          redirectAfterSignUp(sessionData.session.user.id);
+        } else {
+          redirectAfterSignUp();
         }
-        redirectToApp();
         return;
       }
 
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) throw signInError;
-      redirectToApp();
+      redirectAfterSignIn();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Authentication failed");
     } finally {

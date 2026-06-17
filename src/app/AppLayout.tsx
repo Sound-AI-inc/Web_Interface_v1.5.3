@@ -11,7 +11,11 @@ import { InterfaceModeContext, type InterfaceMode } from "./hooks/useInterfaceMo
 import { useAuth } from "./hooks/useAuth";
 import { useWorkspaceStore } from "./state/workspaceStore";
 import { LanguageProvider } from "./i18n/LanguageProvider";
-import { fetchOnboardingStatus } from "./lib/onboardingService";
+import {
+  fetchOnboardingStatus,
+  isOnboardingCompleteSync,
+  shouldRequireOnboarding,
+} from "./lib/onboardingService";
 
 const MODE_STORAGE_KEY = "soundai:interface-mode";
 
@@ -71,11 +75,24 @@ export default function AppLayout() {
       setOnboardingComplete(true);
       return;
     }
+
     const userId = session.user.id;
+    const createdAt = session.user.created_at;
+
+    if (isOnboardingCompleteSync(userId)) {
+      setOnboardingComplete(true);
+      return;
+    }
+
+    if (!shouldRequireOnboarding(userId, createdAt)) {
+      setOnboardingComplete(true);
+      return;
+    }
+
     void fetchOnboardingStatus(userId).then((record) => {
-      setOnboardingComplete(Boolean(record));
+      setOnboardingComplete(Boolean(record?.completedAt));
     });
-  }, [session?.user?.id, location.pathname]);
+  }, [session?.user?.id, session?.user?.created_at]);
 
   useEffect(() => {
     const root = document.documentElement;

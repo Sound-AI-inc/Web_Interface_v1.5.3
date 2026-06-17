@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import ThemedLogo from "../components/ThemedLogo";
 import { useAuth } from "../hooks/useAuth";
 import { useLanguage } from "../i18n/LanguageProvider";
 import {
   ONBOARDING_STEPS,
-  fetchOnboardingStatus,
+  isOnboardingCompleteSync,
+  markNeedsOnboarding,
   saveOnboarding,
+  shouldRequireOnboarding,
   type OnboardingData,
 } from "../lib/onboardingService";
 import type { TranslationKey } from "../i18n/translations";
@@ -23,6 +25,7 @@ const EMPTY: OnboardingData = {
 
 export default function OnboardingSurvey() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, session, loading, configured, markFreshSession } = useAuth();
   const { t } = useLanguage();
   const [step, setStep] = useState(0);
@@ -30,21 +33,36 @@ export default function OnboardingSurvey() {
   const [busy, setBusy] = useState(false);
   const [checking, setChecking] = useState(true);
 
+  const userId = user?.id ?? session?.user?.id;
+  const createdAt = user?.created_at ?? session?.user?.created_at;
+
   useEffect(() => {
     if (loading) return;
     if (configured && !session) {
       navigate("/sign-in", { replace: true });
       return;
     }
-    if (!user) {
+    if (!userId) {
       setChecking(false);
       return;
     }
-    void fetchOnboardingStatus(user.id).then((record) => {
-      if (record) navigate("/app/generator", { replace: true });
-      else setChecking(false);
-    });
-  }, [user, session, loading, configured, navigate]);
+
+    if (searchParams.get("signup") === "1") {
+      markNeedsOnboarding(userId);
+    }
+
+    if (isOnboardingCompleteSync(userId)) {
+      navigate("/app/generator", { replace: true });
+      return;
+    }
+
+    if (!shouldRequireOnboarding(userId, createdAt)) {
+      navigate("/app/generator", { replace: true });
+      return;
+    }
+
+    setChecking(false);
+  }, [userId, createdAt, session, loading, configured, navigate, searchParams]);
 
   const current = ONBOARDING_STEPS[step];
   const progress = ((step + 1) / ONBOARDING_STEPS.length) * 100;
@@ -57,28 +75,26 @@ export default function OnboardingSurvey() {
     setAnswers((prev) => ({ ...prev, [current.key]: t(optionKey) }));
   };
 
-  const finish = async () => {
-    const userId = user?.id ?? session?.user?.id;
+  const finish = () => {
     if (!userId) return;
     setBusy(true);
-    try {
-      await saveOnboarding(userId, answers);
-      markFreshSession();
-      navigate("/app/generator?fresh=1", { replace: true });
-    } finally {
-      setBusy(false);
-    }
+    saveOnboarding(userId, answers);
+    markFreshSession();
+    navigate("/app/generator?fresh=1", { replace: true });
   };
 
   const next = () => {
-    if (step >= ONBOARDING_STEPS.length - 1) void finish();
+    if (step >= ONBOARDING_STEPS.length - 1) finish();
     else setStep((s) => s + 1);
   };
 
   const back = () => setStep((s) => Math.max(0, s - 1));
 
   const stepLabel = useMemo(
-    () => t("onboarding.step").replace("{current}", String(step + 1)).replace("{total}", String(ONBOARDING_STEPS.length)),
+    () =>
+      t("onboarding.step")
+        .replace("{current}", String(step + 1))
+        .replace("{total}", String(ONBOARDING_STEPS.length)),
     [step, t],
   );
 
@@ -102,7 +118,10 @@ export default function OnboardingSurvey() {
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 py-10">
         <p className="font-codec text-[11px] uppercase tracking-[0.08em] text-[var(--text-muted)]">{stepLabel}</p>
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--surface-secondary)]">
-          <div className="h-full rounded-full bg-primary transition-[width] duration-300" style={{ width: `${progress}%` }} />
+          <div
+            className="h-full rounded-full bg-primary transition-[width] duration-300"
+            style={{ width: `${progress}%` }}
+          />
         </div>
 
         <h1 className="mt-8 font-syne text-[28px] font-bold tracking-[-0.02em] text-[var(--text-primary)]">

@@ -1,4 +1,5 @@
 -- User onboarding survey responses (Sprint #2)
+-- Run in Supabase SQL Editor. "Success. No rows returned" is expected for DDL.
 create table if not exists public.user_onboarding (
   user_id uuid primary key references auth.users (id) on delete cascade,
   profile_type text,
