@@ -40,6 +40,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(STORAGE_KEY, language);
     document.documentElement.setAttribute("lang", language);
+    document.documentElement.setAttribute("dir", language === "ar" ? "rtl" : "ltr");
   }, [language]);
 
   const setLanguage = useCallback((code: LanguageCode) => {

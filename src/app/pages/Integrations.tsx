@@ -91,7 +91,7 @@ export default function Integrations() {
                 {g.items.length}
               </span>
             </div>
-            <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
               {g.items.map((i) => (
                 <IntegrationRow key={i.id} integration={i} />
               ))}

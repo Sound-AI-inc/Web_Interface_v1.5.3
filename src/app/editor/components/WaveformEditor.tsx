@@ -14,7 +14,9 @@ import {
   trim,
 } from "../audio/engine";
 import { generateDefaultAudioBuffer } from "../audio/defaultBuffer";
+import { synthesizeAssetBuffer } from "../audio/synthesizeAssetBuffer";
 import LibraryImportMenu from "./LibraryImportMenu";
+import { useLibraryStore } from "../../state/libraryStore";
 
 interface Props {
   onReady?: () => void;
@@ -234,12 +236,14 @@ export default function WaveformEditor({ onReady, onPlayStateChange }: Props) {
               <FolderOpen className="h-3.5 w-3.5" /> Import from library
             </span>
           }
-          onImportAudio={async (_id, title) => {
-            // Library audio assets are deterministic synthetic sounds; for now
-            // we regenerate a fresh default buffer so the editor has something
-            // to operate on and we preserve the asset title as the commit label.
-            const fresh = await generateDefaultAudioBuffer();
-            replaceBuffer(fresh, `Import · ${title}`);
+          onImportAudio={async (assetId, title) => {
+            const asset = useLibraryStore.getState().assets.find((a) => a.id === assetId);
+            if (!asset || asset.kind !== "audio") return;
+            const buffer = await synthesizeAssetBuffer(
+              asset.audioSeed ?? 1,
+              asset.durationSeconds,
+            );
+            replaceBuffer(buffer, `Import · ${title}`);
             regionsRef.current?.clearRegions();
             setSelection(null);
           }}

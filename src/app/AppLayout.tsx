@@ -11,6 +11,7 @@ import { InterfaceModeContext, type InterfaceMode } from "./hooks/useInterfaceMo
 import { useAuth } from "./hooks/useAuth";
 import { useWorkspaceStore } from "./state/workspaceStore";
 import { LanguageProvider } from "./i18n/LanguageProvider";
+import { fetchOnboardingStatus } from "./lib/onboardingService";
 
 const MODE_STORAGE_KEY = "soundai:interface-mode";
 
@@ -29,6 +30,7 @@ export default function AppLayout() {
   const location = useLocation();
   const startNewSession = useWorkspaceStore((s) => s.startNewSession);
   const isWorkspaceRoute = location.pathname.includes("/generator");
+  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
 
   const setMode = useCallback((next: InterfaceMode) => {
     setModeState(next);
@@ -65,6 +67,16 @@ export default function AppLayout() {
   }, [consumeFreshSession, startNewSession, setMode]);
 
   useEffect(() => {
+    if (!session?.user) {
+      setOnboardingComplete(true);
+      return;
+    }
+    void fetchOnboardingStatus(session.user.id).then((record) => {
+      setOnboardingComplete(Boolean(record));
+    });
+  }, [session?.user?.id]);
+
+  useEffect(() => {
     const root = document.documentElement;
     root.classList.remove("theme-pro", "theme-lite");
     root.classList.add(mode === "pro" ? "theme-pro" : "theme-lite");
@@ -73,6 +85,18 @@ export default function AppLayout() {
 
   if (configured && !loading && !session) {
     return <Navigate to="/sign-in" replace />;
+  }
+
+  if (session?.user && onboardingComplete === false) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  if (session?.user && onboardingComplete === null) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[var(--background-primary)]">
+        <div className="font-codec text-sm text-[var(--text-secondary)]">Loading workspace…</div>
+      </div>
+    );
   }
 
   return (

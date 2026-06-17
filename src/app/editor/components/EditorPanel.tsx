@@ -17,6 +17,7 @@ import SynthPresetsPanel from "./SynthPresetsPanel";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { decodeArrayBuffer } from "../audio/engine";
 import { generateDefaultAudioBuffer } from "../audio/defaultBuffer";
+import { peekEditorIntent } from "../../lib/editorIntent";
 
 const TABS = [
   { id: "audio" as const, label: "Audio", icon: Waves },
@@ -41,8 +42,12 @@ export default function EditorPanel() {
   const [loading, setLoading] = useState(true);
   const [dragOver, setDragOver] = useState(false);
 
-  // Bootstrap default audio once.
+  // Bootstrap default audio once unless an asset import is pending.
   useEffect(() => {
+    if (peekEditorIntent()) {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     (async () => {
       const buf = await generateDefaultAudioBuffer();

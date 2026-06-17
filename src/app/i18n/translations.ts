@@ -18,6 +18,7 @@ export const LANGUAGES = [
   { code: "it", label: "Italiano" },
   { code: "ja", label: "日本語" },
   { code: "zh", label: "中文" },
+  { code: "ar", label: "العربية" },
 ] as const;
 
 export type LanguageCode = (typeof LANGUAGES)[number]["code"];
@@ -311,7 +312,97 @@ export type TranslationKey =
   | "project.deleteConfirm"
   | "project.openPage"
   | "project.generations"
-  | "project.assetsCount";
+  | "project.assetsCount"
+  // View modes
+  | "view.grid"
+  | "view.list"
+  // Onboarding
+  | "onboarding.loading"
+  | "onboarding.subtitle"
+  | "onboarding.step"
+  | "onboarding.continue"
+  | "onboarding.finish"
+  | "onboarding.profile.question"
+  | "onboarding.profile.musicProducer"
+  | "onboarding.profile.beatmaker"
+  | "onboarding.profile.composer"
+  | "onboarding.profile.soundDesigner"
+  | "onboarding.profile.mixingEngineer"
+  | "onboarding.profile.contentCreator"
+  | "onboarding.profile.podcastCreator"
+  | "onboarding.profile.videoCreator"
+  | "onboarding.profile.gameAudio"
+  | "onboarding.profile.student"
+  | "onboarding.profile.other"
+  | "onboarding.discovery.question"
+  | "onboarding.discovery.google"
+  | "onboarding.discovery.youtube"
+  | "onboarding.discovery.tiktok"
+  | "onboarding.discovery.instagram"
+  | "onboarding.discovery.productHunt"
+  | "onboarding.discovery.reddit"
+  | "onboarding.discovery.friend"
+  | "onboarding.discovery.discord"
+  | "onboarding.discovery.newsletter"
+  | "onboarding.discovery.other"
+  | "onboarding.goal.question"
+  | "onboarding.goal.audioSamples"
+  | "onboarding.goal.midi"
+  | "onboarding.goal.vstPresets"
+  | "onboarding.goal.soundFx"
+  | "onboarding.goal.musicIdeas"
+  | "onboarding.goal.templates"
+  | "onboarding.frequency.question"
+  | "onboarding.frequency.daily"
+  | "onboarding.frequency.weekly"
+  | "onboarding.frequency.monthly"
+  | "onboarding.frequency.occasionally"
+  | "onboarding.daw.question"
+  | "onboarding.daw.ableton"
+  | "onboarding.daw.flStudio"
+  | "onboarding.daw.logic"
+  | "onboarding.daw.cubase"
+  | "onboarding.daw.studioOne"
+  | "onboarding.daw.reaper"
+  | "onboarding.daw.proTools"
+  | "onboarding.daw.other"
+  | "onboarding.pain.question"
+  | "onboarding.pain.soundDesign"
+  | "onboarding.pain.sampleSearch"
+  | "onboarding.pain.midiWriting"
+  | "onboarding.pain.arrangement"
+  | "onboarding.pain.mixing"
+  | "onboarding.pain.presetCreation"
+  | "onboarding.pain.inspiration"
+  // Prompts builder
+  | "prompts.templates"
+  | "prompts.history"
+  | "prompts.saved"
+  | "prompts.gridView"
+  | "prompts.listView"
+  | "prompts.statsPrompts"
+  | "prompts.statsRuns"
+  | "prompts.statsHistory"
+  | "prompts.editTitle"
+  | "prompts.createTitle"
+  | "prompts.editSubtitle"
+  | "prompts.createSubtitle"
+  | "prompts.fieldName"
+  | "prompts.fieldNamePlaceholder"
+  | "prompts.fieldText"
+  | "prompts.fieldTextPlaceholder"
+  | "prompts.addPrompt"
+  | "prompts.copied"
+  | "prompts.historyEmpty"
+  // Settings sections
+  | "settings.profile"
+  | "settings.account"
+  | "settings.workspace"
+  | "settings.notifications"
+  | "settings.security"
+  | "settings.subscription"
+  | "settings.creditsSection"
+  | "settings.integrationsSection";
 
 type Dict = Partial<Record<TranslationKey, string>>;
 
@@ -592,6 +683,92 @@ const en: Record<TranslationKey, string> = {
   "project.openPage": "Open project page",
   "project.generations": "generations",
   "project.assetsCount": "assets",
+  "view.grid": "Grid",
+  "view.list": "List",
+  "onboarding.loading": "Preparing your studio…",
+  "onboarding.subtitle": "Help us personalize SoundAI Studio for your workflow.",
+  "onboarding.step": "Step {current} of {total}",
+  "onboarding.continue": "Continue",
+  "onboarding.finish": "Enter Studio",
+  "onboarding.profile.question": "What best describes you?",
+  "onboarding.profile.musicProducer": "Music Producer",
+  "onboarding.profile.beatmaker": "Beatmaker",
+  "onboarding.profile.composer": "Composer",
+  "onboarding.profile.soundDesigner": "Sound Designer",
+  "onboarding.profile.mixingEngineer": "Mixing Engineer",
+  "onboarding.profile.contentCreator": "Content Creator",
+  "onboarding.profile.podcastCreator": "Podcast Creator",
+  "onboarding.profile.videoCreator": "Video Creator",
+  "onboarding.profile.gameAudio": "Game Audio Designer",
+  "onboarding.profile.student": "Student",
+  "onboarding.profile.other": "Other",
+  "onboarding.discovery.question": "How did you hear about SoundAI?",
+  "onboarding.discovery.google": "Google Search",
+  "onboarding.discovery.youtube": "YouTube",
+  "onboarding.discovery.tiktok": "TikTok",
+  "onboarding.discovery.instagram": "Instagram",
+  "onboarding.discovery.productHunt": "Product Hunt",
+  "onboarding.discovery.reddit": "Reddit",
+  "onboarding.discovery.friend": "Friend",
+  "onboarding.discovery.discord": "Discord",
+  "onboarding.discovery.newsletter": "Newsletter",
+  "onboarding.discovery.other": "Other",
+  "onboarding.goal.question": "What do you want to create most often?",
+  "onboarding.goal.audioSamples": "Audio Samples",
+  "onboarding.goal.midi": "MIDI",
+  "onboarding.goal.vstPresets": "VST Presets",
+  "onboarding.goal.soundFx": "Sound FX",
+  "onboarding.goal.musicIdeas": "Music Ideas",
+  "onboarding.goal.templates": "Production Templates",
+  "onboarding.frequency.question": "How often do you produce music?",
+  "onboarding.frequency.daily": "Daily",
+  "onboarding.frequency.weekly": "Weekly",
+  "onboarding.frequency.monthly": "Monthly",
+  "onboarding.frequency.occasionally": "Occasionally",
+  "onboarding.daw.question": "Which DAW do you use?",
+  "onboarding.daw.ableton": "Ableton Live",
+  "onboarding.daw.flStudio": "FL Studio",
+  "onboarding.daw.logic": "Logic Pro",
+  "onboarding.daw.cubase": "Cubase",
+  "onboarding.daw.studioOne": "Studio One",
+  "onboarding.daw.reaper": "Reaper",
+  "onboarding.daw.proTools": "Pro Tools",
+  "onboarding.daw.other": "Other",
+  "onboarding.pain.question": "What takes the most time in your workflow?",
+  "onboarding.pain.soundDesign": "Sound Design",
+  "onboarding.pain.sampleSearch": "Sample Search",
+  "onboarding.pain.midiWriting": "MIDI Writing",
+  "onboarding.pain.arrangement": "Arrangement",
+  "onboarding.pain.mixing": "Mixing",
+  "onboarding.pain.presetCreation": "Preset Creation",
+  "onboarding.pain.inspiration": "Inspiration",
+  "prompts.templates": "Templates",
+  "prompts.history": "History",
+  "prompts.saved": "Saved prompts",
+  "prompts.gridView": "Grid view",
+  "prompts.listView": "List view",
+  "prompts.statsPrompts": "Prompts",
+  "prompts.statsRuns": "Total runs",
+  "prompts.statsHistory": "Recent",
+  "prompts.editTitle": "Edit prompt",
+  "prompts.createTitle": "Create a new prompt",
+  "prompts.editSubtitle": "Update this reusable prompt in your library.",
+  "prompts.createSubtitle": "Add a reusable prompt and place it directly into your prompt library.",
+  "prompts.fieldName": "Prompt name",
+  "prompts.fieldNamePlaceholder": "Late-night tape piano",
+  "prompts.fieldText": "Prompt text",
+  "prompts.fieldTextPlaceholder": "Describe the mood, instrumentation and production details…",
+  "prompts.addPrompt": "Add prompt",
+  "prompts.copied": "Prompt copied to clipboard",
+  "prompts.historyEmpty": "Recently used prompts appear here.",
+  "settings.profile": "Profile",
+  "settings.account": "Account",
+  "settings.workspace": "Workspace",
+  "settings.notifications": "Notifications",
+  "settings.security": "Security",
+  "settings.subscription": "Subscription",
+  "settings.creditsSection": "Credits",
+  "settings.integrationsSection": "Integrations",
 };
 
 const ru: Dict = {
@@ -1150,6 +1327,25 @@ const zh: Dict = {
   "settings.interface": "界面",
 };
 
+const ar: Dict = {
+  "nav.audioGenerator": "إنشاء",
+  "nav.prompts": "المطالبات",
+  "nav.library": "المكتبة",
+  "nav.export": "تصدير",
+  "nav.settings": "الإعدادات",
+  "sidebar.tools": "الأدوات",
+  "workspace.create": "إنشاء",
+  "workspace.greeting": "ماذا تريد أن تنشئ اليوم؟",
+  "onboarding.continue": "متابعة",
+  "onboarding.finish": "دخول الاستوديو",
+  "onboarding.profile.question": "ما الذي يصفك بشكل أفضل؟",
+  "view.grid": "شبكة",
+  "view.list": "قائمة",
+  "common.back": "رجوع",
+  "common.cancel": "إلغاء",
+  "common.save": "حفظ",
+};
+
 export const DICTIONARIES: Record<LanguageCode, Record<TranslationKey, string>> = {
   en,
   ru: { ...en, ...ru },
@@ -1160,6 +1356,7 @@ export const DICTIONARIES: Record<LanguageCode, Record<TranslationKey, string>> 
   it: { ...en, ...it },
   ja: { ...en, ...ja },
   zh: { ...en, ...zh },
+  ar: { ...en, ...ar },
 };
 
 export function translate(lang: LanguageCode, key: TranslationKey): string {

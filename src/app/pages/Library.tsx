@@ -10,15 +10,19 @@ import {
   X,
   ChevronRight,
   ChevronDown,
+  Star,
+  Briefcase,
 } from "lucide-react";
 import ProGate from "../components/ProGate";
 import ResultCard, { toCardItem } from "../components/ResultCard";
 import FolderFilePlayer from "../components/FolderFilePlayer";
+import ViewModeToggle from "../components/workspace/ViewModeToggle";
 import WorkspacePageShell from "../components/workspace/WorkspacePageShell";
 import type { LibraryAsset, ResultKind } from "../data/mock";
 import { setEditorIntent } from "../lib/editorIntent";
 import { useInterfaceMode } from "../hooks/useInterfaceMode";
 import { LIBRARY_ROOT_ID, useLibraryStore } from "../state/libraryStore";
+import { useWorkspaceStore } from "../state/workspaceStore";
 import { useLanguage } from "../i18n/LanguageProvider";
 
 type TypeFilter = "all" | ResultKind;
@@ -41,14 +45,27 @@ function LibraryWorkspace() {
   const deleteFolder = useLibraryStore((s) => s.deleteFolder);
   const moveAsset = useLibraryStore((s) => s.moveAsset);
 
+  const renameAsset = useLibraryStore((s) => s.renameAsset);
+  const deleteAsset = useLibraryStore((s) => s.deleteAsset);
+  const toggleFavorite = useLibraryStore((s) => s.toggleFavorite);
+  const favoriteIds = useLibraryStore((s) => s.favoriteIds);
+  const viewMode = useLibraryStore((s) => s.viewMode);
+  const setViewMode = useLibraryStore((s) => s.setViewMode);
+  const assignAssetProject = useLibraryStore((s) => s.assignAssetProject);
+  const assetProject = useLibraryStore((s) => s.assetProject);
+  const projects = useWorkspaceStore((s) => s.projects);
+
   const [type, setType] = useState<TypeFilter>("all");
   const [query, setQuery] = useState("");
   const [selectedFolder, setSelectedFolder] = useState<string>(LIBRARY_ROOT_ID);
+  const [selectedProject, setSelectedProject] = useState<string>("all");
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     () => new Set([LIBRARY_ROOT_ID]),
   );
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  const [renamingAssetId, setRenamingAssetId] = useState<string | null>(null);
+  const [assetRenameValue, setAssetRenameValue] = useState("");
   const [moveMenuFor, setMoveMenuFor] = useState<string | null>(null);
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
 
@@ -93,12 +110,16 @@ function LibraryWorkspace() {
     return assets.filter((a: LibraryAsset) => {
       const fid = assetFolder[a.id] ?? LIBRARY_ROOT_ID;
       if (selectedFolder !== LIBRARY_ROOT_ID && fid !== selectedFolder) return false;
+      if (selectedProject !== "all") {
+        const pid = assetProject[a.id] ?? null;
+        if (pid !== selectedProject) return false;
+      }
       if (type !== "all" && a.kind !== type) return false;
       if (!query) return true;
       const q = query.toLowerCase();
       return a.title.toLowerCase().includes(q) || a.tags.some((tag) => tag.includes(q));
     });
-  }, [assets, assetFolder, selectedFolder, type, query]);
+  }, [assets, assetFolder, assetProject, selectedFolder, selectedProject, type, query]);
 
   const startRename = (id: string, currentName: string) => {
     setRenamingId(id);
@@ -130,11 +151,18 @@ function LibraryWorkspace() {
     navigate("/app/editor");
   };
 
+  const commitAssetRename = () => {
+    if (renamingAssetId) renameAsset(renamingAssetId, assetRenameValue);
+    setRenamingAssetId(null);
+    setAssetRenameValue("");
+  };
+
   return (
     <WorkspacePageShell
       title={t("library.title")}
       subtitle={t("library.subtitle")}
       stats={stats}
+      actions={<ViewModeToggle value={viewMode} onChange={setViewMode} />}
     >
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[280px_1fr]">
         <aside className="premium-library-sidebar flex flex-col gap-2 rounded-[18px] border border-[var(--border-primary)] bg-[var(--surface-primary)] p-4 shadow-[var(--ui-shadow-soft)]">
@@ -229,6 +257,40 @@ function LibraryWorkspace() {
           <p className="mt-2 font-codec text-[11px] italic text-[var(--text-muted)]">
             Tip: drag items into folders or use the move button on each card to organize assets for faster export.
           </p>
+
+          <div className="mt-4 border-t border-[var(--border-primary)] pt-4">
+            <div className="mb-2 flex items-center gap-2">
+              <Briefcase className="h-3.5 w-3.5 text-primary" />
+              <h3 className="font-codec text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                Projects
+              </h3>
+            </div>
+            <div className="flex flex-col gap-1">
+              <button
+                type="button"
+                onClick={() => setSelectedProject("all")}
+                className={`rounded-[8px] px-2 py-1.5 text-left font-codec text-xs ${
+                  selectedProject === "all" ? "bg-primary/10 text-primary" : "text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
+                }`}
+              >
+                All projects
+              </button>
+              {projects.map((project) => (
+                <button
+                  key={project.id}
+                  type="button"
+                  onClick={() => setSelectedProject(project.id)}
+                  className={`truncate rounded-[8px] px-2 py-1.5 text-left font-codec text-xs ${
+                    selectedProject === project.id
+                      ? "bg-primary/10 text-primary"
+                      : "text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
+                  }`}
+                >
+                  {project.name}
+                </button>
+              ))}
+            </div>
+          </div>
         </aside>
 
         <div className="min-w-0">
@@ -256,21 +318,66 @@ function LibraryWorkspace() {
             </div>
           </div>
 
-          <div className="premium-library-grid">
+          <div className={viewMode === "grid" ? "premium-library-grid" : "flex flex-col gap-2"}>
             {filtered.map((a) => (
               <div
                 key={a.id}
                 draggable
                 onDragStart={(e) => onDragStartAsset(e, a.id)}
-                className="premium-library-card-wrap relative cursor-grab active:cursor-grabbing"
+                className={`premium-library-card-wrap relative cursor-grab active:cursor-grabbing ${viewMode === "list" ? "rounded-[14px] border border-[var(--border-primary)] bg-[var(--surface-primary)] p-2" : ""}`}
               >
-                <ResultCard
-                  item={toCardItem(a)}
-                  savedToLibrary
-                  variant="library"
-                  onEdit={() => openInEditor(a)}
-                />
-                <div className="absolute right-5 top-5 z-10">
+                {renamingAssetId === a.id ? (
+                  <div className="flex items-center gap-2 p-3">
+                    <input
+                      autoFocus
+                      value={assetRenameValue}
+                      onChange={(e) => setAssetRenameValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") commitAssetRename();
+                        if (e.key === "Escape") setRenamingAssetId(null);
+                      }}
+                      className="app-input h-8 flex-1 text-xs"
+                    />
+                    <button type="button" onClick={commitAssetRename} className="premium-icon-btn h-8 w-8 text-primary">
+                      <Check className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <ResultCard
+                    item={toCardItem(a)}
+                    savedToLibrary
+                    variant="library"
+                    onEdit={() => openInEditor(a)}
+                  />
+                )}
+                <div className="absolute right-5 top-5 z-10 flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => toggleFavorite(a.id)}
+                    className={`premium-asset-action h-7 w-7 ${favoriteIds.includes(a.id) ? "text-primary" : ""}`}
+                    aria-label="Favorite"
+                  >
+                    <Star className={`h-3 w-3 ${favoriteIds.includes(a.id) ? "fill-current" : ""}`} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRenamingAssetId(a.id);
+                      setAssetRenameValue(a.title);
+                    }}
+                    className="premium-asset-action h-7 w-7"
+                    aria-label="Rename"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteAsset(a.id)}
+                    className="premium-asset-action h-7 w-7"
+                    aria-label="Delete"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
                   <button
                     type="button"
                     onClick={() => setMoveMenuFor(moveMenuFor === a.id ? null : a.id)}
@@ -299,6 +406,29 @@ function LibraryWorkspace() {
                           >
                             <FolderIcon className="h-3 w-3" />
                             <span className="flex-1 truncate">{f.name}</span>
+                            {current && <Check className="h-3 w-3" />}
+                          </button>
+                        );
+                      })}
+                      <div className="my-1 border-t border-[var(--border-primary)]" />
+                      {projects.map((project) => {
+                        const current = assetProject[a.id] === project.id;
+                        return (
+                          <button
+                            key={project.id}
+                            type="button"
+                            onClick={() => {
+                              assignAssetProject(a.id, current ? null : project.id);
+                              setMoveMenuFor(null);
+                            }}
+                            className={`flex w-full items-center gap-2 rounded-[8px] px-2 py-1.5 text-left font-codec text-xs transition-colors ${
+                              current
+                                ? "bg-primary/10 text-primary"
+                                : "text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
+                            }`}
+                          >
+                            <Briefcase className="h-3 w-3" />
+                            <span className="flex-1 truncate">{project.name}</span>
                             {current && <Check className="h-3 w-3" />}
                           </button>
                         );

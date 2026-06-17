@@ -18,6 +18,7 @@ const Settings = lazy(() => import("./app/pages/Settings"));
 const Notifications = lazy(() => import("./app/pages/Notifications"));
 const HelpPage = lazy(() => import("./app/pages/help/HelpPage"));
 const OAuthRegistration = lazy(() => import("./app/pages/OAuthRegistration"));
+const OnboardingSurvey = lazy(() => import("./app/pages/OnboardingSurvey"));
 
 function RouteFallback() {
   return (
@@ -40,6 +41,15 @@ function App() {
             <Route path="/sign-in" element={<OAuthRegistration />} />
             <Route path="/sign-up" element={<OAuthRegistration />} />
             <Route path="/welcome" element={<Navigate to="/sign-up" replace />} />
+
+            <Route
+              path="/onboarding"
+              element={
+                <LanguageProvider>
+                  <OnboardingSurvey />
+                </LanguageProvider>
+              }
+            />
 
             <Route path="/app" element={<AppLayout />}>
               <Route index element={<Navigate to="/app/generator" replace />} />

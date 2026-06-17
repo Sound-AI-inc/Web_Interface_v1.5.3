@@ -1,36 +1,32 @@
 import type { Integration } from "../data/mock";
+import { integrationLogoUrl } from "../lib/integrationLogos";
 
 interface IntegrationRowProps {
   integration: Integration;
 }
 
-/**
- * Color chip palette per category so the logo placeholder reads as a brand
- * mark rather than a generic avatar. Each brand gets a distinct gradient
- * derived from its category hue; the monogram keeps the existing
- * `iconLetter` field without needing real SVGs.
- */
-const CATEGORY_GRADIENT: Record<Integration["category"], string> = {
-  DAW: "from-[#FF3C82] to-[#FF98A8]",
-  "AI Tools": "from-[#8A5CF6] to-[#C084FC]",
-  Distribution: "from-[#F59E0B] to-[#FCD34D]",
-  Samples: "from-[#10B981] to-[#6EE7B7]",
-  Storage: "from-[#3B82F6] to-[#93C5FD]",
-  Processing: "from-[#EC4899] to-[#F9A8D4]",
-};
-
 export default function IntegrationRow({ integration }: IntegrationRowProps) {
-  const gradient = CATEGORY_GRADIENT[integration.category];
+  const logoUrl = integrationLogoUrl(integration.id);
+
   return (
-    <div className="flex items-center gap-3 rounded-card token-card border border-[var(--border-primary)] p-2.5 transition-colors hover:border-primary/30 hover:shadow-flat-sm">
-      <div
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-button bg-gradient-to-br ${gradient} font-poppins text-[11px] font-bold uppercase text-on-accent shadow-sm`}
-      >
-        {integration.iconLetter}
+    <div className="flex items-center gap-3 rounded-card border border-[var(--border-primary)] bg-[var(--surface-primary)] p-3 transition-colors hover:border-primary/30 hover:shadow-flat-sm">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[10px] border border-[var(--border-primary)] bg-[var(--surface-secondary)]">
+        {logoUrl ? (
+          <img
+            src={logoUrl}
+            alt=""
+            className="h-6 w-6 object-contain"
+            loading="lazy"
+          />
+        ) : (
+          <span className="font-poppins text-[11px] font-bold uppercase text-[var(--text-primary)]">
+            {integration.iconLetter}
+          </span>
+        )}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <h3 className="truncate font-poppins text-[13px] font-semibold text-text">
+          <h3 className="truncate font-poppins text-[13px] font-semibold text-[var(--text-primary)]">
             {integration.name}
           </h3>
           {integration.pro && (
@@ -39,12 +35,12 @@ export default function IntegrationRow({ integration }: IntegrationRowProps) {
             </span>
           )}
         </div>
-        <p className="truncate font-codec text-[11px] text-text/60">
+        <p className="truncate font-codec text-[11px] text-[var(--text-muted)]">
           {integration.description}
         </p>
       </div>
       {integration.connected ? (
-        <button className="h-7 shrink-0 rounded-button border border-surface bg-surface-muted px-3 font-poppins text-[10px] font-medium uppercase tracking-wider text-text/60 transition-colors hover:bg-surface">
+        <button className="h-7 shrink-0 rounded-button border border-[var(--border-primary)] bg-[var(--surface-secondary)] px-3 font-poppins text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-elevated)]">
           Connected
         </button>
       ) : (

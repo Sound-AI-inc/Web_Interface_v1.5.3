@@ -25,6 +25,16 @@ export function consumeEditorIntent(): EditorIntent | null {
   }
 }
 
+export function peekEditorIntent(): EditorIntent | null {
+  const raw = sessionStorage.getItem(STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as EditorIntent;
+  } catch {
+    return null;
+  }
+}
+
 export function kindToEditorTab(kind: ResultKind): "audio" | "midi" | "synth" {
   if (kind === "midi") return "midi";
   if (kind === "preset") return "synth";

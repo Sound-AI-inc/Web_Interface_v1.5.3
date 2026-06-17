@@ -301,7 +301,6 @@ export default function AudioGenerator() {
   const handleGenerate = async () => {
     if (isGenerating || prompt.trim().length < 3) return;
 
-    const chatId = ensureActiveChat();
     const creditCost = generationCount;
     if (remaining < creditCost) {
       setGenerationWarning(t("generator.insufficientCredits"));
@@ -376,6 +375,7 @@ export default function AudioGenerator() {
         return;
       }
 
+      const chatId = ensureActiveChat();
       appendBatch(chatId, batch, response.items);
       setPrompt("");
       setPending(null);

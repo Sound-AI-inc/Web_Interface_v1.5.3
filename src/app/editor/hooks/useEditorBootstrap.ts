@@ -5,6 +5,7 @@ import { selectActiveChat, useWorkspaceStore } from "../../state/workspaceStore"
 import type { AudioResult } from "../../data/mock";
 import { useEditor } from "../core/store";
 import type { MidiNote } from "../core/types";
+import { synthesizeAssetBuffer } from "../audio/synthesizeAssetBuffer";
 
 function findAsset(assetId: string, sessionAssets: AudioResult[]) {
   const fromSession = sessionAssets.find((a) => a.id === assetId);
@@ -16,6 +17,7 @@ export function useEditorBootstrap() {
   const [assetTitle, setAssetTitle] = useState<string | undefined>();
   const setTab = useEditor((s) => s.setTab);
   const replaceNotes = useEditor((s) => s.replaceNotes);
+  const replaceBuffer = useEditor((s) => s.replaceBuffer);
   const setSynth = useEditor((s) => s.setSynth);
 
   useEffect(() => {
@@ -30,6 +32,12 @@ export function useEditorBootstrap() {
     setTab(kindToEditorTab(intent.kind));
 
     if (!asset) return;
+
+    if (asset.kind === "audio") {
+      void synthesizeAssetBuffer(asset.audioSeed ?? 1, asset.durationSeconds).then((buffer) => {
+        replaceBuffer(buffer, `Load ${title}`);
+      });
+    }
 
     if (asset.kind === "midi" && asset.notes) {
       const notes: MidiNote[] = asset.notes.map((n, i) => ({
@@ -52,7 +60,7 @@ export function useEditorBootstrap() {
         filterResonance: asset.preset.filterResonance,
       });
     }
-  }, [replaceNotes, setSynth, setTab]);
+  }, [replaceBuffer, replaceNotes, setSynth, setTab]);
 
   return { assetTitle };
 }

@@ -48,7 +48,7 @@ export default function OAuthRegistration() {
 
   const redirectToApp = () => {
     markFreshSession();
-    navigate("/app/generator", { replace: true });
+    navigate("/onboarding", { replace: true });
   };
 
   const startOAuth = async (provider: Provider) => {
@@ -62,7 +62,7 @@ export default function OAuthRegistration() {
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/app/generator?fresh=1`,
+        redirectTo: `${window.location.origin}/onboarding?fresh=1`,
         queryParams: provider === "google" ? { access_type: "offline", prompt: "consent" } : undefined,
       },
     });
