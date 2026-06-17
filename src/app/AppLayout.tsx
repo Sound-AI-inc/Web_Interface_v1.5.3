@@ -67,14 +67,15 @@ export default function AppLayout() {
   }, [consumeFreshSession, startNewSession, setMode]);
 
   useEffect(() => {
-    if (!session?.user) {
+    if (!session?.user?.id) {
       setOnboardingComplete(true);
       return;
     }
-    void fetchOnboardingStatus(session.user.id).then((record) => {
+    const userId = session.user.id;
+    void fetchOnboardingStatus(userId).then((record) => {
       setOnboardingComplete(Boolean(record));
     });
-  }, [session?.user?.id]);
+  }, [session?.user?.id, location.pathname]);
 
   useEffect(() => {
     const root = document.documentElement;

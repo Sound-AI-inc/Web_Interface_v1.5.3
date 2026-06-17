@@ -13,14 +13,18 @@ create table if not exists public.user_onboarding (
 
 alter table public.user_onboarding enable row level security;
 
-create policy "Users can read own onboarding"
-  on public.user_onboarding for select
-  using (auth.uid() = user_id);
+-- Allow authenticated users to manage their own onboarding row (insert + update + select)
+drop policy if exists "Users can read own onboarding" on public.user_onboarding;
+drop policy if exists "Users can upsert own onboarding" on public.user_onboarding;
+drop policy if exists "Users can update own onboarding" on public.user_onboarding;
+drop policy if exists "Users manage own onboarding" on public.user_onboarding;
 
-create policy "Users can upsert own onboarding"
-  on public.user_onboarding for insert
+create policy "Users manage own onboarding"
+  on public.user_onboarding
+  for all
+  to authenticated
+  using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
-create policy "Users can update own onboarding"
-  on public.user_onboarding for update
-  using (auth.uid() = user_id);
+grant usage on schema public to anon, authenticated;
+grant select, insert, update on public.user_onboarding to authenticated;

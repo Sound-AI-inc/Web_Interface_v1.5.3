@@ -58,10 +58,11 @@ export default function OnboardingSurvey() {
   };
 
   const finish = async () => {
-    if (!user) return;
+    const userId = user?.id ?? session?.user?.id;
+    if (!userId) return;
     setBusy(true);
     try {
-      await saveOnboarding(user.id, answers);
+      await saveOnboarding(userId, answers);
       markFreshSession();
       navigate("/app/generator?fresh=1", { replace: true });
     } finally {
@@ -94,7 +95,7 @@ export default function OnboardingSurvey() {
       <header className="border-b border-[var(--border-primary)] px-6 py-4">
         <div className="mx-auto flex max-w-2xl items-center gap-3">
           <ThemedLogo className="h-8 w-8" />
-          <span className="font-syne text-lg font-bold text-[var(--text-primary)]">SoundAI Studio</span>
+          <span className="font-syne text-lg font-bold text-[var(--text-primary)]">SoundAI</span>
         </div>
       </header>
 
