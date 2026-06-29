@@ -10,6 +10,7 @@ import { useAuth } from "./useAuth";
 export interface CreditsState {
   remaining: number;
   total: number;
+  spent: number;
   loading: boolean;
   low: boolean;
   refresh: () => Promise<void>;
@@ -21,12 +22,14 @@ export function useCredits(): CreditsState {
   const { user } = useAuth();
   const [remaining, setRemaining] = useState(SIGNUP_CREDITS);
   const [total, setTotal] = useState(DEFAULT_QUOTA);
+  const [spent, setSpent] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     if (!user) {
       setRemaining(SIGNUP_CREDITS);
       setTotal(DEFAULT_QUOTA);
+      setSpent(0);
       setLoading(false);
       return;
     }
@@ -37,13 +40,16 @@ export function useCredits(): CreditsState {
       if (data) {
         setRemaining(data.balance);
         setTotal(data.quota);
+        setSpent(data.spent);
       } else {
         setRemaining(SIGNUP_CREDITS);
         setTotal(DEFAULT_QUOTA);
+        setSpent(0);
       }
     } catch {
       setRemaining(SIGNUP_CREDITS);
       setTotal(DEFAULT_QUOTA);
+      setSpent(0);
     } finally {
       setLoading(false);
     }
@@ -64,20 +70,28 @@ export function useCredits(): CreditsState {
       if (remaining < amount) return false;
 
       const next = remaining - amount;
+      const nextSpent = spent + amount;
       setRemaining(next);
+      setSpent(nextSpent);
 
       if (user) {
-        void upsertUserCredits(user.id, next, total);
+        const saved = await upsertUserCredits(user.id, next, total, nextSpent);
+        if (!saved) {
+          setRemaining(remaining);
+          setSpent(spent);
+          return false;
+        }
       }
 
       return true;
     },
-    [remaining, total, user],
+    [remaining, spent, total, user],
   );
 
   return {
     remaining,
     total,
+    spent,
     loading,
     low: remaining / Math.max(total, 1) < 0.2,
     refresh,

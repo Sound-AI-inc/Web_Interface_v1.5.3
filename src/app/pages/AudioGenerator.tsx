@@ -16,6 +16,7 @@ import { consumeComposerPrefill } from "../lib/composerPrefill";
 import { setEditorIntent } from "../lib/editorIntent";
 import { COMPOSER_INPUT_ID, focusComposerInput } from "../lib/focusComposer";
 import { toModelSelectOptions } from "../lib/modelOptions";
+import { recordGenerationHistory } from "../lib/creditsService";
 import { useLibraryStore } from "../state/libraryStore";
 import {
   selectActiveChat,
@@ -25,6 +26,7 @@ import {
 } from "../state/workspaceStore";
 import { useLanguage } from "../i18n/LanguageProvider";
 import { useCredits } from "../hooks/useCredits";
+import { useAuth } from "../hooks/useAuth";
 
 const LITE_TYPES = ["Audio Sample"] as const;
 const LITE_MODELS_BY_TYPE: Record<(typeof LITE_TYPES)[number], string[]> = {
@@ -68,6 +70,11 @@ const GENERATION_STAGES = [
   "Finalizing results",
 ] as const;
 const MIN_GENERATION_VISUAL_MS = 1800;
+const PRO_CREDIT_COST_BY_TYPE: Record<string, number> = {
+  "Audio Sample": 2,
+  "MIDI Melody": 3,
+  "VST Preset": 4,
+};
 
 interface PendingGeneration {
   id: string;
@@ -111,6 +118,7 @@ export default function AudioGenerator() {
   const navigate = useNavigate();
   const { mode } = useInterfaceMode();
   const { t } = useLanguage();
+  const { user } = useAuth();
   const isPro = mode === "pro";
 
   const activeChatId = useWorkspaceStore((s) => s.activeChatId);
@@ -301,7 +309,7 @@ export default function AudioGenerator() {
   const handleGenerate = async () => {
     if (isGenerating || prompt.trim().length < 3) return;
 
-    const creditCost = generationCount;
+    const creditCost = generationCount * (isPro ? (PRO_CREDIT_COST_BY_TYPE[type] ?? 2) : 1);
     if (remaining < creditCost) {
       setGenerationWarning(t("generator.insufficientCredits"));
       return;
@@ -377,6 +385,18 @@ export default function AudioGenerator() {
 
       const chatId = ensureActiveChat();
       appendBatch(chatId, batch, response.items);
+      void recordGenerationHistory({
+        userId: user?.id ?? null,
+        projectId: activeChat?.projectId ?? null,
+        generationId: batch.id,
+        prompt: promptValue,
+        generationType: type,
+        model: resolvedModel,
+        format: resolvedFormat,
+        count: generationCount,
+        creditsSpent: creditCost,
+        status: "success",
+      });
       setPrompt("");
       setPending(null);
     } catch (error) {

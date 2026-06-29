@@ -1,0 +1,569 @@
+1 ================================================================================
+2 ТЕХНИЧЕСКОЕ ЗАДАНИЕ — SOUNDAI AUDIO GENERATOR
+3 Refactor: Premium UX Design + ChatGPT-style Generation Flow
+4 ================================================================================
+5 Статус: Internal / For Development Use Only
+6 Версия: 1.0
+7 Дата: June 2026
+8 Применимость: Страница Audio Generator + связанные компоненты
+9 Платформа: Lovable (React / Tailwind / Supabase)
+10 ================================================================================
+11  
+12 РАЗДЕЛ 1. ЦЕЛИ И КОНТЕКСТ
+13 --------------------------------------------------------------------------------
+14  
+15 1.1 Цель задачи
+16 Привести страницу Audio Generator к уровню premium AI SaaS продукта 2026 года.
+17 Сохранить существующую структуру Sidebar Navigation (левая панель).
+18 Переработать центральную область и поведение Composer.
+19 Внедрить ChatGPT-style поток генерации: Composer по центру → сдвигается вниз
+20 после отправки → результаты появляются в ленте сверху.
+21 Улучшить переключение Lite / Pro режима с градиентным эффектом на кнопках.
+22  
+23 1.2 Что НЕ меняется
+24 - Левый Sidebar: иконки, пункты меню, порядок навигации.
+25 - Supabase backend: авторизация, credits, subscriptions.
+26 - Логика генерации: типы, модели, форматы вывода.
+27 - Маршрутизация и структура проекта.
+28  
+29 1.3 Что меняется
+30 - Центральная область: переход от статичного блока к ChatGPT-style feed.
+31 - Composer: центрирован при первом открытии, уходит вниз после Generate.
+32 - Lite/Pro Toggle: градиентный эффект вместо flat-цвета.
+33 - Карточки результатов: redesign в DAW-style asset cards.
+34 - Типографика, spacing, тени, border-radius — уточнение до premium standard.
+35 - History: сессионная лента запросов внутри страницы (не отдельная вкладка).
+36  
+37 ================================================================================
+38  
+39 РАЗДЕЛ 2. БРЕНД-ПАРАМЕТРЫ
+40 --------------------------------------------------------------------------------
+41  
+42 2.1 Цветовая палитра
+43  
+44 Основной акцент (Pro mode):
+45   Primary Gradient: linear-gradient(135deg, #FF3B6B 0%, #FF6B9D 60%, #FF9CC0 100%)
+46   — используется для кнопки Create, активных элементов, Lite/Pro toggle в Pro
+47  
+48 Вторичный акцент (Lite mode):
+49   Light Gradient: linear-gradient(135deg, #38BDF8 0%, #7DD3FC 60%, #BAE6FD 100%)
+50   — используется для кнопок в Lite-режиме (светлый интерфейс)
+51  
+52 Нейтральные:
+53   Background Dark:   #0F0F12
+54   Background Card:   #18181C
+55   Background Input:  #1E1E24
+56   Surface Elevated:  #22222A
+57   Border Subtle:     rgba(255, 255, 255, 0.08)
+58   Text Primary:      #FFFFFF
+59   Text Secondary:    rgba(255, 255, 255, 0.55)
+60   Text Tertiary:     rgba(255, 255, 255, 0.30)
+61  
+62 Lite Mode (светлая тема):
+63   Background:        #F4F5F7
+64   Background Card:   #FFFFFF
+65   Background Input:  #FFFFFF
+66   Border Subtle:     rgba(0, 0, 0, 0.08)
+67   Text Primary:      #0F0F12
+68   Text Secondary:    rgba(0, 0, 0, 0.55)
+69  
+70 2.2 Типографика
+71  
+72 Заголовки (H1/H2):    Syne, Bold — или аналог (Geist, DM Sans Bold)
+73 Body / Labels:        Inter, 400 / 500
+74 Code / Metadata:      JetBrains Mono, 400
+75 Letter-spacing H1:    -0.03em
+76 Letter-spacing Label: 0.04em uppercase
+77  
+78 2.3 Скругления / Shadows
+79  
+80 Input fields:         border-radius: 16px
+81 Cards:               border-radius: 20px
+82 Buttons round:       border-radius: 9999px (pill)
+83 Dropdown:            border-radius: 12px
+84 Elevation card:      box-shadow: 0 4px 32px rgba(0,0,0,0.40)
+85 Glow primary:        box-shadow: 0 0 32px rgba(255, 59, 107, 0.20)
+86  
+87 ================================================================================
+88  
+89 РАЗДЕЛ 3. LAYOUT — СТРУКТУРА СТРАНИЦЫ
+90 --------------------------------------------------------------------------------
+91  
+92 3.1 Общий layout (без изменений структурно)
+93  
+94 ┌──────────────────────────────────────────────────────────────────────┐
+95 │                         Header (64px)                               │
+96 ├────────────┬──────────────────────────────────────────────────────── │
+97 │            │                                                        │
+98 │  Sidebar   │              Main Area                                 │
+99 │  (220px)   │              (flex-1, overflow-y: auto)                │
+100 │            │                                                        │
+101 │  [nav]     │   [Generation Feed или Empty State]                    │
+102 │            │                                                        │
+103 │            ├──────────────────────────────────────────────────────── │
+104 │            │              Composer Dock (sticky bottom)             │
+105 └────────────┴────────────────────────────────────────────────────────┘
+106  
+107 3.2 Состояние Empty (первый визит / новая сессия)
+108  
+109 Центральная область показывает:
+110 - Заголовок: "Create your next sound"  (Syne Bold, 40px, text-center)
+111 - Подзаголовок: "Describe the mood, instruments, texture..."
+112   (Inter 16px, text-secondary, text-center)
+113 - Пустое поле Composer центрировано по вертикали (flexbox column, justify-center)
+114 - Ниже Composer — Quick Ideas chips (3–4 примера промптов)
+115  
+116 Поведение:
+117 При фокусе на textarea — Border анимируется: от border-subtle до primary gradient glow.
+118 При клике Generate — Composer плавно перемещается вниз (transition: bottom 400ms ease).
+119 Лента генерации появляется сверху с fade-in.
+120  
+121 ================================================================================
+122  
+123 РАЗДЕЛ 4. COMPOSER DOCK (КЛЮЧЕВОЙ КОМПОНЕНТ)
+124 --------------------------------------------------------------------------------
+125  
+126 4.1 Структура Composer
+127  
+128 Composer — это floating dock, фиксированный снизу Main Area.
+129 Ширина: calc(100% - 220px - 48px) — не на всю ширину, с отступами.
+130 Padding: 20px 24px.
+131 Background: var(--bg-elevated) + backdrop-filter: blur(20px)
+132 Border-top: 1px solid var(--border-subtle)
+133 Border-radius (top): 24px 24px 0 0
+134  
+135 Внутренняя структура (сверху вниз):
+136  
+137 --- Строка 1: Textarea ---
+138   placeholder: "Describe the mood, instruments, texture and output you want..."
+139   min-height: 52px
+140   max-height: 160px
+141   auto-resize при вводе
+142   background: transparent
+143   border: none
+144   outline: none
+145   font: Inter 15px, text-primary
+146  
+147 --- Строка 2: Controls ---
+148 Левый кластер (flex gap-2):
+149   [TYPE dropdown]  [MODEL dropdown]  [GENERATIONS dropdown]  [FORMAT dropdown]
+150  
+151   Стиль dropdown:
+152     background: var(--bg-input)
+153     border: 1px solid var(--border-subtle)
+154     border-radius: 10px
+155     padding: 6px 12px
+156     font-size: 13px
+157     text-secondary
+158  
+159 Правый кластер:
+160   [Mic icon button]  [Create button]
+161  
+162   Create button:
+163     Pro mode:  background: linear-gradient(135deg, #FF3B6B, #FF9CC0)
+164     Lite mode: background: linear-gradient(135deg, #38BDF8, #BAE6FD)
+165     color: white
+166     border-radius: 9999px
+167     padding: 10px 20px
+168     font-weight: 600
+169     font-size: 14px
+170     icon: ↑ (arrow up)
+171     Hover: brightness(1.08) + scale(1.02) + glow shadow
+172     transition: all 200ms ease
+173  
+174 --- Строка 0 (над textarea): Mode Pills ---
+175   Lite / Pro toggle pill (слева от composer)
+176   Format type tags: [Audio Sample] [MIDI] [VST Preset]
+177   Размещение: горизонтальный ряд, gap-2, flex-wrap
+178  
+179 4.2 Lite / Pro Toggle
+180  
+181 Компонент: pill toggle, две кнопки внутри одного контейнера.
+182 Ширина контейнера: fit-content
+183 Background контейнера: var(--bg-input)
+184 Border-radius: 9999px
+185  
+186 Кнопка Lite (активная в Lite mode):
+187   background: linear-gradient(135deg, #38BDF8 0%, #7DD3FC 100%)
+188   color: white
+189   transition: background 300ms ease, box-shadow 300ms ease
+190   box-shadow: 0 2px 12px rgba(56, 189, 248, 0.35)
+191  
+192 Кнопка Pro (активная в Pro mode):
+193   background: linear-gradient(135deg, #FF3B6B 0%, #FF9CC0 100%)
+194   color: white
+195   transition: background 300ms ease, box-shadow 300ms ease
+196   box-shadow: 0 2px 12px rgba(255, 59, 107, 0.35)
+197  
+198 Неактивная кнопка:
+199   background: transparent
+200   color: var(--text-secondary)
+201   no shadow
+202  
+203 Анимация переключения:
+204   Используется CSS transition на background + box-shadow.
+205   Дополнительно: при переключении запустить ripple-эффект на активной кнопке.
+206   (реализация ripple: position absolute, keyframe scale+opacity, 400ms)
+207   NOTE: финальную wow-анимацию переключения согласовать с разработчиками отдельно.
+208  
+209 ================================================================================
+210  
+211 РАЗДЕЛ 5. GENERATION FEED (ЛЕНТА РЕЗУЛЬТАТОВ)
+212 --------------------------------------------------------------------------------
+213  
+214 5.1 Поведение ленты
+215  
+216 После нажатия Generate:
+217 1. Composer dock плавно фиксируется внизу (если был по центру — transition bottom).
+218 2. В ленте появляется новый блок: User Message (промпт).
+219 3. Под ним появляется Generation Card с состоянием Loading.
+220 4. После ответа — Loading сменяется на Asset Cards.
+221  
+222 Лента: flex-column, gap-24px, padding-bottom: 120px (чтобы контент не перекрывался Composer).
+223  
+224 5.2 User Message Bubble
+225  
+226 Align: right (flex justify-end)
+227 Background: var(--bg-card) с gradient border (1px, primary gradient)
+228 Border-radius: 20px 20px 4px 20px
+229 Padding: 12px 16px
+230 Font: Inter 14px, text-primary
+231 Max-width: 70%
+232  
+233 5.3 Generation Card (состояние Loading)
+234  
+235 Align: left
+236 Background: var(--bg-card)
+237 Border-radius: 20px
+238 Padding: 16px 20px
+239 Width: 100%
+240  
+241 Содержимое в Loading:
+242   - Анимированные shimmer-плашки (skeleton) для 3 ожидаемых assets
+243   - Текст: "Generating [TYPE]..." с анимированной точкой
+244   - Цвет shimmer: gradient rgba(255,255,255,0.05) → rgba(255,255,255,0.10) → rgba(255,255,255,0.05)
+245   - animation: shimmer 1.8s infinite linear
+246  
+247 5.4 Asset Card (результат)
+248  
+249 Для каждого сгенерированного файла — отдельная карточка.
+250  
+251 Карточка Audio Sample:
+252   ┌──────────────────────────────────────────────────────┐
+253   │  [Waveform visualization — 100% width, 48px height] │
+254   │                                                      │
+255   │  Filename: Dark Techno Kick 001.wav                  │
+256   │  BPM: 135   Key: C minor   Duration: 2.4s            │
+257   │                                                      │
+258   │  [ ▶  Play]  [Download ↓]  [ ♡  Save]  [Reuse →]        │
+259   └──────────────────────────────────────────────────────┘
+260  
+261   Background: var(--bg-card)
+262   Border: 1px solid var(--border-subtle)
+263   Border-radius: 20px
+264   Padding: 16px 20px
+265   Hover: border-color → primary gradient, box-shadow → glow
+266  
+267 Карточка MIDI:
+268   - Иконка MIDI (piano roll icon)
+269   - Metadata: Scale, Key, Bars, Time signature
+270   - Actions: Preview (MIDI visualizer), Download .mid, Reuse
+271  
+272 Карточка VST Preset:
+273   - Plugin name + иконка
+274   - Category tag (Bass / Lead / Pad)
+275   - Actions: Copy settings, Download .fxp/.vstpreset, Open in editor
+276  
+277 5.5 История генераций (Session History)
+278  
+279 Автоматически: каждый запрос + результаты добавляются в ленту снизу.
+280 Прокрутка вверх — видна история сессии.
+281 Нет отдельной вкладки в Sidebar для истории чата.
+282 Кнопка "Save to Library" на каждой карточке — ручное сохранение лучших результатов.
+283  
+284 ================================================================================
+285  
+286 РАЗДЕЛ 6. LEFT SIDEBAR — БЕЗ СТРУКТУРНЫХ ИЗМЕНЕНИЙ
+287 --------------------------------------------------------------------------------
+288  
+289 6.1 Что сохраняется (без изменений)
+290  
+291 Пункты меню в том же порядке:
+292   - Audio Generator (active)
+293   - Prompts
+294   - Arrangement [SOON]
+295   - Editor Mode
+296   - Library
+297   - Export
+298   - Integrations
+299   - Billing
+300  
+301 Footer Sidebar:
+302   - Interface Mode + Lite/Pro toggle
+303   - User avatar + email
+304  
+305 6.2 Визуальные улучшения Sidebar (без структурных изменений)
+306  
+307 Active item (Audio Generator):
+308   background: var(--bg-elevated)
+309   border-left: 2px solid [primary gradient color, т.е. #FF3B6B в Pro, #38BDF8 в Lite]
+310   color: text-primary
+311   font-weight: 600
+312  
+313 Inactive items:
+314   color: text-secondary
+315   Hover: color → text-primary, background: rgba(255,255,255,0.04)
+316  
+317 [SOON] badge:
+318   background: rgba(255,255,255,0.08)
+319   color: text-tertiary
+320   font-size: 10px
+321   border-radius: 4px
+322   padding: 2px 6px
+323   letter-spacing: 0.06em
+324  
+325 Sidebar background:
+326   Тонкий separator border-right: 1px solid var(--border-subtle)
+327   Background: var(--bg-dark) — чуть темнее Main Area
+328  
+329 ================================================================================
+330  
+331 РАЗДЕЛ 7. HEADER
+332 --------------------------------------------------------------------------------
+333  
+334 7.1 Структура Header
+335  
+336 Высота: 64px
+337 Левая часть:
+338   - SoundAI логотип + wordmark
+339  
+340 Центр:
+341   - Текст страницы: "Audio Generator" (только когда нет контента в ленте)
+342   - В режиме генерации: пусто или хлебные крошки проекта
+343  
+344 Правая часть:
+345   - Credits indicator:
+346       иконка + число + "Credits"
+347       background: var(--bg-card)
+348       border: 1px solid var(--border-subtle)
+349       border-radius: 9999px
+350       padding: 8px 14px
+351       font: Inter 13px, font-weight 600
+352   - Аватар пользователя (circle, 32px)
+353  
+354 7.2 Credits Bar (при приближении к лимиту)
+355  
+356 Если credits < 20% от плана:
+357   Цвет числа меняется на #FF3B6B
+358   Добавить tooltip: "Low credits — upgrade plan"
+359  
+360 ================================================================================
+361  
+362 РАЗДЕЛ 8. LITE MODE — СВЕТЛАЯ ТЕМА
+363 --------------------------------------------------------------------------------
+364  
+365 8.1 Переключение Lite/Pro
+366  
+367 При переключении в Lite mode (светлая тема):
+368   - CSS class на <html> или <body>: data-theme="lite"
+369   - Все CSS переменные переключаются на Lite-значения (см. Раздел 2)
+370   - Кнопки и акценты: Light Gradient (#38BDF8 → #BAE6FD)
+371   - Compositor border → light blue glow
+372   - Cards: белый фон, тонкая тень вниз
+373  
+374 8.2 Кнопки в Lite Mode
+375  
+376 Все CTA-кнопки (Create, Save, Download):
+377   background: linear-gradient(135deg, #38BDF8 0%, #7DD3FC 60%, #BAE6FD 100%)
+378   color: #0F0F12 (тёмный текст на светлом градиенте)
+379   box-shadow: 0 2px 16px rgba(56, 189, 248, 0.30)
+380  
+381 Active nav items:
+382   border-left-color: #38BDF8
+383  
+384 ================================================================================
+385  
+386 РАЗДЕЛ 9. АНИМАЦИИ И ПЕРЕХОДЫ
+387 --------------------------------------------------------------------------------
+388  
+389 9.1 Composer — появление / сдвиг вниз
+390  
+391 Initial state (empty): transform: translateY(0), centered via flexbox.
+392 After Generate click:
+393   transition: position fixed bottom:0, transition duration 400ms cubic-bezier(0.4, 0, 0.2, 1)
+394   Feed area: fade-in + slide-up, opacity 0→1, translateY(12px→0), 300ms delay 100ms
+395  
+396 9.2 Asset Cards — появление
+397  
+398 staggered animation: каждая карточка fade-in с delay +80ms
+399 transform: translateY(8px) → translateY(0), opacity 0→1
+400 duration: 250ms ease-out
+401  
+402 9.3 Loading Skeleton
+403  
+404 shimmer gradient animation:
+405   background: linear-gradient(90deg, var(--shimmer-a) 25%, var(--shimmer-b) 50%, var(--shimmer-a) 75%)
+406   background-size: 200% 100%
+407   animation: shimmer 1.8s infinite linear
+408   @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+409  
+410 9.4 Button Hover States
+411  
+412 Create button:
+413   transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease
+414   Hover: transform scale(1.02), filter brightness(1.08), glow shadow increase
+415  
+416 Dropdown controls:
+417   Hover: border-color rgba(255,255,255,0.16), background slight lighten
+418  
+419 9.5 Sidebar Nav items
+420  
+421 Hover: background transition 120ms ease
+422 Active transition при смене страницы: 150ms ease
+423  
+424 ================================================================================
+425  
+426 РАЗДЕЛ 10. QUICK IDEAS CHIPS
+427 --------------------------------------------------------------------------------
+428  
+429 10.1 Описание
+430  
+431 Блок Quick Ideas отображается в Empty State (под Composer, по центру).
+432 Заголовок: "Try an idea →" (text-tertiary, font-size 13px)
+433 3–4 chips с примерами промптов.
+434  
+435 Примеры chips для Audio Generator:
+436   "Dark techno kick with sub tail"
+437   "Ambient texture for intro, 8 bars"
+438   "Serum bass preset, aggressive mid-range"
+439   "MIDI chord progression in D minor, 90 BPM"
+440  
+441 Стиль chip:
+442   background: var(--bg-elevated)
+443   border: 1px solid var(--border-subtle)
+444   border-radius: 9999px
+445   padding: 7px 14px
+446   font: Inter 13px, text-secondary
+447   cursor: pointer
+448   Hover: border-color → primary gradient, text → primary
+449  
+450 Клик по chip: вставляет текст в textarea Composer + фокусирует поле.
+451  
+452 ================================================================================
+453  
+454 РАЗДЕЛ 11. EMPTY STATE — ДОПОЛНИТЕЛЬНЫЕ ЭЛЕМЕНТЫ
+455 --------------------------------------------------------------------------------
+456  
+457 11.1 Заголовок Empty State
+458  
+459 "Create your next sound"
+460   font: Syne Bold, 40px
+461   text-align: center
+462   letter-spacing: -0.03em
+463   gradient text fill: linear-gradient(135deg, #FFFFFF 0%, rgba(255,255,255,0.6) 100%)
+464  
+465 Подзаголовок:
+466   "Describe the mood, instruments, texture and output you want"
+467   font: Inter 400, 16px
+468   color: text-secondary
+469   text-align: center
+470   margin-bottom: 40px
+471  
+472 11.2 Composer в Empty State
+473  
+474 Ширина: min(680px, 90%)
+475 margin: 0 auto
+476 border: 1px solid var(--border-subtle)
+477 border-radius: 24px
+478 background: var(--bg-card)
+479 box-shadow: 0 8px 48px rgba(0,0,0,0.30)
+480  
+481 На фокус:
+482   border: 1px solid transparent
+483   background-clip: padding-box
+484   + pseudo-element gradient border через outline trick или wrapper border-gradient
+485  
+486 ================================================================================
+487  
+488 РАЗДЕЛ 12. RESPONSIVE
+489 --------------------------------------------------------------------------------
+490  
+491 12.1 Breakpoints
+492  
+493 Desktop (≥1280px):  Sidebar 220px + Main flex-1
+494 Tablet (768–1279px):  Sidebar collapse до иконок (48px), main расширяется
+495 Mobile (<768px):  Sidebar скрывается, открывается по бургер-иконке
+496  
+497 12.2 Composer на мобильном
+498  
+499 На мобильном Composer dock sticky bottom:
+500   padding: 12px 16px
+501   border-radius: 20px 20px 0 0
+502   Dropdowns: горизонтальный scroll (overflow-x: auto, scrollbar hidden)
+503  
+504 ================================================================================
+505  
+506 РАЗДЕЛ 13. ПРИОРИТЕТЫ РЕАЛИЗАЦИИ
+507 --------------------------------------------------------------------------------
+508  
+509 Приоритет 1 (обязательно для MVP):
+510   - ChatGPT-style Composer: центр → dock bottom
+511   - Asset Card redesign (Audio / MIDI / Preset)
+512   - Lite/Pro gradient toggle
+513   - Create button gradient (Pro: розовый, Lite: голубой)
+514   - Empty State с заголовком и Quick Ideas chips
+515   - Loading skeleton для генерации
+516   - Sidebar visual polish (active state, hover states)
+517  
+518 Приоритет 2 (следующий итерация):
+519   - Waveform visualization в Audio cards
+520   - MIDI mini-visualizer в MIDI cards
+521   - Session history scroll
+522   - Ripple animation на Lite/Pro toggle
+523   - Credits low-balance warning
+524  
+525 Приоритет 3 (отложено):
+526   - Wow-анимация переключения Lite/Pro (согласовать с командой)
+527   - Save to Library flow
+528   - Prompt Memory / Smart Collections sidebar panel
+529   - AI Style Profile block
+530  
+531 ================================================================================
+532  
+533 РАЗДЕЛ 14. ТЕХНИЧЕСКИЕ ОГРАНИЧЕНИЯ
+534 --------------------------------------------------------------------------------
+535  
+536 - Платформа: Lovable (React / Tailwind CSS / Supabase)
+537 - Нельзя использовать внешние CSS frameworks кроме Tailwind core utilities
+538 - Анимации: CSS transitions + keyframes, без GSAP или Framer Motion
+539   (если доступна Motion library — можно использовать)
+540 - Шрифты: подключить через Google Fonts (Syne + Inter) или Fontsource
+541 - Без изменений: маршрутизация, Supabase auth, credits logic, generation API calls
+542 - Иконки: использовать Lucide React (уже подключён)
+543 - Не создавать новые вкладки в Sidebar для истории чатов —
+544   история реализуется внутри ленты страницы Generator
+545  
+546 ================================================================================
+547  
+548 РАЗДЕЛ 15. КОНТРОЛЬНЫЙ СПИСОК ПРИЁМКИ
+549 --------------------------------------------------------------------------------
+550  
+551 [ ] Composer центрирован в Empty State, уходит вниз при Generate
+552 [ ] Лента генераций появляется с fade-in + stagger анимацией
+553 [ ] Asset Cards: Audio / MIDI / Preset имеют раздельные шаблоны
+554 [ ] Create button — розовый градиент в Pro, голубой градиент в Lite
+555 [ ] Lite/Pro toggle — градиентный фон активной кнопки с glow shadow
+556 [ ] Sidebar: active item с левым border-акцентом, hover states
+557 [ ] Header: Credits pill redesign
+558 [ ] Quick Ideas chips в Empty State, клик → заполняет textarea
+559 [ ] Loading skeleton во время генерации
+560 [ ] Responsive: мобильный sidebar collapse
+561 [ ] Нет структурных изменений в Sidebar navigation
+562 [ ] Нет изменений в backend логике и маршрутизации
+563  
+564 ================================================================================
+565 END OF DOCUMENT
+566 SoundAI — Internal Technical Specification
+567 Confidential | Not for external distribution
+568 ================================================================================
+569  

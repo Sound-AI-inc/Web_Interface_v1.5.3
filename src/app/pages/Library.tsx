@@ -16,7 +16,6 @@ import {
 import ProGate from "../components/ProGate";
 import ResultCard, { toCardItem } from "../components/ResultCard";
 import FolderFilePlayer from "../components/FolderFilePlayer";
-import ViewModeToggle from "../components/workspace/ViewModeToggle";
 import WorkspacePageShell from "../components/workspace/WorkspacePageShell";
 import type { LibraryAsset, ResultKind } from "../data/mock";
 import { setEditorIntent } from "../lib/editorIntent";
@@ -49,8 +48,6 @@ function LibraryWorkspace() {
   const deleteAsset = useLibraryStore((s) => s.deleteAsset);
   const toggleFavorite = useLibraryStore((s) => s.toggleFavorite);
   const favoriteIds = useLibraryStore((s) => s.favoriteIds);
-  const viewMode = useLibraryStore((s) => s.viewMode);
-  const setViewMode = useLibraryStore((s) => s.setViewMode);
   const assignAssetProject = useLibraryStore((s) => s.assignAssetProject);
   const assetProject = useLibraryStore((s) => s.assetProject);
   const projects = useWorkspaceStore((s) => s.projects);
@@ -162,7 +159,6 @@ function LibraryWorkspace() {
       title={t("library.title")}
       subtitle={t("library.subtitle")}
       stats={stats}
-      actions={<ViewModeToggle value={viewMode} onChange={setViewMode} />}
     >
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[280px_1fr]">
         <aside className="premium-library-sidebar flex flex-col gap-2 rounded-[18px] border border-[var(--border-primary)] bg-[var(--surface-primary)] p-4 shadow-[var(--ui-shadow-soft)]">
@@ -318,13 +314,13 @@ function LibraryWorkspace() {
             </div>
           </div>
 
-          <div className={viewMode === "grid" ? "premium-library-grid" : "flex flex-col gap-2"}>
+          <div className="flex flex-col gap-1.5">
             {filtered.map((a) => (
               <div
                 key={a.id}
                 draggable
                 onDragStart={(e) => onDragStartAsset(e, a.id)}
-                className={`premium-library-card-wrap relative cursor-grab active:cursor-grabbing ${viewMode === "list" ? "rounded-[14px] border border-[var(--border-primary)] bg-[var(--surface-primary)] p-2" : ""}`}
+                className="premium-library-card-wrap relative cursor-grab rounded-[12px] border border-[var(--border-primary)] bg-[var(--surface-primary)] p-1.5 active:cursor-grabbing"
               >
                 {renamingAssetId === a.id ? (
                   <div className="flex items-center gap-2 p-3">

@@ -119,7 +119,6 @@ export interface Integration {
 }
 
 export const integrations: Integration[] = [
-  // DAW (5)
   {
     id: "ableton",
     name: "Ableton Live",
@@ -146,30 +145,29 @@ export const integrations: Integration[] = [
   },
   {
     id: "reaper",
-    name: "Reaper",
+    name: "REAPER",
     category: "DAW",
     description: "Import audio via a ReaScript plugin integration for fast project delivery.",
     connected: false,
     iconLetter: "R",
   },
   {
-    id: "bandlab",
-    name: "BandLab",
+    id: "bitwig",
+    name: "Bitwig Studio",
     category: "DAW",
-    description: "Collaborate and share projects with the online BandLab DAW.",
+    description: "Transfer generated loops and modulation-ready sound design assets.",
     connected: false,
-    iconLetter: "B",
+    iconLetter: "Bw",
   },
 
-  // AI Tools (5)
   {
-    id: "chatgpt",
-    name: "ChatGPT",
+    id: "openai",
+    name: "OpenAI",
     category: "AI Tools",
-    description: "AI text generation for lyrics, track descriptions, and creative content.",
+    description: "Prompt expansion, lyric drafting, metadata, and assistant workflows.",
     connected: false,
     pro: true,
-    iconLetter: "C",
+    iconLetter: "O",
   },
   {
     id: "sora",
@@ -181,33 +179,23 @@ export const integrations: Integration[] = [
     iconLetter: "S",
   },
   {
-    id: "runway",
-    name: "Runway",
+    id: "elevenlabs",
+    name: "ElevenLabs",
     category: "AI Tools",
-    description: "AI video editing and generation for music videos.",
+    description: "Voiceover, spoken hooks, and vocal texture generation.",
     connected: false,
     pro: true,
-    iconLetter: "Rw",
+    iconLetter: "11",
   },
   {
-    id: "midjourney",
-    name: "Midjourney",
+    id: "huggingface",
+    name: "Hugging Face",
     category: "AI Tools",
-    description: "AI image generation for album covers and artwork.",
+    description: "Connect open audio, MIDI, and tagging models for experiments.",
     connected: false,
-    pro: true,
-    iconLetter: "Mj",
-  },
-  {
-    id: "stable-diffusion",
-    name: "Stable Diffusion",
-    category: "AI Tools",
-    description: "Open-source AI image generation for creative music visuals.",
-    connected: false,
-    iconLetter: "SD",
+    iconLetter: "HF",
   },
 
-  // Distribution (3)
   {
     id: "soundcloud",
     name: "SoundCloud",
@@ -226,15 +214,14 @@ export const integrations: Integration[] = [
     iconLetter: "Ln",
   },
   {
-    id: "audius",
-    name: "Audius",
+    id: "distrokid",
+    name: "DistroKid",
     category: "Distribution",
-    description: "Decentralized Web3 track publishing.",
+    description: "Prepare generated assets and release metadata for distribution.",
     connected: false,
-    iconLetter: "Au",
+    iconLetter: "DK",
   },
 
-  // Samples (2)
   {
     id: "splice",
     name: "Splice",
@@ -245,41 +232,23 @@ export const integrations: Integration[] = [
     iconLetter: "Sp",
   },
   {
-    id: "jamahook",
-    name: "Jamahook",
+    id: "loopcloud",
+    name: "Loopcloud",
     category: "Samples",
-    description: "AI sample suggestions and export functionality.",
+    description: "Match generated loops against sample collections and tags.",
     connected: false,
-    iconLetter: "Jh",
+    iconLetter: "LC",
+  },
+  {
+    id: "native-instruments",
+    name: "Native Instruments",
+    category: "Samples",
+    description: "Organize generated presets and samples for Kontakt and Maschine workflows.",
+    connected: false,
+    pro: true,
+    iconLetter: "NI",
   },
 
-  // Storage (3)
-  {
-    id: "gdrive",
-    name: "Google Drive",
-    category: "Storage",
-    description: "Cloud storage and backup for your audio projects and exports.",
-    connected: false,
-    iconLetter: "G",
-  },
-  {
-    id: "dropbox",
-    name: "Dropbox",
-    category: "Storage",
-    description: "Sync and share your music projects across devices.",
-    connected: false,
-    iconLetter: "D",
-  },
-  {
-    id: "onedrive",
-    name: "OneDrive",
-    category: "Storage",
-    description: "Microsoft cloud storage integration for projects.",
-    connected: false,
-    iconLetter: "O1",
-  },
-
-  // Processing (2)
   {
     id: "lalal",
     name: "LALAL.AI",
@@ -290,12 +259,13 @@ export const integrations: Integration[] = [
     iconLetter: "La",
   },
   {
-    id: "deepgram",
-    name: "Deepgram",
+    id: "izotope",
+    name: "iZotope",
     category: "Processing",
-    description: "Speech-to-text and text-to-speech API for podcasts and voiceovers.",
+    description: "Send generated stems into repair, mix, and mastering workflows.",
     connected: false,
-    iconLetter: "Dg",
+    pro: true,
+    iconLetter: "iZ",
   },
 ];
 

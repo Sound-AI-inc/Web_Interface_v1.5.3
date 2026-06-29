@@ -47,7 +47,7 @@ export const useLibraryStore = create<LibraryState>()(
       assetFolder: initialAssetFolder,
       assetProject: {},
       favoriteIds: [],
-      viewMode: "grid",
+      viewMode: "list",
 
       addFolder: (name) => {
         const id = `f-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;

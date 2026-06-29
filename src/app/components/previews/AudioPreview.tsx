@@ -223,7 +223,7 @@ export default function AudioPreview({
       </button>
       <div
         ref={containerRef}
-        className={`waveform-shell relative h-14 flex-1 overflow-hidden rounded-input ${mode === "pro" ? "waveform-shell-pro" : "waveform-shell-lite"}`}
+        className={`waveform-shell relative h-8 flex-1 overflow-hidden rounded-input ${mode === "pro" ? "waveform-shell-pro" : "waveform-shell-lite"}`}
       >
         <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
       </div>
