@@ -14,6 +14,7 @@ import {
   Lock,
 } from "lucide-react";
 import UserMenuPortal from "./UserMenuPortal";
+import { useAuth } from "../hooks/useAuth";
 import { useInterfaceMode } from "../hooks/useInterfaceMode";
 import type { LucideIcon } from "lucide-react";
 import ThemedLogo from "./ThemedLogo";
@@ -161,6 +162,13 @@ export default function Sidebar({
   const width = collapsed ? "w-[56px]" : "w-[216px]";
   const profileRef = useRef<HTMLButtonElement>(null);
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const displayName =
+    (user?.user_metadata?.full_name as string | undefined) ??
+    user?.email?.split("@")[0] ??
+    "Account";
+  const email = user?.email ?? "";
+  const initial = displayName.charAt(0).toUpperCase() || "S";
 
   useEffect(() => {
     if (!userMenuOpen) return;
@@ -254,16 +262,16 @@ export default function Sidebar({
           aria-expanded={userMenuOpen}
         >
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-on-accent">
-            D
+            {initial}
           </div>
           {!collapsed && (
             <div className="flex min-w-0 flex-1 flex-col text-left">
               <span className="truncate font-poppins text-xs font-semibold text-text">
-                Dmitriy ELAT
+                {displayName}
               </span>
-              <span className="truncate font-codec text-[10px] text-text/50">
-                elat.official@gmail.com
-              </span>
+              {email && (
+                <span className="truncate font-codec text-[10px] text-text/50">{email}</span>
+              )}
             </div>
           )}
         </button>

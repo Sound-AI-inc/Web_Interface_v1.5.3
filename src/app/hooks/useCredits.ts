@@ -69,6 +69,8 @@ export function useCredits(): CreditsState {
       if (amount <= 0) return true;
       if (remaining < amount) return false;
 
+      const previousRemaining = remaining;
+      const previousSpent = spent;
       const next = remaining - amount;
       const nextSpent = spent + amount;
       setRemaining(next);
@@ -77,8 +79,8 @@ export function useCredits(): CreditsState {
       if (user) {
         const saved = await upsertUserCredits(user.id, next, total, nextSpent);
         if (!saved) {
-          setRemaining(remaining);
-          setSpent(spent);
+          setRemaining(previousRemaining);
+          setSpent(previousSpent);
           return false;
         }
       }

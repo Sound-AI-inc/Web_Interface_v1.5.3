@@ -1309,6 +1309,84 @@
   border-color: var(--border-secondary);
   color: var(--text-primary);
 }
+
+/* Conversation artifact — generation results inside chat feed */
+.conversation-artifact {
+  @apply w-full;
+}
+.conversation-artifact-status {
+  @apply mb-3 font-codec text-[11px] font-medium uppercase tracking-[0.06em];
+  color: var(--text-muted);
+}
+.conversation-artifact-progress {
+  @apply mt-2 h-1 overflow-hidden rounded-full;
+  background: var(--surface-secondary);
+}
+.conversation-artifact-progress > div {
+  @apply h-full rounded-full;
+  background: var(--ui-create-gradient);
+  transition: width 300ms ease;
+}
+.conversation-artifact-body {
+  @apply space-y-4 py-1;
+}
+.conversation-artifact-heading {
+  @apply space-y-1.5;
+}
+.conversation-artifact-kind {
+  @apply inline-flex items-center gap-1.5 font-codec text-[10px] font-semibold uppercase tracking-[0.08em];
+  color: var(--text-muted);
+}
+.conversation-artifact-kind svg {
+  color: rgb(var(--color-primary));
+}
+.conversation-artifact-title {
+  @apply font-poppins text-lg font-semibold leading-snug;
+  color: var(--text-primary);
+}
+.conversation-artifact-description {
+  @apply font-codec text-sm leading-relaxed;
+  color: var(--text-secondary);
+}
+.conversation-artifact-preview {
+  @apply overflow-hidden rounded-[16px];
+  background: var(--surface-secondary);
+}
+.conversation-artifact[data-pro="true"] .conversation-artifact-preview {
+  background: rgba(0, 0, 0, 0.22);
+}
+.conversation-artifact-meta {
+  @apply flex flex-wrap gap-x-3 gap-y-1 font-mono text-[11px];
+  color: var(--text-muted);
+}
+.conversation-artifact-actions {
+  @apply flex flex-wrap items-center gap-1 pt-1;
+}
+.conversation-artifact-action {
+  @apply inline-flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 font-codec text-[11px] font-medium;
+  color: var(--text-muted);
+  transition: color 150ms ease, background-color 150ms ease;
+}
+.conversation-artifact-action:hover:not(:disabled) {
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+}
+.conversation-artifact-action.is-active {
+  color: rgb(var(--color-primary));
+}
+.conversation-artifact-action:disabled {
+  @apply cursor-not-allowed opacity-45;
+}
+.conversation-artifact-footer {
+  @apply border-t pt-3;
+  border-color: var(--border-primary);
+}
+.premium-generation-bubble {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
 .premium-export-group {
   @apply rounded-[16px] border p-4;
   border-color: var(--border-primary);

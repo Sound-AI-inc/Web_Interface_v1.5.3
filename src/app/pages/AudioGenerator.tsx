@@ -376,25 +376,36 @@ export default function AudioGenerator() {
         items: response.items,
       };
 
-      const charged = await deduct(creditCost);
+      const actualCount = Math.max(1, response.items.length);
+      const chargeAmount = Math.min(creditCost, actualCount);
+
+      const charged = await deduct(chargeAmount);
       if (!charged) {
         setGenerationWarning(t("generator.insufficientCredits"));
         setPending(null);
         return;
       }
 
+      if (actualCount < generationCount) {
+        setGenerationWarning(
+          (response.warning ? `${response.warning} ` : "") +
+            `Requested ${generationCount} variants; received ${actualCount}. Credits charged: ${chargeAmount}.`,
+        );
+      }
+
       const chatId = ensureActiveChat();
       appendBatch(chatId, batch, response.items);
+      const createdChat = useWorkspaceStore.getState().chats.find((c) => c.id === chatId);
       void recordGenerationHistory({
         userId: user?.id ?? null,
-        projectId: activeChat?.projectId ?? null,
+        projectId: createdChat?.projectId ?? null,
         generationId: batch.id,
         prompt: promptValue,
         generationType: type,
         model: resolvedModel,
         format: resolvedFormat,
-        count: generationCount,
-        creditsSpent: creditCost,
+        count: actualCount,
+        creditsSpent: chargeAmount,
         status: "success",
       });
       setPrompt("");
@@ -549,61 +560,48 @@ function GenerationTimeline({
         : `${batch.count} VST Preset${batch.count > 1 ? "s" : ""} Generated`;
 
   return (
-    <article className="space-y-4">
+    <article className="space-y-5">
       <div className="flex justify-end">
         <div className="user-bubble max-w-[85%] px-4 py-3 font-codec text-sm leading-6 text-[var(--text-primary)]">
           {batch.prompt}
         </div>
       </div>
       <div className="flex justify-start">
-        <div className="assistant-bubble premium-generation-bubble max-w-full space-y-4 md:max-w-[95%]">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="font-codec text-sm font-semibold text-[var(--text-primary)]">
-                SoundAI
-              </div>
-              <div className="mt-1 font-codec text-[13px] text-[var(--text-secondary)]">{label}</div>
-              <div className="mt-1 font-mono text-[11px] text-[var(--text-muted)]">
-                {batch.model} · {batch.format} · {batch.createdAt}
-              </div>
+        <div className="assistant-bubble premium-generation-bubble w-full max-w-full md:max-w-[92%]">
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <div className="font-codec text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-muted)]">
+              SoundAI
             </div>
             <span className="timeline-status">
               <Check className="h-3 w-3" />
-              Completed
+              {label}
             </span>
-          </div>
-          <div className="flex flex-wrap gap-2">
+            <span className="font-mono text-[11px] text-[var(--text-muted)]">
+              {batch.model} · {batch.format}
+            </span>
             <TimelineAction icon={RefreshCw} label="Regenerate" onClick={onRegenerate} />
           </div>
-          <div className="space-y-3">
+          <div className="space-y-6">
             {batch.items.map((item, index) => (
-              <div key={item.id} className="asset-enter" style={{ animationDelay: `${index * 80}ms` }}>
+              <div key={item.id} style={{ animationDelay: `${index * 80}ms` }}>
                 <ResultCard
                   item={toCardItem(item)}
+                  variant="feed"
                   savedToLibrary={saved.has(item.id)}
+                  favorited={favorites.has(item.id)}
                   onAddToLibrary={() => onSaveToLibrary(item)}
+                  onToggleFavorite={() => onToggleFavorite(item.id)}
                   onRemix={() => onRemix(item)}
                   onEdit={() => onEditInEditor(item)}
                   saveLabel={saved.has(item.id) ? "Saved" : "Save to Library"}
+                  footer={
+                    <AddToProjectMenu
+                      projects={projects}
+                      onAssign={(projectId) => onAddToProject(item, projectId)}
+                      onCreateProject={() => onCreateProjectForAsset(item)}
+                    />
+                  }
                 />
-                <div className="mt-2 flex flex-wrap items-center gap-2 pl-1">
-                  <AddToProjectMenu
-                    projects={projects}
-                    onAssign={(projectId) => onAddToProject(item, projectId)}
-                    onCreateProject={() => onCreateProjectForAsset(item)}
-                  />
-                  {favorites.has(item.id) ? (
-                    <span className="font-codec text-[11px] text-primary">Favorited</span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => onToggleFavorite(item.id)}
-                      className="font-codec text-[11px] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                    >
-                      Favorite
-                    </button>
-                  )}
-                </div>
               </div>
             ))}
           </div>
