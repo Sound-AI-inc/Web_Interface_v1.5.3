@@ -1,1 +1,3 @@
-/*    /index.html   200
+# Cloudflare Pages SPA fallback is handled by the deployment platform and the app router.
+# This file intentionally avoids a catch-all redirect rule to prevent redirect loops.
+# Deep links are preserved by the client-side BrowserRouter and the deployment fallback configuration.

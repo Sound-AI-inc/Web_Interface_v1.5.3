@@ -15,7 +15,9 @@ import {
   fetchOnboardingStatus,
   isOnboardingCompleteSync,
   shouldRequireOnboarding,
+  shouldShowGuidedTour,
 } from "./lib/onboardingService";
+import GuidedTourModal from "./components/GuidedTourModal";
 
 const MODE_STORAGE_KEY = "soundai:interface-mode";
 
@@ -35,6 +37,7 @@ export default function AppLayout() {
   const startNewSession = useWorkspaceStore((s) => s.startNewSession);
   const isWorkspaceRoute = location.pathname.includes("/generator");
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
+  const [showGuidedTour, setShowGuidedTour] = useState(false);
 
   const setMode = useCallback((next: InterfaceMode) => {
     setModeState(next);
@@ -73,6 +76,7 @@ export default function AppLayout() {
   useEffect(() => {
     if (!session?.user?.id) {
       setOnboardingComplete(true);
+      setShowGuidedTour(false);
       return;
     }
 
@@ -81,16 +85,20 @@ export default function AppLayout() {
 
     if (isOnboardingCompleteSync(userId)) {
       setOnboardingComplete(true);
+      setShowGuidedTour(shouldShowGuidedTour(userId));
       return;
     }
 
     if (!shouldRequireOnboarding(userId, createdAt)) {
       setOnboardingComplete(true);
+      setShowGuidedTour(shouldShowGuidedTour(userId));
       return;
     }
 
     void fetchOnboardingStatus(userId).then((record) => {
-      setOnboardingComplete(Boolean(record?.completedAt));
+      const completed = Boolean(record?.completedAt);
+      setOnboardingComplete(completed);
+      setShowGuidedTour(completed && shouldShowGuidedTour(userId));
     });
   }, [session?.user?.id, session?.user?.created_at]);
 
@@ -103,6 +111,10 @@ export default function AppLayout() {
 
   if (configured && !loading && !session) {
     return <Navigate to="/sign-in" replace />;
+  }
+
+  if (session?.user && onboardingComplete === false) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   if (session?.user && onboardingComplete === false) {
@@ -127,6 +139,11 @@ export default function AppLayout() {
             mode === "pro" ? "theme-pro" : "theme-lite"
           }`}
         >
+          <GuidedTourModal
+            open={showGuidedTour}
+            userId={session?.user?.id}
+            onClose={() => setShowGuidedTour(false)}
+          />
           <Sidebar
             onOpenSettings={() => setSettingsModalOpen(true)}
             onOpenUpgrade={() => setUpgradeModalOpen(true)}

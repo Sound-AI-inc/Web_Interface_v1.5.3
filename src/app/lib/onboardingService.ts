@@ -11,6 +11,8 @@ export interface OnboardingData {
 
 export interface OnboardingRecord extends OnboardingData {
   completedAt: string;
+  tourCompletedAt?: string;
+  tourSkippedAt?: string;
 }
 
 const localKey = (userId: string) => `soundai:onboarding:${userId}`;
@@ -94,6 +96,8 @@ function mapRow(data: Record<string, unknown>): OnboardingRecord | null {
     mainDaw: (data.main_daw as string) ?? "",
     painPoint: (data.pain_point as string) ?? "",
     completedAt,
+    tourCompletedAt: (data.tour_completed_at as string | undefined) ?? undefined,
+    tourSkippedAt: (data.tour_skipped_at as string | undefined) ?? undefined,
   };
 }
 
@@ -169,6 +173,32 @@ async function syncToSupabase(userId: string, payload: OnboardingData, completed
   }
 }
 
+async function syncTourStatus(userId: string, status: "completed" | "skipped") {
+  const supabase = getSupabase();
+  if (!supabase) return;
+
+  try {
+    const timestamp = new Date().toISOString();
+    const payload = {
+      user_id: userId,
+      ...(status === "completed" ? { tour_completed_at: timestamp } : { tour_skipped_at: timestamp }),
+    };
+
+    const { error } = await Promise.race([
+      supabase.from("user_onboarding").upsert(payload, { onConflict: "user_id" }),
+      new Promise<{ error: { message: string } }>((_, reject) => {
+        window.setTimeout(() => reject(new Error("timeout")), 8000);
+      }),
+    ]);
+
+    if (error) {
+      console.warn("[tour] Supabase save failed:", error.message);
+    }
+  } catch (err) {
+    console.warn("[tour] Supabase save error:", err);
+  }
+}
+
 export async function saveOnboarding(userId: string, payload: OnboardingData): Promise<void> {
   const completedAt = new Date().toISOString();
   const record: OnboardingRecord = { ...payload, completedAt };
@@ -176,6 +206,27 @@ export async function saveOnboarding(userId: string, payload: OnboardingData): P
   markOnboardingBypass(userId);
   clearNeedsOnboarding(userId);
   void syncToSupabase(userId, payload, completedAt);
+}
+
+export function shouldShowGuidedTour(userId: string): boolean {
+  const local = readLocal(userId);
+  if (local?.tourCompletedAt || local?.tourSkippedAt) {
+    return false;
+  }
+  return true;
+}
+
+export async function markGuidedTour(userId: string, status: "completed" | "skipped"): Promise<void> {
+  const timestamp = new Date().toISOString();
+  const local = readLocal(userId);
+  const nextRecord: OnboardingRecord = {
+    ...(local ?? { profileType: "", discoverySource: "", primaryGoal: "", workflowFrequency: "", mainDaw: "", painPoint: "" }),
+    completedAt: local?.completedAt ?? timestamp,
+    tourCompletedAt: status === "completed" ? timestamp : local?.tourCompletedAt,
+    tourSkippedAt: status === "skipped" ? timestamp : local?.tourSkippedAt,
+  };
+  writeLocal(userId, nextRecord);
+  void syncTourStatus(userId, status);
 }
 
 export const ONBOARDING_STEPS = [
