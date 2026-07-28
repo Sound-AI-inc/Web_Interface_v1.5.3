@@ -345,6 +345,17 @@ export type TranslationKey =
   | "onboarding.discovery.discord"
   | "onboarding.discovery.newsletter"
   | "onboarding.discovery.other"
+  | "onboarding.country.question"
+  | "onboarding.country.unitedStates"
+  | "onboarding.country.unitedKingdom"
+  | "onboarding.country.canada"
+  | "onboarding.country.germany"
+  | "onboarding.country.france"
+  | "onboarding.country.spain"
+  | "onboarding.country.netherlands"
+  | "onboarding.country.australia"
+  | "onboarding.country.brazil"
+  | "onboarding.country.other"
   | "onboarding.goal.question"
   | "onboarding.goal.audioSamples"
   | "onboarding.goal.midi"
@@ -713,6 +724,17 @@ const en: Record<TranslationKey, string> = {
   "onboarding.discovery.discord": "Discord",
   "onboarding.discovery.newsletter": "Newsletter",
   "onboarding.discovery.other": "Other",
+  "onboarding.country.question": "What is your country of residence?",
+  "onboarding.country.unitedStates": "United States",
+  "onboarding.country.unitedKingdom": "United Kingdom",
+  "onboarding.country.canada": "Canada",
+  "onboarding.country.germany": "Germany",
+  "onboarding.country.france": "France",
+  "onboarding.country.spain": "Spain",
+  "onboarding.country.netherlands": "Netherlands",
+  "onboarding.country.australia": "Australia",
+  "onboarding.country.brazil": "Brazil",
+  "onboarding.country.other": "Other",
   "onboarding.goal.question": "What do you want to create most often?",
   "onboarding.goal.audioSamples": "Audio Samples",
   "onboarding.goal.midi": "MIDI",

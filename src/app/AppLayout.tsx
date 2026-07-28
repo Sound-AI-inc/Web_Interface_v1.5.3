@@ -117,10 +117,6 @@ export default function AppLayout() {
     return <Navigate to="/onboarding" replace />;
   }
 
-  if (session?.user && onboardingComplete === false) {
-    return <Navigate to="/onboarding" replace />;
-  }
-
   if (session?.user && onboardingComplete === null) {
     return (
       <div className="flex h-screen items-center justify-center bg-[var(--background-primary)]">

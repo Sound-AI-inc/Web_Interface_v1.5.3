@@ -25,6 +25,7 @@ export default function OAuthRegistration() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const copy = useMemo(
@@ -60,6 +61,7 @@ export default function OAuthRegistration() {
 
   const startOAuth = async (provider: Provider) => {
     setError(null);
+    setNotice(null);
     const supabase = getSupabase();
     if (!supabase) {
       if (isSignUp) redirectAfterSignUp();
@@ -84,6 +86,7 @@ export default function OAuthRegistration() {
     event.preventDefault();
     setBusy(true);
     setError(null);
+    setNotice(null);
 
     try {
       const supabase = getSupabase();
@@ -118,6 +121,35 @@ export default function OAuthRegistration() {
       redirectAfterSignIn();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Authentication failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const recoverPassword = async () => {
+    setError(null);
+    setNotice(null);
+
+    if (!email) {
+      setError("Enter your email first, then request a password reset.");
+      return;
+    }
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      setNotice("Demo auth is active. Password recovery requires Supabase configuration.");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/sign-in`,
+      });
+      if (resetError) throw resetError;
+      setNotice("Password reset email sent.");
+    } catch (resetError) {
+      setError(resetError instanceof Error ? resetError.message : "Could not send password reset email.");
     } finally {
       setBusy(false);
     }
@@ -246,10 +278,26 @@ export default function OAuthRegistration() {
                 </div>
               )}
 
+              {notice && (
+                <div className="rounded-input border border-primary/30 bg-[var(--surface-secondary)] px-4 py-3 text-sm text-primary">
+                  {notice}
+                </div>
+              )}
+
               <button type="submit" disabled={busy} className="app-btn-primary w-full py-3">
                 {busy ? "Please wait…" : copy.cta}
                 <ArrowRight className="h-4 w-4" />
               </button>
+              {!isSignUp && (
+                <button
+                  type="button"
+                  onClick={() => void recoverPassword()}
+                  disabled={busy}
+                  className="w-full text-center text-sm font-semibold text-primary transition-opacity hover:opacity-80 disabled:opacity-50"
+                >
+                  Forgot password?
+                </button>
+              )}
             </form>
           </div>
         </section>

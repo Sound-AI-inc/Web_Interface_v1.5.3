@@ -17,6 +17,7 @@ import type { TranslationKey } from "../i18n/translations";
 const EMPTY: OnboardingData = {
   profileType: "",
   discoverySource: "",
+  countryOfResidence: "",
   primaryGoal: "",
   workflowFrequency: "",
   mainDaw: "",
@@ -31,6 +32,7 @@ export default function OnboardingSurvey() {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<OnboardingData>(EMPTY);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
 
   const userId = user?.id ?? session?.user?.id;
@@ -75,16 +77,23 @@ export default function OnboardingSurvey() {
     setAnswers((prev) => ({ ...prev, [current.key]: t(optionKey) }));
   };
 
-  const finish = () => {
+  const finish = async () => {
     if (!userId) return;
     setBusy(true);
-    saveOnboarding(userId, answers);
-    markFreshSession();
-    navigate("/app/generator?fresh=1", { replace: true });
+    setError(null);
+    try {
+      await saveOnboarding(userId, answers);
+      markFreshSession();
+      navigate("/app/generator?fresh=1", { replace: true });
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Could not save onboarding answers.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const next = () => {
-    if (step >= ONBOARDING_STEPS.length - 1) finish();
+    if (step >= ONBOARDING_STEPS.length - 1) void finish();
     else setStep((s) => s + 1);
   };
 
@@ -151,6 +160,12 @@ export default function OnboardingSurvey() {
             );
           })}
         </ul>
+
+        {error && (
+          <div className="mt-5 rounded-input border border-[var(--error)]/30 bg-[var(--surface-secondary)] px-4 py-3 text-sm text-[var(--error)]">
+            {error}
+          </div>
+        )}
 
         <div className="mt-auto flex items-center justify-between gap-3 pt-10">
           <button
