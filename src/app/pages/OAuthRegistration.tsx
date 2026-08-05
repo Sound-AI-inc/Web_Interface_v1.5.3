@@ -2,7 +2,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, LockKeyhole, Mail } from "lucide-react";
 import type { Provider } from "@supabase/supabase-js";
-import { getSupabase, supabaseConfigured } from "../lib/supabase";
+import { getSupabase } from "../lib/supabase";
 import { ensureSignupCredits } from "../lib/creditsService";
 import { markNeedsOnboarding } from "../lib/onboardingService";
 import { useAuth } from "../hooks/useAuth";
@@ -138,7 +138,14 @@ export default function OAuthRegistration() {
               <ArrowLeft className="h-4 w-4" />
               Back to website
             </Link>
-            <div className="font-syne text-[42px] font-bold tracking-[-0.03em]">SoundAI</div>
+            <div className="mb-8 flex items-center gap-3">
+              <img
+                src="/logo SoundAI v1.5 (1).svg"
+                alt="SoundAI"
+                className="h-10 w-10"
+              />
+              <span className="font-syne text-[28px] font-bold tracking-[-0.03em]">SoundAI</span>
+            </div>
             <p className="mt-6 max-w-md font-codec text-[22px] font-medium leading-snug text-[var(--text-primary)]">
               Create production-ready
             </p>
@@ -158,6 +165,14 @@ export default function OAuthRegistration() {
 
         <section className="flex justify-center lg:justify-end">
           <div className="auth-card w-full max-w-[560px] p-8 sm:p-10">
+            <div className="mb-8 flex items-center gap-3">
+              <img
+                src="/logo SoundAI v1.5 (1).svg"
+                alt="SoundAI"
+                className="h-8 w-8"
+              />
+              <span className="font-syne text-xl font-bold">SoundAI</span>
+            </div>
             <div className="mb-8">
               <h1 className="font-syne text-[28px] font-bold">{copy.title}</h1>
               <p className="mt-2 text-sm text-[var(--text-secondary)]">
@@ -166,11 +181,6 @@ export default function OAuthRegistration() {
                   {copy.switchLabel}
                 </Link>
               </p>
-              {!supabaseConfigured() && (
-                <span className="mt-3 inline-flex rounded-full border border-[var(--border-primary)] bg-[var(--surface-secondary)] px-3 py-1 text-[11px] font-semibold text-primary">
-                  Demo auth
-                </span>
-              )}
             </div>
 
             <div className="grid gap-3">
