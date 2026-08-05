@@ -1,0 +1,14 @@
+name = "web-interface-v1-5-3"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[assets]]
+directory = "dist"
+binding = "ASSETS"
+
+[vars]
+VITE_SUPABASE_URL = ""
+VITE_SUPABASE_ANON_KEY = ""
+
+[build]
+command = "npm run build"
