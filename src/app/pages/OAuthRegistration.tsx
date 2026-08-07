@@ -70,9 +70,7 @@ export default function OAuthRegistration() {
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: isSignUp
-          ? `${window.location.origin}/onboarding?fresh=1&signup=1`
-          : `${window.location.origin}/app/generator?fresh=1`,
+        redirectTo: `${window.location.origin}/auth/callback?mode=${isSignUp ? "signup" : "signin"}`,
         queryParams: provider === "google" ? { access_type: "offline", prompt: "consent" } : undefined,
       },
     });
@@ -99,14 +97,20 @@ export default function OAuthRegistration() {
           password,
           options: {
             data: { full_name: fullName },
-            emailRedirectTo: `${window.location.origin}/onboarding?signup=1&fresh=1`,
+            emailRedirectTo: `${window.location.origin}/auth/callback?mode=signup`,
           },
         });
         if (signUpError) throw signUpError;
         const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData.session?.user) {
-          await ensureSignupCredits(sessionData.session.user.id);
-          redirectAfterSignUp(sessionData.session.user.id);
+        const userId = sessionData.session?.user?.id;
+        if (userId) {
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .upsert({ id: userId, full_name: fullName }, { onConflict: "id" });
+          if (profileError) console.warn("[auth] email profile upsert failed:", profileError.message);
+          await ensureSignupCredits(userId);
+          markNeedsOnboarding(userId);
+          redirectAfterSignUp(userId);
         } else {
           redirectAfterSignUp();
         }

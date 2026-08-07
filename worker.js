@@ -7,8 +7,16 @@ export default {
       return asset;
     }
 
+    const indexUrl = new URL("/index.html", url.origin);
+    if (url.search) {
+      indexUrl.search = url.search;
+    }
+    if (url.hash) {
+      indexUrl.hash = url.hash;
+    }
+
     return env.ASSETS.fetch(
-      new Request(new URL("/index.html", url.origin), request),
+      new Request(indexUrl, request),
     );
   },
 };
