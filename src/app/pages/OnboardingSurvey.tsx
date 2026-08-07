@@ -47,10 +47,6 @@ export default function OnboardingSurvey() {
       return;
     }
 
-    if (searchParams.get("signup") === "1") {
-      markNeedsOnboarding(userId);
-    }
-
     if (isOnboardingCompleteSync(userId)) {
       navigate("/app/generator", { replace: true });
       return;
@@ -62,7 +58,7 @@ export default function OnboardingSurvey() {
     }
 
     setChecking(false);
-  }, [userId, createdAt, session, loading, configured, navigate, searchParams]);
+  }, [userId, createdAt, session, loading, configured, navigate]);
 
   const current = ONBOARDING_STEPS[step];
   const progress = ((step + 1) / ONBOARDING_STEPS.length) * 100;
