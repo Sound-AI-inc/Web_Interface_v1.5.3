@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import ThemedLogo from "../components/ThemedLogo";
 import { useAuth } from "../hooks/useAuth";
@@ -7,7 +7,6 @@ import { useLanguage } from "../i18n/LanguageProvider";
 import {
   ONBOARDING_STEPS,
   isOnboardingCompleteSync,
-  markNeedsOnboarding,
   saveOnboarding,
   shouldRequireOnboarding,
   type OnboardingData,
@@ -25,7 +24,6 @@ const EMPTY: OnboardingData = {
 
 export default function OnboardingSurvey() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { user, session, loading, configured, markFreshSession } = useAuth();
   const { t } = useLanguage();
   const [step, setStep] = useState(0);

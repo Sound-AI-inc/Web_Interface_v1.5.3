@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getSupabase } from "../app/lib/supabase";
-import { ensureSignupCredits } from "../app/lib/creditsService";
-import { markNeedsOnboarding } from "../app/lib/onboardingService";
+import { getSupabase } from "../lib/supabase";
+import { ensureSignupCredits } from "../lib/creditsService";
+import { markNeedsOnboarding } from "../lib/onboardingService";
 
 export default function AuthCallback() {
   const navigate = useNavigate();
