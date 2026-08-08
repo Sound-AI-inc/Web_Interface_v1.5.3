@@ -30,7 +30,21 @@ export default function AuthCallback() {
 
     const handleCallback = async () => {
       try {
+        console.info("[auth-debug] AuthCallback mounted", {
+          origin: window.location.origin,
+          pathname: window.location.pathname,
+          search: window.location.search,
+          hash: window.location.hash,
+          mode,
+        });
+
         const { data, error } = await supabase.auth.getSession();
+
+        console.info("[auth-debug] getSession result", {
+          hasError: Boolean(error),
+          hasSession: Boolean(data.session),
+          userId: data.session?.user?.id,
+        });
 
         if (error || !data.session) {
           setStatus("error");
@@ -43,6 +57,11 @@ export default function AuthCallback() {
         const { error: profileError } = await supabase
           .from("profiles")
           .upsert({ id: user.id }, { onConflict: "id" });
+
+        console.info("[auth-debug] profile upsert result", {
+          userId: user.id,
+          error: profileError?.message ?? null,
+        });
 
         if (profileError) {
           console.warn("[auth] profile upsert failed:", profileError.message);

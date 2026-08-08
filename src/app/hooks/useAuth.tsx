@@ -40,6 +40,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     void supabase.auth.getSession().then(({ data }) => {
       if (mounted) {
+        console.info("[auth-debug] initial getSession", {
+          hasSession: Boolean(data.session),
+          userId: data.session?.user?.id,
+        });
         setSession(data.session);
         setLoading(false);
       }
@@ -48,6 +52,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      console.info("[auth-debug] onAuthStateChange", {
+        event,
+        hasSession: Boolean(nextSession),
+        userId: nextSession?.user?.id,
+      });
       setSession(nextSession);
       setLoading(false);
       if (nextSession?.user && (event === "SIGNED_IN" || event === "USER_UPDATED")) {

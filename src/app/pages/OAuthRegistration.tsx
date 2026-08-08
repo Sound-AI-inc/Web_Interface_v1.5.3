@@ -62,20 +62,29 @@ export default function OAuthRegistration() {
     setError(null);
     const supabase = getSupabase();
     if (!supabase) {
+      console.warn("[auth-debug] OAuth button clicked but Supabase is not configured");
       if (isSignUp) redirectAfterSignUp();
       else redirectAfterSignIn();
       return;
     }
 
+    const redirectTo = `${window.location.origin}/auth/callback?mode=${isSignUp ? "signup" : "signin"}`;
+    console.info("[auth-debug] OAuth button clicked", { provider, isSignUp, redirectTo });
+
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?mode=${isSignUp ? "signup" : "signin"}`,
+        redirectTo,
         queryParams: provider === "google" ? { access_type: "offline", prompt: "consent" } : undefined,
       },
     });
 
-    if (oauthError) setError(oauthError.message);
+    if (oauthError) {
+      console.error("[auth-debug] signInWithOAuth error", oauthError.message);
+      setError(oauthError.message);
+    } else {
+      console.info("[auth-debug] signInWithOAuth initiated successfully");
+    }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
