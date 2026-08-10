@@ -53,6 +53,8 @@ function App() {
               }
             />
 
+            <Route path="/create" element={<AudioGenerator />} />
+
             <Route path="/app" element={<AppLayout />}>
               <Route index element={<Navigate to="/app/generator" replace />} />
               <Route path="generator" element={<AudioGenerator />} />

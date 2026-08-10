@@ -28,6 +28,48 @@ export default function AuthCallback() {
       return;
     }
 
+    let mounted = true;
+    let subscription: { unsubscribe: () => void } | null = null;
+
+    const handleAuthReady = async (session: any) => {
+      if (!mounted) return;
+
+      try {
+        console.info("[auth-debug] AuthCallback session ready", {
+          userId: session.user?.id,
+          mode,
+        });
+
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .upsert({ id: session.user.id }, { onConflict: "id" });
+
+        console.info("[auth-debug] profile upsert result", {
+          userId: session.user.id,
+          error: profileError?.message ?? null,
+        });
+
+        if (profileError) {
+          console.warn("[auth] profile upsert failed:", profileError.message);
+        }
+
+        await ensureSignupCredits(session.user.id);
+
+        if (mode === "signup" || isNewUser(session.user)) {
+          markNeedsOnboarding(session.user.id);
+        }
+
+        setStatus("ready");
+        navigate("/onboarding", { replace: true });
+      } catch (err) {
+        console.error("[auth] callback error:", err);
+        if (mounted) {
+          setStatus("error");
+          setError(err instanceof Error ? err.message : "Authentication failed");
+        }
+      }
+    };
+
     const handleCallback = async () => {
       try {
         console.info("[auth-debug] AuthCallback mounted", {
@@ -46,43 +88,50 @@ export default function AuthCallback() {
           userId: data.session?.user?.id,
         });
 
-        if (error || !data.session) {
-          setStatus("error");
-          setError("No session found after authentication");
+        if (data.session) {
+          await handleAuthReady(data.session);
           return;
         }
 
-        const user = data.session.user;
+        const authResult = supabase.auth.onAuthStateChange(
+          (event, nextSession) => {
+            console.info("[auth-debug] onAuthStateChange in callback", {
+              event,
+              hasSession: Boolean(nextSession),
+              userId: nextSession?.user?.id,
+            });
 
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .upsert({ id: user.id }, { onConflict: "id" });
+            if (event === "SIGNED_IN" && nextSession) {
+              subscription?.unsubscribe();
+              void handleAuthReady(nextSession);
+            }
+          },
+        );
 
-        console.info("[auth-debug] profile upsert result", {
-          userId: user.id,
-          error: profileError?.message ?? null,
-        });
+        subscription = authResult.data.subscription;
 
-        if (profileError) {
-          console.warn("[auth] profile upsert failed:", profileError.message);
-        }
-
-        await ensureSignupCredits(user.id);
-
-        if (mode === "signup" || isNewUser(user)) {
-          markNeedsOnboarding(user.id);
-        }
-
-        setStatus("ready");
-        navigate("/onboarding", { replace: true });
+        setTimeout(() => {
+          if (mounted && status === "loading") {
+            subscription?.unsubscribe();
+            setStatus("error");
+            setError("Authentication timeout. Please try again.");
+          }
+        }, 10000);
       } catch (err) {
         console.error("[auth] callback error:", err);
-        setStatus("error");
-        setError(err instanceof Error ? err.message : "Authentication failed");
+        if (mounted) {
+          setStatus("error");
+          setError(err instanceof Error ? err.message : "Authentication failed");
+        }
       }
     };
 
     void handleCallback();
+
+    return () => {
+      mounted = false;
+      subscription?.unsubscribe();
+    };
   }, [navigate]);
 
   function isNewUser(user: { created_at?: string; last_sign_in_at?: string }): boolean {

@@ -37,6 +37,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     let mounted = true;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const finishLoading = () => {
+      if (mounted) setLoading(false);
+    };
 
     void supabase.auth.getSession().then(({ data }) => {
       if (mounted) {
@@ -45,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           userId: data.session?.user?.id,
         });
         setSession(data.session);
-        setLoading(false);
+        timeoutId = setTimeout(finishLoading, 1500);
       }
     });
 
@@ -58,7 +63,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         userId: nextSession?.user?.id,
       });
       setSession(nextSession);
-      setLoading(false);
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        clearTimeout(timeoutId);
+        finishLoading();
+      }
       if (nextSession?.user && (event === "SIGNED_IN" || event === "USER_UPDATED")) {
         void ensureSignupCredits(nextSession.user.id);
       }
@@ -66,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false;
+      clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, []);
