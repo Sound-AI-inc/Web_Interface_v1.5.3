@@ -5,9 +5,7 @@ main = "worker.js"
 
 [assets]
 directory = "dist"
+binding = "ASSETS"
 
 [vars]
 VITE_WEBSITE_URL = "https://web-interface-v1-5-3.soundai-inc.workers.dev"
-
-[build]
-command = "npm run build"
