@@ -72,6 +72,7 @@ export default function AppLayout() {
 
   useEffect(() => {
     if (!session?.user?.id) {
+      console.info("[auth-debug] AppLayout redirect to /sign-in because no session");
       setOnboardingComplete(true);
       return;
     }
@@ -80,16 +81,23 @@ export default function AppLayout() {
     const createdAt = session.user.created_at;
 
     if (isOnboardingCompleteSync(userId)) {
+      console.info("[auth-debug] AppLayout allow workspace, onboarding complete sync", { userId });
       setOnboardingComplete(true);
       return;
     }
 
     if (!shouldRequireOnboarding(userId, createdAt)) {
+      console.info("[auth-debug] AppLayout allow workspace, no onboarding required", { userId, createdAt });
       setOnboardingComplete(true);
       return;
     }
 
+    console.info("[auth-debug] AppLayout will fetch onboarding status", { userId, createdAt });
     void fetchOnboardingStatus(userId).then((record) => {
+      console.info("[auth-debug] AppLayout onboarding status fetched", {
+        userId,
+        completed: Boolean(record?.completedAt),
+      });
       setOnboardingComplete(Boolean(record?.completedAt));
     });
   }, [session?.user?.id, session?.user?.created_at]);

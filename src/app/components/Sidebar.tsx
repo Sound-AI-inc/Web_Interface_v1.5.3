@@ -170,6 +170,13 @@ export default function Sidebar({
   const email = user?.email ?? "";
   const initial = displayName.charAt(0).toUpperCase() || "S";
 
+  console.info("[auth-debug] Sidebar render", {
+    hasUser: Boolean(user),
+    userId: user?.id,
+    email,
+    displayName,
+  });
+
   useEffect(() => {
     if (!userMenuOpen) return;
     const onDocClick = (e: MouseEvent) => {

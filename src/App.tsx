@@ -19,6 +19,7 @@ const Notifications = lazy(() => import("./app/pages/Notifications"));
 const HelpPage = lazy(() => import("./app/pages/help/HelpPage"));
 const OAuthRegistration = lazy(() => import("./app/pages/OAuthRegistration"));
 const OnboardingSurvey = lazy(() => import("./app/pages/OnboardingSurvey"));
+const AuthCallback = lazy(() => import("./app/pages/AuthCallback"));
 
 function RouteFallback() {
   return (
@@ -38,6 +39,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/sign-up" replace />} />
             <Route path="/auth" element={<OAuthRegistration />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/sign-in" element={<OAuthRegistration />} />
             <Route path="/sign-up" element={<OAuthRegistration />} />
             <Route path="/welcome" element={<Navigate to="/sign-up" replace />} />
@@ -50,6 +52,8 @@ function App() {
                 </LanguageProvider>
               }
             />
+
+            <Route path="/create" element={<AudioGenerator />} />
 
             <Route path="/app" element={<AppLayout />}>
               <Route index element={<Navigate to="/app/generator" replace />} />

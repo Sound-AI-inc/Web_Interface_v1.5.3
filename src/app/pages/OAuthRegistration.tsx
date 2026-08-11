@@ -50,7 +50,7 @@ export default function OAuthRegistration() {
   const redirectAfterSignUp = (userId?: string) => {
     if (userId) markNeedsOnboarding(userId);
     markFreshSession();
-    navigate("/onboarding?signup=1", { replace: true });
+    navigate("/onboarding", { replace: true });
   };
 
   const redirectAfterSignIn = () => {
@@ -62,22 +62,29 @@ export default function OAuthRegistration() {
     setError(null);
     const supabase = getSupabase();
     if (!supabase) {
+      console.warn("[auth-debug] OAuth button clicked but Supabase is not configured");
       if (isSignUp) redirectAfterSignUp();
       else redirectAfterSignIn();
       return;
     }
 
+    const redirectTo = `${window.location.origin}/auth/callback?mode=${isSignUp ? "signup" : "signin"}`;
+    console.info("[auth-debug] OAuth button clicked", { provider, isSignUp, redirectTo });
+
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: isSignUp
-          ? `${window.location.origin}/onboarding?fresh=1&signup=1`
-          : `${window.location.origin}/app/generator?fresh=1`,
+        redirectTo,
         queryParams: provider === "google" ? { access_type: "offline", prompt: "consent" } : undefined,
       },
     });
 
-    if (oauthError) setError(oauthError.message);
+    if (oauthError) {
+      console.error("[auth-debug] signInWithOAuth error", oauthError.message);
+      setError(oauthError.message);
+    } else {
+      console.info("[auth-debug] signInWithOAuth initiated successfully");
+    }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -99,14 +106,20 @@ export default function OAuthRegistration() {
           password,
           options: {
             data: { full_name: fullName },
-            emailRedirectTo: `${window.location.origin}/onboarding?signup=1&fresh=1`,
+            emailRedirectTo: `${window.location.origin}/auth/callback?mode=signup`,
           },
         });
         if (signUpError) throw signUpError;
         const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData.session?.user) {
-          await ensureSignupCredits(sessionData.session.user.id);
-          redirectAfterSignUp(sessionData.session.user.id);
+        const userId = sessionData.session?.user?.id;
+        if (userId) {
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .upsert({ id: userId, full_name: fullName }, { onConflict: "id" });
+          if (profileError) console.warn("[auth] email profile upsert failed:", profileError.message);
+          await ensureSignupCredits(userId);
+          markNeedsOnboarding(userId);
+          redirectAfterSignUp(userId);
         } else {
           redirectAfterSignUp();
         }
