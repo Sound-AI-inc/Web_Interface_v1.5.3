@@ -30,6 +30,7 @@ export default function OnboardingSurvey() {
   const [answers, setAnswers] = useState<OnboardingData>(EMPTY);
   const [busy, setBusy] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const userId = user?.id ?? session?.user?.id;
   const createdAt = user?.created_at ?? session?.user?.created_at;
@@ -62,7 +63,7 @@ export default function OnboardingSurvey() {
   const progress = ((step + 1) / ONBOARDING_STEPS.length) * 100;
   const selected = answers[current?.key ?? "profileType"];
 
-  const canContinue = Boolean(selected);
+  const canContinue = Boolean(selected) && Boolean(userId);
 
   const pick = (optionKey: TranslationKey) => {
     if (!current) return;
@@ -70,7 +71,10 @@ export default function OnboardingSurvey() {
   };
 
   const finish = () => {
-    if (!userId) return;
+    if (!userId) {
+      setError("Session lost. Please refresh and try again.");
+      return;
+    }
     setBusy(true);
     saveOnboarding(userId, answers);
     markFreshSession();
@@ -122,6 +126,12 @@ export default function OnboardingSurvey() {
           {current ? t(current.questionKey) : ""}
         </h1>
         <p className="mt-2 font-codec text-sm text-[var(--text-secondary)]">{t("onboarding.subtitle")}</p>
+
+        {error && (
+          <div className="mt-4 rounded-input border border-[var(--error)]/30 bg-[var(--surface-secondary)] px-4 py-3 text-sm text-[var(--error)]">
+            {error}
+          </div>
+        )}
 
         <ul className="mt-8 space-y-2">
           {current?.options.map((optionKey) => {

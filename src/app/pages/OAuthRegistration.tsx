@@ -63,8 +63,7 @@ export default function OAuthRegistration() {
     const supabase = getSupabase();
     if (!supabase) {
       console.warn("[auth-debug] OAuth button clicked but Supabase is not configured");
-      if (isSignUp) redirectAfterSignUp();
-      else redirectAfterSignIn();
+      setError("Auth is not configured yet. Please set Supabase variables and try again.");
       return;
     }
 
@@ -95,8 +94,7 @@ export default function OAuthRegistration() {
     try {
       const supabase = getSupabase();
       if (!supabase) {
-        if (isSignUp) redirectAfterSignUp();
-        else redirectAfterSignIn();
+        setError("Auth is not configured yet. Please set Supabase variables and try again.");
         return;
       }
 

@@ -29,7 +29,7 @@ export default function AuthCallback() {
     }
 
     let mounted = true;
-    let subscription: { unsubscribe: () => void } | null = null;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
     const handleAuthReady = async (session: any) => {
       if (!mounted) return;
@@ -70,67 +70,32 @@ export default function AuthCallback() {
       }
     };
 
-    const handleCallback = async () => {
-      try {
-        console.info("[auth-debug] AuthCallback mounted", {
-          origin: window.location.origin,
-          pathname: window.location.pathname,
-          search: window.location.search,
-          hash: window.location.hash,
-          mode,
-        });
+    const waitForSession = async () => {
+      for (let i = 0; i < 20; i++) {
+        if (!mounted) return;
 
-        const { data, error } = await supabase.auth.getSession();
-
-        console.info("[auth-debug] getSession result", {
-          hasError: Boolean(error),
-          hasSession: Boolean(data.session),
-          userId: data.session?.user?.id,
-        });
-
+        const { data } = await supabase.auth.getSession();
         if (data.session) {
           await handleAuthReady(data.session);
           return;
         }
 
-        const authResult = supabase.auth.onAuthStateChange(
-          (event, nextSession) => {
-            console.info("[auth-debug] onAuthStateChange in callback", {
-              event,
-              hasSession: Boolean(nextSession),
-              userId: nextSession?.user?.id,
-            });
+        await new Promise((resolve) => {
+          timeoutId = setTimeout(resolve, 500);
+        });
+      }
 
-            if (event === "SIGNED_IN" && nextSession) {
-              subscription?.unsubscribe();
-              void handleAuthReady(nextSession);
-            }
-          },
-        );
-
-        subscription = authResult.data.subscription;
-
-        setTimeout(() => {
-          if (mounted && status === "loading") {
-            subscription?.unsubscribe();
-            setStatus("error");
-            setError("Authentication timeout. Please try again.");
-          }
-        }, 10000);
-      } catch (err) {
-        console.error("[auth] callback error:", err);
-        if (mounted) {
-          setStatus("error");
-          setError(err instanceof Error ? err.message : "Authentication failed");
-        }
+      if (mounted) {
+        setStatus("error");
+        setError("Authentication timeout. Please try again.");
       }
     };
 
-    void handleCallback();
+    void waitForSession();
 
     return () => {
       mounted = false;
-      subscription?.unsubscribe();
+      clearTimeout(timeoutId);
     };
   }, [navigate]);
 
