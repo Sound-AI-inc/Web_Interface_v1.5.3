@@ -10,6 +10,7 @@ export default function AuthCallback() {
   const { markFreshSession } = useAuth();
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState<string | null>(null);
+  const [hints, setHints] = useState<string[]>([]);
 
   useEffect(() => {
     const supabase = createSupabase();
@@ -36,6 +37,18 @@ export default function AuthCallback() {
       return;
     }
 
+    console.info("[auth-debug] AuthCallback mounted", {
+      mode,
+      url: window.location.href,
+      search: window.location.search,
+      hash: window.location.hash,
+      isIframe: window.self !== window.top,
+      hasAccessToken: !!params.get("access_token"),
+      hasRefreshToken: !!params.get("refresh_token"),
+      hasCode: !!params.get("code"),
+      hasError: !!params.get("error"),
+    });
+
     let mounted = true;
     let timeoutId: ReturnType<typeof setTimeout>;
 
@@ -45,7 +58,11 @@ export default function AuthCallback() {
       try {
         console.info("[auth-debug] AuthCallback session ready", {
           userId: session.user?.id,
+          email: session.user?.email,
           mode,
+          isNewUser: isNewUser(session.user),
+          createdAt: session.user?.created_at,
+          lastSignInAt: session.user?.last_sign_in_at,
         });
 
         const { error: profileError } = await supabase
@@ -86,15 +103,65 @@ export default function AuthCallback() {
       }
     };
 
+    const handleDuplicateAccount = (session: any) => {
+      if (!mounted) return;
+
+      console.warn("[auth-debug] Duplicate account detected in signup mode", {
+        userId: session.user?.id,
+        email: session.user?.email,
+        mode,
+        createdAt: session.user?.created_at,
+        lastSignInAt: session.user?.last_sign_in_at,
+      });
+
+      setStatus("error");
+      setError("Этот аккаунт уже зарегистрирован. Перейдите на страницу входа.");
+      setHints([
+        "Вы пытались зарегистрироваться, но аккаунт с таким email уже существует.",
+        "Перейдите на страницу входа или восстановите пароль.",
+      ]);
+    };
+
     const waitForSession = async () => {
       for (let i = 0; i < 40; i++) {
         if (!mounted) return;
 
         const { data } = await supabase.auth.getSession();
         if (data.session) {
-          await handleAuthReady(data.session);
+          const session = data.session;
+
+          if (mode === "signup" && !isNewUser(session.user)) {
+            handleDuplicateAccount(session);
+            return;
+          }
+
+          await handleAuthReady(session);
           return;
         }
+
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData.user) {
+          console.info("[auth-debug] getUser fallback found user after getSession returned null", {
+            userId: userData.user.id,
+            email: userData.user.email,
+            mode,
+          });
+
+          if (mode === "signup" && !isNewUser(userData.user)) {
+            handleDuplicateAccount(userData.user);
+            return;
+          }
+
+          await handleAuthReady({ ...userData, user: userData.user });
+          return;
+        }
+
+        console.debug("[auth-debug] waiting for session", {
+          attempt: i + 1,
+          hasAccessToken: !!params.get("access_token"),
+          hasRefreshToken: !!params.get("refresh_token"),
+          hasCode: !!params.get("code"),
+        });
 
         await new Promise((resolve) => {
           timeoutId = setTimeout(resolve, 500);
@@ -102,6 +169,23 @@ export default function AuthCallback() {
       }
 
       if (mounted) {
+        console.error("[auth-debug] Authentication timeout after 40 attempts", {
+          url: window.location.href,
+          search: window.location.search,
+          isIframe: window.self !== window.top,
+          hasAccessToken: !!params.get("access_token"),
+          hasRefreshToken: !!params.get("refresh_token"),
+          hasCode: !!params.get("code"),
+        });
+
+        const timeoutHints: string[] = [
+          "Проверьте URL в адресной строке: должны быть параметры access_token или code.",
+          "Если приложение открыто во встроенном окне (iframe), третьи-party cookies могут блокироваться.",
+          "Проверьте настройки Redirect URLs в панели Supabase (Authentication > URL Configuration).",
+          "Убедитесь, что в Supabase включены провайдеры Google и Spotify.",
+        ];
+
+        setHints(timeoutHints);
         setStatus("error");
         setError("Authentication timeout. Please try again.");
       }
@@ -125,7 +209,7 @@ export default function AuthCallback() {
   if (status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--background-primary)]">
-        <div className="font-codec text-sm text-[var(--text-secondary)]">Completing authenticationвЂ¦</div>
+        <div className="font-codec text-sm text-[var(--text-secondary)]">Completing authentication…</div>
       </div>
     );
   }
@@ -133,14 +217,24 @@ export default function AuthCallback() {
   if (status === "error") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--background-primary)]">
-        <div className="w-full max-w-md px-6">
+        <div className="w-full max-w-md px-6 space-y-4">
           <div className="rounded-input border border-[var(--error)]/30 bg-[var(--surface-secondary)] px-4 py-3 text-sm text-[var(--error)]">
             {error || "Authentication failed"}
           </div>
+          {hints.length > 0 && (
+            <div className="rounded-input border border-[var(--border-primary)] bg-[var(--surface-secondary)] px-4 py-3 text-sm text-[var(--text-secondary)]">
+              <p className="mb-2 font-semibold text-[var(--text-primary)]">Подсказки для отладки:</p>
+              <ul className="list-inside list-disc space-y-1">
+                {hints.map((hint, idx) => (
+                  <li key={idx}>{hint}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           <button
             type="button"
             onClick={() => navigate("/sign-in", { replace: true })}
-            className="app-btn-primary mt-4 w-full"
+            className="app-btn-primary w-full"
           >
             Return to sign in
           </button>
