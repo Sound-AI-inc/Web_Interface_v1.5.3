@@ -3,6 +3,7 @@ import { CreditCard, Plus, Trash2 } from "lucide-react";
 import PageContainer from "../components/PageContainer";
 import { Field, SettingsSection, Toggle } from "../components/SettingsForm";
 import { useLanguage } from "../i18n/LanguageProvider";
+import { useAuth } from "../hooks/useAuth";
 
 interface PaymentCard {
   id: string;
@@ -19,12 +20,24 @@ const initialCards: PaymentCard[] = [
 
 export default function Profile() {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [cards, setCards] = useState<PaymentCard[]>(initialCards);
   const [generationsEmail, setGenerationsEmail] = useState(true);
   const [productUpdates, setProductUpdates] = useState(false);
   const [billingAlerts, setBillingAlerts] = useState(true);
   const [pushInApp, setPushInApp] = useState(true);
   const [collabMentions, setCollabMentions] = useState(true);
+
+  const displayName =
+    (user?.user_metadata?.full_name as string | undefined) ??
+    user?.email?.split("@")[0] ??
+    "Account";
+  const email = user?.email ?? "";
+  const avatarUrl =
+    (user?.user_metadata?.avatar_url as string | undefined) ??
+    (user?.user_metadata?.picture as string | undefined) ??
+    null;
+  const initial = displayName.charAt(0).toUpperCase() || "S";
 
   const addCard = () => {
     const id = `c${Math.random().toString(36).slice(2, 8)}`;
@@ -58,21 +71,27 @@ export default function Profile() {
       <div className="rounded-card token-card border border-[var(--border-primary)] px-6 shadow-flat-sm">
         <SettingsSection title={t("profile.account")} description={t("profile.accountDesc")}>
           <div className="flex items-center gap-5">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 font-poppins text-xl font-semibold text-primary">
-              DM
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 font-poppins text-xl font-semibold text-primary overflow-hidden">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+              ) : (
+                initial
+              )}
             </div>
             <div className="flex flex-col gap-0.5">
-              <span className="font-poppins text-sm font-semibold text-text">Dmitriy M.</span>
-              <span className="font-codec text-xs text-text/60">dmitriy@soundai.studio</span>
+              <span className="font-poppins text-sm font-semibold text-text">{displayName}</span>
+              {email && (
+                <span className="font-codec text-xs text-text/60">{email}</span>
+              )}
             </div>
             <button className="app-btn-ghost ml-auto h-9 px-3 text-xs">{t("profile.changeAvatar")}</button>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Field label={t("profile.displayName")}>
-              <input className="app-input" defaultValue="Dmitriy M." />
+              <input className="app-input" defaultValue={displayName} />
             </Field>
             <Field label={t("profile.email")}>
-              <input className="app-input" defaultValue="dmitriy@soundai.studio" type="email" />
+              <input className="app-input" defaultValue={email} type="email" readOnly />
             </Field>
             <Field label={t("profile.workspace")}>
               <input className="app-input" defaultValue="SoundAI · Studio" />

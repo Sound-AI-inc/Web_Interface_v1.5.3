@@ -56,7 +56,7 @@ export default function OAuthRegistration() {
 
   const redirectAfterSignIn = () => {
     markFreshSession();
-    navigate("/app/generator?fresh=1", { replace: true });
+    navigate("/create?fresh=1", { replace: true });
   };
 
   const startOAuth = async (provider: Provider) => {
@@ -69,12 +69,12 @@ export default function OAuthRegistration() {
       return;
     }
 
+    const mode = isSignUp ? "signup" : "signin";
+    sessionStorage.setItem("soundai:oauth-mode", mode);
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: isSignUp
-          ? `${window.location.origin}/onboarding?fresh=1&signup=1`
-          : `${window.location.origin}/app/generator?fresh=1`,
+        redirectTo: `${window.location.origin}/auth/callback?mode=${mode}`,
         queryParams: provider === "google" ? { access_type: "offline", prompt: "consent" } : undefined,
       },
     });
@@ -91,8 +91,7 @@ export default function OAuthRegistration() {
     try {
       const supabase = getSupabase();
       if (!supabase) {
-        if (isSignUp) redirectAfterSignUp();
-        else redirectAfterSignIn();
+        setError("Auth is not configured yet. Please set Supabase variables and try again.");
         return;
       }
 

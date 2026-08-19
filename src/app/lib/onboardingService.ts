@@ -21,7 +21,7 @@ const BYPASS_KEY = "soundai:onboarding-bypass";
 const NEEDS_KEY = "soundai:needs-onboarding";
 
 /** Account created within this window is treated as a new registration. */
-const NEW_USER_WINDOW_MS = 15 * 60 * 1000;
+const NEW_USER_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 function readLocal(userId: string): OnboardingRecord | null {
   try {

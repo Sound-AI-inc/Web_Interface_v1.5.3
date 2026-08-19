@@ -168,7 +168,18 @@ export default function Sidebar({
     user?.email?.split("@")[0] ??
     "Account";
   const email = user?.email ?? "";
+  const avatarUrl =
+    (user?.user_metadata?.avatar_url as string | undefined) ??
+    (user?.user_metadata?.picture as string | undefined) ??
+    null;
   const initial = displayName.charAt(0).toUpperCase() || "S";
+
+  console.info("[auth-debug] Sidebar render", {
+    hasUser: Boolean(user),
+    userId: user?.id,
+    email,
+    displayName,
+  });
 
   useEffect(() => {
     if (!userMenuOpen) return;
@@ -261,8 +272,12 @@ export default function Sidebar({
           aria-haspopup="menu"
           aria-expanded={userMenuOpen}
         >
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-on-accent">
-            {initial}
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-on-accent overflow-hidden">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+            ) : (
+              initial
+            )}
           </div>
           {!collapsed && (
             <div className="flex min-w-0 flex-1 flex-col text-left">

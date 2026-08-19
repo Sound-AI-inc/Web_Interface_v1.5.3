@@ -1,6 +1,14 @@
-name = "soundai-web-interface"
-compatibility_date = "2026-07-28"
-pages_build_output_dir = "dist"
+name = "web-interface-v1-5-3"
+compatibility_date = "2026-01-01"
+compatibility_flags = ["nodejs_compat"]
+main = "worker.js"
+
+[assets]
+directory = "dist"
+binding = "ASSETS"
 
 [vars]
-NODE_VERSION = "20"
+VITE_WEBSITE_URL = "https://web-interface-v1-5-3.soundai-inc.workers.dev"
+
+[build]
+command = "npm run build"

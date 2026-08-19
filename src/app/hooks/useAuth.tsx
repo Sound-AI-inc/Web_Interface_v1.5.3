@@ -37,19 +37,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     let mounted = true;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const finishLoading = () => {
+      if (mounted) setLoading(false);
+    };
 
     void supabase.auth.getSession().then(({ data }) => {
       if (mounted) {
+        console.info("[auth-debug] initial getSession", {
+          hasSession: Boolean(data.session),
+          userId: data.session?.user?.id,
+        });
         setSession(data.session);
-        setLoading(false);
+        timeoutId = setTimeout(finishLoading, 1500);
       }
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      console.info("[auth-debug] onAuthStateChange", {
+        event,
+        hasSession: Boolean(nextSession),
+        userId: nextSession?.user?.id,
+      });
       setSession(nextSession);
-      setLoading(false);
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        clearTimeout(timeoutId);
+        finishLoading();
+      }
       if (nextSession?.user && (event === "SIGNED_IN" || event === "USER_UPDATED")) {
         void ensureSignupCredits(nextSession.user.id);
       }
@@ -57,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false;
+      clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, []);

@@ -21,6 +21,17 @@ export function getSupabase(): SupabaseClient | null {
   return _client;
 }
 
+export function createSupabase(): SupabaseClient | null {
+  if (!url || !anon) return null;
+  return createClient(url, anon, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  });
+}
+
 export function supabaseConfigured(): boolean {
   return Boolean(url && anon);
 }

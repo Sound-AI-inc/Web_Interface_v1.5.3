@@ -75,6 +75,7 @@ export default function AppLayout() {
 
   useEffect(() => {
     if (!session?.user?.id) {
+      console.info("[auth-debug] AppLayout redirect to /sign-in because no session");
       setOnboardingComplete(true);
       setShowGuidedTour(false);
       return;
@@ -84,17 +85,20 @@ export default function AppLayout() {
     const createdAt = session.user.created_at;
 
     if (isOnboardingCompleteSync(userId)) {
+      console.info("[auth-debug] AppLayout allow workspace, onboarding complete sync", { userId });
       setOnboardingComplete(true);
       setShowGuidedTour(shouldShowGuidedTour(userId));
       return;
     }
 
     if (!shouldRequireOnboarding(userId, createdAt)) {
+      console.info("[auth-debug] AppLayout allow workspace, no onboarding required", { userId, createdAt });
       setOnboardingComplete(true);
       setShowGuidedTour(shouldShowGuidedTour(userId));
       return;
     }
 
+    console.info("[auth-debug] AppLayout will fetch onboarding status", { userId, createdAt });
     void fetchOnboardingStatus(userId).then((record) => {
       const completed = Boolean(record?.completedAt);
       setOnboardingComplete(completed);
