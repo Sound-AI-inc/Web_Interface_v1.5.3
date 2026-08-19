@@ -1,22 +1,23 @@
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    const asset = await env.ASSETS.fetch(request);
-    if (asset.status !== 404) {
-      return asset;
+    const response = await env.ASSETS.fetch(request);
+
+    if (response.status === 404) {
+      const path = url.pathname;
+
+      if (path.startsWith("/api/")) {
+        return response;
+      }
+
+      const accept = request.headers.get("accept") || "";
+      if (accept.includes("text/html")) {
+        const indexRequest = new Request(`${url.origin}/index.html`, request);
+        return env.ASSETS.fetch(indexRequest);
+      }
     }
 
-    const indexUrl = new URL("/index.html", url.origin);
-    if (url.search) {
-      indexUrl.search = url.search;
-    }
-    if (url.hash) {
-      indexUrl.hash = url.hash;
-    }
-
-    return env.ASSETS.fetch(
-      new Request(indexUrl, request),
-    );
+    return response;
   },
 };

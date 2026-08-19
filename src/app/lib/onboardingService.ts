@@ -3,6 +3,7 @@ import { getSupabase } from "./supabase";
 export interface OnboardingData {
   profileType: string;
   discoverySource: string;
+  countryOfResidence: string;
   primaryGoal: string;
   workflowFrequency: string;
   mainDaw: string;
@@ -11,6 +12,8 @@ export interface OnboardingData {
 
 export interface OnboardingRecord extends OnboardingData {
   completedAt: string;
+  tourCompletedAt?: string;
+  tourSkippedAt?: string;
 }
 
 const localKey = (userId: string) => `soundai:onboarding:${userId}`;
@@ -89,11 +92,14 @@ function mapRow(data: Record<string, unknown>): OnboardingRecord | null {
   return {
     profileType: (data.profile_type as string) ?? "",
     discoverySource: (data.discovery_source as string) ?? "",
+    countryOfResidence: (data.country_of_residence as string) ?? "",
     primaryGoal: (data.primary_goal as string) ?? "",
     workflowFrequency: (data.workflow_frequency as string) ?? "",
     mainDaw: (data.main_daw as string) ?? "",
     painPoint: (data.pain_point as string) ?? "",
     completedAt,
+    tourCompletedAt: (data.tour_completed_at as string | undefined) ?? undefined,
+    tourSkippedAt: (data.tour_skipped_at as string | undefined) ?? undefined,
   };
 }
 
@@ -138,9 +144,9 @@ export async function fetchOnboardingStatus(userId: string): Promise<OnboardingR
   return readLocal(userId);
 }
 
-async function syncToSupabase(userId: string, payload: OnboardingData, completedAt: string) {
+async function syncToSupabase(userId: string, payload: OnboardingData, completedAt: string): Promise<boolean> {
   const supabase = getSupabase();
-  if (!supabase) return;
+  if (!supabase) return true;
 
   try {
     const { error } = await Promise.race([
@@ -149,6 +155,7 @@ async function syncToSupabase(userId: string, payload: OnboardingData, completed
           user_id: userId,
           profile_type: payload.profileType,
           discovery_source: payload.discoverySource,
+          country_of_residence: payload.countryOfResidence,
           primary_goal: payload.primaryGoal,
           workflow_frequency: payload.workflowFrequency,
           main_daw: payload.mainDaw,
@@ -163,19 +170,76 @@ async function syncToSupabase(userId: string, payload: OnboardingData, completed
     ]);
     if (error) {
       console.warn("[onboarding] Supabase save failed:", error.message);
+      return false;
     }
   } catch (err) {
     console.warn("[onboarding] Supabase save error:", err);
+    return false;
   }
+
+  return true;
+}
+
+async function syncTourStatus(userId: string, status: "completed" | "skipped"): Promise<boolean> {
+  const supabase = getSupabase();
+  if (!supabase) return true;
+
+  try {
+    const timestamp = new Date().toISOString();
+    const payload = {
+      user_id: userId,
+      ...(status === "completed" ? { tour_completed_at: timestamp } : { tour_skipped_at: timestamp }),
+    };
+
+    const { error } = await Promise.race([
+      supabase.from("user_onboarding").upsert(payload, { onConflict: "user_id" }),
+      new Promise<{ error: { message: string } }>((_, reject) => {
+        window.setTimeout(() => reject(new Error("timeout")), 8000);
+      }),
+    ]);
+
+    if (error) {
+      console.warn("[tour] Supabase save failed:", error.message);
+      return false;
+    }
+  } catch (err) {
+    console.warn("[tour] Supabase save error:", err);
+    return false;
+  }
+
+  return true;
 }
 
 export async function saveOnboarding(userId: string, payload: OnboardingData): Promise<void> {
   const completedAt = new Date().toISOString();
   const record: OnboardingRecord = { ...payload, completedAt };
+  const saved = await syncToSupabase(userId, payload, completedAt);
+  if (!saved) throw new Error("Could not save onboarding answers. Please try again.");
   writeLocal(userId, record);
   markOnboardingBypass(userId);
   clearNeedsOnboarding(userId);
-  void syncToSupabase(userId, payload, completedAt);
+}
+
+export function shouldShowGuidedTour(userId: string): boolean {
+  const local = readLocal(userId);
+  if (local?.tourCompletedAt || local?.tourSkippedAt) {
+    return false;
+  }
+  return true;
+}
+
+export async function markGuidedTour(userId: string, status: "completed" | "skipped"): Promise<void> {
+  const timestamp = new Date().toISOString();
+  const local = readLocal(userId);
+  const nextRecord: OnboardingRecord = {
+    ...(local ?? { profileType: "", discoverySource: "", countryOfResidence: "", primaryGoal: "", workflowFrequency: "", mainDaw: "", painPoint: "" }),
+    completedAt: local?.completedAt ?? timestamp,
+    tourCompletedAt: status === "completed" ? timestamp : local?.tourCompletedAt,
+    tourSkippedAt: status === "skipped" ? timestamp : local?.tourSkippedAt,
+  };
+  const saved = await syncTourStatus(userId, status);
+  if (!saved) throw new Error("Could not save guided tour status. Please try again.");
+  writeLocal(userId, nextRecord);
 }
 
 export const ONBOARDING_STEPS = [
@@ -194,6 +258,22 @@ export const ONBOARDING_STEPS = [
       "onboarding.profile.gameAudio",
       "onboarding.profile.student",
       "onboarding.profile.other",
+    ],
+  },
+  {
+    key: "countryOfResidence" as const,
+    questionKey: "onboarding.country.question" as const,
+    options: [
+      "onboarding.country.unitedStates",
+      "onboarding.country.unitedKingdom",
+      "onboarding.country.canada",
+      "onboarding.country.germany",
+      "onboarding.country.france",
+      "onboarding.country.spain",
+      "onboarding.country.netherlands",
+      "onboarding.country.australia",
+      "onboarding.country.brazil",
+      "onboarding.country.other",
     ],
   },
   {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import ThemedLogo from "../components/ThemedLogo";
 import { useAuth } from "../hooks/useAuth";
@@ -7,6 +7,7 @@ import { useLanguage } from "../i18n/LanguageProvider";
 import {
   ONBOARDING_STEPS,
   isOnboardingCompleteSync,
+  markNeedsOnboarding,
   saveOnboarding,
   shouldRequireOnboarding,
   type OnboardingData,
@@ -16,6 +17,7 @@ import type { TranslationKey } from "../i18n/translations";
 const EMPTY: OnboardingData = {
   profileType: "",
   discoverySource: "",
+  countryOfResidence: "",
   primaryGoal: "",
   workflowFrequency: "",
   mainDaw: "",
@@ -24,13 +26,14 @@ const EMPTY: OnboardingData = {
 
 export default function OnboardingSurvey() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, session, loading, configured, markFreshSession } = useAuth();
   const { t } = useLanguage();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<OnboardingData>(EMPTY);
   const [busy, setBusy] = useState(false);
-  const [checking, setChecking] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [checking, setChecking] = useState(true);
 
   const userId = user?.id ?? session?.user?.id;
   const createdAt = user?.created_at ?? session?.user?.created_at;
@@ -46,18 +49,22 @@ export default function OnboardingSurvey() {
       return;
     }
 
+    if (searchParams.get("signup") === "1") {
+      markNeedsOnboarding(userId);
+    }
+
     if (isOnboardingCompleteSync(userId)) {
-      navigate("/create", { replace: true });
+      navigate("/app/generator", { replace: true });
       return;
     }
 
     if (!shouldRequireOnboarding(userId, createdAt)) {
-      navigate("/create", { replace: true });
+      navigate("/app/generator", { replace: true });
       return;
     }
 
     setChecking(false);
-  }, [userId, createdAt, session, loading, configured, navigate]);
+  }, [userId, createdAt, session, loading, configured, navigate, searchParams]);
 
   const current = ONBOARDING_STEPS[step];
   const progress = ((step + 1) / ONBOARDING_STEPS.length) * 100;
@@ -70,19 +77,23 @@ export default function OnboardingSurvey() {
     setAnswers((prev) => ({ ...prev, [current.key]: t(optionKey) }));
   };
 
-  const finish = () => {
-    if (!userId) {
-      setError("Session lost. Please refresh and try again.");
-      return;
-    }
+  const finish = async () => {
+    if (!userId) return;
     setBusy(true);
-    saveOnboarding(userId, answers);
-    markFreshSession();
-    navigate("/create", { replace: true });
+    setError(null);
+    try {
+      await saveOnboarding(userId, answers);
+      markFreshSession();
+      navigate("/app/generator?fresh=1", { replace: true });
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Could not save onboarding answers.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const next = () => {
-    if (step >= ONBOARDING_STEPS.length - 1) finish();
+    if (step >= ONBOARDING_STEPS.length - 1) void finish();
     else setStep((s) => s + 1);
   };
 
@@ -155,6 +166,12 @@ export default function OnboardingSurvey() {
             );
           })}
         </ul>
+
+        {error && (
+          <div className="mt-5 rounded-input border border-[var(--error)]/30 bg-[var(--surface-secondary)] px-4 py-3 text-sm text-[var(--error)]">
+            {error}
+          </div>
+        )}
 
         <div className="mt-auto flex items-center justify-between gap-3 pt-10">
           <button

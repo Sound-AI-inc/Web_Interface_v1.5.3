@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getSupabase } from "../lib/supabase";
+import { createSupabase } from "../lib/supabase";
 import { ensureSignupCredits } from "../lib/creditsService";
 import { markNeedsOnboarding } from "../lib/onboardingService";
+import { useAuth } from "../hooks/useAuth";
 
 export default function AuthCallback() {
   const navigate = useNavigate();
+  const { markFreshSession } = useAuth();
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const supabase = getSupabase();
+    const supabase = createSupabase();
     if (!supabase) {
       setStatus("error");
       setError("Supabase is not configured");
@@ -20,7 +22,13 @@ export default function AuthCallback() {
     const params = new URLSearchParams(window.location.search);
     const errorParam = params.get("error");
     const errorDescription = params.get("error_description");
-    const mode = params.get("mode");
+    const urlMode = params.get("mode");
+    const storedMode = sessionStorage.getItem("soundai:oauth-mode");
+    const mode = urlMode || storedMode || "signin";
+
+    if (storedMode) {
+      sessionStorage.removeItem("soundai:oauth-mode");
+    }
 
     if (errorParam) {
       setStatus("error");
@@ -55,12 +63,20 @@ export default function AuthCallback() {
 
         await ensureSignupCredits(session.user.id);
 
-        if (mode === "signup" || isNewUser(session.user)) {
+        const isSignUp = mode === "signup" || isNewUser(session.user);
+
+        if (isSignUp) {
           markNeedsOnboarding(session.user.id);
         }
 
         setStatus("ready");
-        navigate("/onboarding", { replace: true });
+
+        if (isSignUp) {
+          navigate("/onboarding?fresh=1&signup=1", { replace: true });
+        } else {
+          markFreshSession();
+          navigate("/create?fresh=1", { replace: true });
+        }
       } catch (err) {
         console.error("[auth] callback error:", err);
         if (mounted) {
@@ -71,7 +87,7 @@ export default function AuthCallback() {
     };
 
     const waitForSession = async () => {
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 40; i++) {
         if (!mounted) return;
 
         const { data } = await supabase.auth.getSession();

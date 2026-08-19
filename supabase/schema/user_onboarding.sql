@@ -4,13 +4,19 @@ create table if not exists public.user_onboarding (
   user_id uuid primary key references auth.users (id) on delete cascade,
   profile_type text,
   discovery_source text,
+  country_of_residence text,
   primary_goal text,
   workflow_frequency text,
   main_daw text,
   pain_point text,
   completed_at timestamptz,
+  tour_completed_at timestamptz,
+  tour_skipped_at timestamptz,
   created_at timestamptz not null default now()
 );
+
+alter table public.user_onboarding
+  add column if not exists country_of_residence text;
 
 alter table public.user_onboarding enable row level security;
 

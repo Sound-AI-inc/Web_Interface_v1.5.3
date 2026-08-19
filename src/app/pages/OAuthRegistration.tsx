@@ -2,7 +2,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, LockKeyhole, Mail } from "lucide-react";
 import type { Provider } from "@supabase/supabase-js";
-import { getSupabase } from "../lib/supabase";
+import { getSupabase, supabaseConfigured } from "../lib/supabase";
 import { ensureSignupCredits } from "../lib/creditsService";
 import { markNeedsOnboarding } from "../lib/onboardingService";
 import { useAuth } from "../hooks/useAuth";
@@ -25,6 +25,7 @@ export default function OAuthRegistration() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const copy = useMemo(
@@ -50,46 +51,42 @@ export default function OAuthRegistration() {
   const redirectAfterSignUp = (userId?: string) => {
     if (userId) markNeedsOnboarding(userId);
     markFreshSession();
-    navigate("/onboarding", { replace: true });
+    navigate("/onboarding?signup=1", { replace: true });
   };
 
   const redirectAfterSignIn = () => {
     markFreshSession();
-    navigate("/app/generator?fresh=1", { replace: true });
+    navigate("/create?fresh=1", { replace: true });
   };
 
   const startOAuth = async (provider: Provider) => {
     setError(null);
+    setNotice(null);
     const supabase = getSupabase();
     if (!supabase) {
-      console.warn("[auth-debug] OAuth button clicked but Supabase is not configured");
-      setError("Auth is not configured yet. Please set Supabase variables and try again.");
+      if (isSignUp) redirectAfterSignUp();
+      else redirectAfterSignIn();
       return;
     }
 
-    const redirectTo = `${window.location.origin}/auth/callback?mode=${isSignUp ? "signup" : "signin"}`;
-    console.info("[auth-debug] OAuth button clicked", { provider, isSignUp, redirectTo });
-
+    const mode = isSignUp ? "signup" : "signin";
+    sessionStorage.setItem("soundai:oauth-mode", mode);
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo,
+        redirectTo: `${window.location.origin}/auth/callback?mode=${mode}`,
         queryParams: provider === "google" ? { access_type: "offline", prompt: "consent" } : undefined,
       },
     });
 
-    if (oauthError) {
-      console.error("[auth-debug] signInWithOAuth error", oauthError.message);
-      setError(oauthError.message);
-    } else {
-      console.info("[auth-debug] signInWithOAuth initiated successfully");
-    }
+    if (oauthError) setError(oauthError.message);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setBusy(true);
     setError(null);
+    setNotice(null);
 
     try {
       const supabase = getSupabase();
@@ -104,20 +101,14 @@ export default function OAuthRegistration() {
           password,
           options: {
             data: { full_name: fullName },
-            emailRedirectTo: `${window.location.origin}/auth/callback?mode=signup`,
+            emailRedirectTo: `${window.location.origin}/onboarding?signup=1&fresh=1`,
           },
         });
         if (signUpError) throw signUpError;
         const { data: sessionData } = await supabase.auth.getSession();
-        const userId = sessionData.session?.user?.id;
-        if (userId) {
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .upsert({ id: userId, full_name: fullName }, { onConflict: "id" });
-          if (profileError) console.warn("[auth] email profile upsert failed:", profileError.message);
-          await ensureSignupCredits(userId);
-          markNeedsOnboarding(userId);
-          redirectAfterSignUp(userId);
+        if (sessionData.session?.user) {
+          await ensureSignupCredits(sessionData.session.user.id);
+          redirectAfterSignUp(sessionData.session.user.id);
         } else {
           redirectAfterSignUp();
         }
@@ -129,6 +120,35 @@ export default function OAuthRegistration() {
       redirectAfterSignIn();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Authentication failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const recoverPassword = async () => {
+    setError(null);
+    setNotice(null);
+
+    if (!email) {
+      setError("Enter your email first, then request a password reset.");
+      return;
+    }
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      setNotice("Demo auth is active. Password recovery requires Supabase configuration.");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/sign-in`,
+      });
+      if (resetError) throw resetError;
+      setNotice("Password reset email sent.");
+    } catch (resetError) {
+      setError(resetError instanceof Error ? resetError.message : "Could not send password reset email.");
     } finally {
       setBusy(false);
     }
@@ -149,14 +169,7 @@ export default function OAuthRegistration() {
               <ArrowLeft className="h-4 w-4" />
               Back to website
             </Link>
-            <div className="mb-8 flex items-center gap-3">
-              <img
-                src="/logo SoundAI v1.5 (1).svg"
-                alt="SoundAI"
-                className="h-10 w-10"
-              />
-              <span className="font-syne text-[28px] font-bold tracking-[-0.03em]">SoundAI</span>
-            </div>
+            <div className="font-syne text-[42px] font-bold tracking-[-0.03em]">SoundAI</div>
             <p className="mt-6 max-w-md font-codec text-[22px] font-medium leading-snug text-[var(--text-primary)]">
               Create production-ready
             </p>
@@ -176,14 +189,6 @@ export default function OAuthRegistration() {
 
         <section className="flex justify-center lg:justify-end">
           <div className="auth-card w-full max-w-[560px] p-8 sm:p-10">
-            <div className="mb-8 flex items-center gap-3">
-              <img
-                src="/logo SoundAI v1.5 (1).svg"
-                alt="SoundAI"
-                className="h-8 w-8"
-              />
-              <span className="font-syne text-xl font-bold">SoundAI</span>
-            </div>
             <div className="mb-8">
               <h1 className="font-syne text-[28px] font-bold">{copy.title}</h1>
               <p className="mt-2 text-sm text-[var(--text-secondary)]">
@@ -192,6 +197,11 @@ export default function OAuthRegistration() {
                   {copy.switchLabel}
                 </Link>
               </p>
+              {!supabaseConfigured() && (
+                <span className="mt-3 inline-flex rounded-full border border-[var(--border-primary)] bg-[var(--surface-secondary)] px-3 py-1 text-[11px] font-semibold text-primary">
+                  Demo auth
+                </span>
+              )}
             </div>
 
             <div className="grid gap-3">
@@ -267,10 +277,26 @@ export default function OAuthRegistration() {
                 </div>
               )}
 
+              {notice && (
+                <div className="rounded-input border border-primary/30 bg-[var(--surface-secondary)] px-4 py-3 text-sm text-primary">
+                  {notice}
+                </div>
+              )}
+
               <button type="submit" disabled={busy} className="app-btn-primary w-full py-3">
                 {busy ? "Please wait…" : copy.cta}
                 <ArrowRight className="h-4 w-4" />
               </button>
+              {!isSignUp && (
+                <button
+                  type="button"
+                  onClick={() => void recoverPassword()}
+                  disabled={busy}
+                  className="w-full text-center text-sm font-semibold text-primary transition-opacity hover:opacity-80 disabled:opacity-50"
+                >
+                  Forgot password?
+                </button>
+              )}
             </form>
           </div>
         </section>
