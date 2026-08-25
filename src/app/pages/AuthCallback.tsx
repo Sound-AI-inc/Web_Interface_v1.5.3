@@ -115,14 +115,36 @@ export default function AuthCallback() {
       });
 
       setStatus("error");
-      setError("Этот аккаунт уже зарегистрирован. Перейдите на страницу входа.");
+      setError("пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.");
       setHints([
-        "Вы пытались зарегистрироваться, но аккаунт с таким email уже существует.",
-        "Перейдите на страницу входа или восстановите пароль.",
+        "пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ email пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.",
+        "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.",
       ]);
     };
 
     const waitForSession = async () => {
+      const authCode = params.get("code")
+      if (authCode) {
+        try {
+          console.info("[auth-debug] PKCE exchange attempt", { authCode, mode })
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(authCode)
+          if (exchangeError) {
+            console.warn("[auth-debug] exchange error", exchangeError.message)
+          } else if (data?.session) {
+            console.info("[auth-debug] exchange success", { userId: data.session.user?.id, email: data.session.user?.email })
+            if (mode === "signup" && !isNewUser(data.session.user)) {
+              handleDuplicateAccount(data.session)
+              return
+            }
+            await handleAuthReady(data.session)
+            return
+          }
+        } catch (err) {
+          console.warn("[auth-debug] exchange exception", err)
+        }
+      }
+
+
       for (let i = 0; i < 40; i++) {
         if (!mounted) return;
 
@@ -179,10 +201,10 @@ export default function AuthCallback() {
         });
 
         const timeoutHints: string[] = [
-          "Проверьте URL в адресной строке: должны быть параметры access_token или code.",
-          "Если приложение открыто во встроенном окне (iframe), третьи-party cookies могут блокироваться.",
-          "Проверьте настройки Redirect URLs в панели Supabase (Authentication > URL Configuration).",
-          "Убедитесь, что в Supabase включены провайдеры Google и Spotify.",
+          "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ URL пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ access_token пїЅпїЅпїЅ code.",
+          "пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ (iframe), пїЅпїЅпїЅпїЅпїЅпїЅ-party cookies пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.",
+          "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ Redirect URLs пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ Supabase (Authentication > URL Configuration).",
+          "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅ Supabase пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ Google пїЅ Spotify.",
         ];
 
         setHints(timeoutHints);
@@ -209,7 +231,7 @@ export default function AuthCallback() {
   if (status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--background-primary)]">
-        <div className="font-codec text-sm text-[var(--text-secondary)]">Completing authentication…</div>
+        <div className="font-codec text-sm text-[var(--text-secondary)]">Completing authenticationпїЅ</div>
       </div>
     );
   }
@@ -223,7 +245,7 @@ export default function AuthCallback() {
           </div>
           {hints.length > 0 && (
             <div className="rounded-input border border-[var(--border-primary)] bg-[var(--surface-secondary)] px-4 py-3 text-sm text-[var(--text-secondary)]">
-              <p className="mb-2 font-semibold text-[var(--text-primary)]">Подсказки для отладки:</p>
+              <p className="mb-2 font-semibold text-[var(--text-primary)]">пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ:</p>
               <ul className="list-inside list-disc space-y-1">
                 {hints.map((hint, idx) => (
                   <li key={idx}>{hint}</li>
