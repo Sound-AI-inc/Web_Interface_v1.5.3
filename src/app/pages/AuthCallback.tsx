@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createSupabase } from "../lib/supabase";
+import { getSupabase } from "../lib/supabase";
 import { ensureSignupCredits } from "../lib/creditsService";
 import { markNeedsOnboarding } from "../lib/onboardingService";
 import { useAuth } from "../hooks/useAuth";
@@ -13,7 +13,7 @@ export default function AuthCallback() {
   const [hints, setHints] = useState<string[]>([]);
 
   useEffect(() => {
-    const supabase = createSupabase();
+    const supabase = getSupabase();
     if (!supabase) {
       setStatus("error");
       setError("Supabase is not configured");
@@ -47,6 +47,12 @@ export default function AuthCallback() {
       hasRefreshToken: !!params.get("refresh_token"),
       hasCode: !!params.get("code"),
       hasError: !!params.get("error"),
+    });
+
+    const codeVerifierKey = Object.keys(window.localStorage).find(k => k.endsWith("-code-verifier"));
+    console.info("[auth-debug] code_verifier check", {
+      hasCodeVerifier: !!codeVerifierKey,
+      codeVerifierKey,
     });
 
     let mounted = true;
