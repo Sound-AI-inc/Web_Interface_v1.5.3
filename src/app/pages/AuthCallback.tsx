@@ -12,6 +12,12 @@ export default function AuthCallback() {
   const [error, setError] = useState<string | null>(null);
   const [hints, setHints] = useState<string[]>([]);
 
+  console.info("[auth-debug] AuthCallback RENDER", {
+    url: window.location.href,
+    search: window.location.search,
+    isIframe: window.self !== window.top,
+  });
+
   useEffect(() => {
     const supabase = getSupabase();
     if (!supabase) {
@@ -53,10 +59,29 @@ export default function AuthCallback() {
     console.info("[auth-debug] code_verifier check", {
       hasCodeVerifier: !!codeVerifierKey,
       codeVerifierKey,
+      allLocalStorageKeys: Object.keys(window.localStorage),
+      allSessionStorageKeys: Object.keys(window.sessionStorage),
     });
 
     let mounted = true;
     let timeoutId: ReturnType<typeof setTimeout>;
+
+    const {
+      data: { subscription: authListener },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.info("[auth-debug] onAuthStateChange listener", {
+        event,
+        hasSession: Boolean(session),
+        userId: session?.user?.id,
+      });
+      if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session && mounted) {
+        console.info("[auth-debug] SIGNED_IN received via listener", {
+          userId: session.user?.id,
+          mode,
+        });
+        void handleAuthReady(session);
+      }
+    });;
 
     const handleAuthReady = async (session: any) => {
       if (!mounted) return;
@@ -221,11 +246,12 @@ export default function AuthCallback() {
 
     void waitForSession();
 
-    return () => {
-      mounted = false;
-      clearTimeout(timeoutId);
-    };
-  }, [navigate]);
+     return () => {
+       mounted = false;
+       clearTimeout(timeoutId);
+       authListener.unsubscribe();
+     };
+   }, [navigate]);
 
   function isNewUser(user: { created_at?: string; last_sign_in_at?: string }): boolean {
     const created = user.created_at ? new Date(user.created_at).getTime() : 0;

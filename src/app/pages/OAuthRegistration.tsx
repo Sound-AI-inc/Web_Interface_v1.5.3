@@ -99,9 +99,13 @@ export default function OAuthRegistration() {
       });
       setError(oauthError.message);
     } else {
+      const codeVerifierKey = Object.keys(window.localStorage).find(k => k.endsWith("-code-verifier"));
       console.info("[auth-debug] OAuth redirect succeeded", {
         provider,
         mode,
+        codeVerifierStored: !!codeVerifierKey,
+        codeVerifierKey,
+        allLocalStorageKeys: Object.keys(window.localStorage),
       });
     }
   };
