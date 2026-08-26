@@ -16,6 +16,16 @@ export default function AuthCallback() {
     url: window.location.href,
     search: window.location.search,
     isIframe: window.self !== window.top,
+    localStorageAvailable: (() => {
+      try {
+        const test = "__ls_test__";
+        window.localStorage.setItem(test, "1");
+        window.localStorage.removeItem(test);
+        return true;
+      } catch {
+        return false;
+      }
+    })(),
   });
 
   useEffect(() => {

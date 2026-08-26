@@ -14,7 +14,15 @@ export default {
       const accept = request.headers.get("accept") || "";
       if (accept.includes("text/html")) {
         const indexRequest = new Request(`${url.origin}/index.html`, request);
-        return env.ASSETS.fetch(indexRequest);
+        const indexResponse = await env.ASSETS.fetch(indexRequest);
+        
+        const headers = new Headers(indexResponse.headers);
+        headers.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+        
+        return new Response(indexResponse.body, {
+          ...indexResponse,
+          headers,
+        });
       }
     }
 
