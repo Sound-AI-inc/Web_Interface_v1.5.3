@@ -15,24 +15,11 @@ export function getSupabase(): SupabaseClient | null {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true,
+      detectSessionInUrl: false,
       flowType: "pkce",
-      debug: true,
     },
   });
   return _client;
-}
-
-export function createSupabase(): SupabaseClient | null {
-  if (!url || !anon) return null;
-  return createClient(url, anon, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-      flowType: "pkce",
-    },
-  });
 }
 
 export function supabaseConfigured(): boolean {

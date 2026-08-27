@@ -64,25 +64,13 @@ export default function OAuthRegistration() {
     setNotice(null);
     const supabase = getSupabase();
     if (!supabase) {
-      console.warn("[auth-debug] OAuth start: Supabase not configured, using fallback redirect", {
-        provider,
-        isSignUp,
-        pathname: location.pathname,
-      });
-      if (isSignUp) redirectAfterSignUp();
-      else redirectAfterSignIn();
+      setError("Auth is not configured. Please try again later.");
       return;
     }
 
     const mode = isSignUp ? "signup" : "signin";
-    console.info("[auth-debug] OAuth start", {
-      provider,
-      mode,
-      pathname: location.pathname,
-      redirectTo: `${window.location.origin}/auth/callback?mode=${mode}`,
-    });
-
     sessionStorage.setItem("soundai:oauth-mode", mode);
+
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
@@ -92,21 +80,7 @@ export default function OAuthRegistration() {
     });
 
     if (oauthError) {
-      console.error("[auth-debug] OAuth redirect failed", {
-        provider,
-        mode,
-        error: oauthError.message,
-      });
       setError(oauthError.message);
-    } else {
-      const codeVerifierKey = Object.keys(window.localStorage).find(k => k.endsWith("-code-verifier"));
-      console.info("[auth-debug] OAuth redirect succeeded", {
-        provider,
-        mode,
-        codeVerifierStored: !!codeVerifierKey,
-        codeVerifierKey,
-        allLocalStorageKeys: Object.keys(window.localStorage),
-      });
     }
   };
 
@@ -312,7 +286,7 @@ export default function OAuthRegistration() {
               )}
 
               <button type="submit" disabled={busy} className="app-btn-primary w-full py-3">
-                {busy ? "Please wait…" : copy.cta}
+                {busy ? "Please waitâ€¦" : copy.cta}
                 <ArrowRight className="h-4 w-4" />
               </button>
               {!isSignUp && (
