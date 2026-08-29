@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, LockKeyhole, Mail } from "lucide-react";
 import type { Provider } from "@supabase/supabase-js";
 import { getSupabase, supabaseConfigured } from "../lib/supabase";
-import { ensureSignupCredits } from "../lib/creditsService";
 import { markNeedsOnboarding } from "../lib/onboardingService";
 import { useAuth } from "../hooks/useAuth";
 
@@ -108,8 +107,7 @@ export default function OAuthRegistration() {
         });
         if (signUpError) throw signUpError;
         const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData.session?.user) {
-          await ensureSignupCredits(sessionData.session.user.id);
+         if (sessionData.session?.user) {
           redirectAfterSignUp(sessionData.session.user.id);
         } else {
           redirectAfterSignUp();

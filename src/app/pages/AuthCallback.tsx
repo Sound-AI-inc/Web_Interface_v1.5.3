@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ensureSignupCredits } from "../lib/creditsService";
-import { markNeedsOnboarding } from "../lib/onboardingService";
 import { getSupabase } from "../lib/supabase";
+import { markNeedsOnboarding } from "../lib/onboardingService";
 import { useAuth } from "../hooks/useAuth";
 
 type OAuthMode = "signin" | "signup";
 
 function readOAuthMode(url: URL): OAuthMode {
-  const mode = url.searchParams.get("mode") ?? sessionStorage.getItem("soundai:oauth-mode");
+  const mode =
+    url.searchParams.get("mode") ??
+    sessionStorage.getItem("soundai:oauth-mode");
   sessionStorage.removeItem("soundai:oauth-mode");
   return mode === "signup" ? "signup" : "signin";
 }
@@ -24,15 +25,20 @@ export default function AuthCallback() {
     processingRef.current = true;
 
     const completeOAuth = async () => {
+      const timingStart = performance.now();
       const supabase = getSupabase();
+
       if (!supabase) {
         throw new Error("Authentication is not configured.");
       }
 
       const url = new URL(window.location.href);
+
       const code = url.searchParams.get("code");
       const oauthError = url.searchParams.get("error");
-      const oauthErrorDescription = url.searchParams.get("error_description");
+      const oauthErrorDescription =
+        url.searchParams.get("error_description");
+
       const mode = readOAuthMode(url);
 
       if (oauthError) {
@@ -43,52 +49,59 @@ export default function AuthCallback() {
         throw new Error("Missing OAuth authorization code.");
       }
 
-      console.info("[auth-debug] Exchanging OAuth code for session");
+      console.info("[auth-timing] callback_start", { mode, hasCode: Boolean(code) });
 
-      const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+      const {
+        data,
+        error: exchangeError,
+      } = await supabase.auth.exchangeCodeForSession(code);
 
       if (exchangeError) {
-        console.error("[auth-debug] OAuth exchange failed", exchangeError);
+        console.error("[auth-timing] OAuth exchange failed", exchangeError);
         throw exchangeError;
       }
 
       const session = data.session;
+
       if (!session?.user) {
         throw new Error("OAuth completed but no user session was created.");
       }
 
       const user = session.user;
 
-      console.info("[auth-debug] OAuth session created", {
+      console.info("[auth-timing] session_created", {
         userId: user.id,
-        mode,
+        email: user.email,
+        elapsedMs: Math.round(performance.now() - timingStart),
       });
 
-      window.history.replaceState({}, document.title, "/auth/callback");
-
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .upsert({ id: user.id }, { onConflict: "id" });
-
-      if (profileError) {
-        throw profileError;
-      }
+      window.history.replaceState(
+        {},
+        document.title,
+        "/auth/callback"
+      );
 
       markFreshSession();
+      console.info("[auth-timing] redirect", {
+        target: mode === "signup" ? "/onboarding" : "/create",
+        elapsedMs: Math.round(performance.now() - timingStart),
+      });
 
       if (mode === "signup") {
-        await ensureSignupCredits(user.id);
         markNeedsOnboarding(user.id);
-        navigate("/onboarding?fresh=1&signup=1", { replace: true });
-        return;
+        navigate("/onboarding?signup=1", { replace: true });
+      } else {
+        navigate("/create?fresh=1", { replace: true });
       }
-
-      navigate("/create?fresh=1", { replace: true });
     };
 
     void completeOAuth().catch((err) => {
       console.error("[auth-debug] OAuth callback failed", err);
-      setError(err instanceof Error ? err.message : "Authentication failed.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Authentication failed."
+      );
     });
   }, [navigate, markFreshSession]);
 
@@ -99,10 +112,13 @@ export default function AuthCallback() {
           <div className="rounded-input border border-[var(--error)]/30 bg-[var(--surface-secondary)] p-4 text-sm text-[var(--error)]">
             {error}
           </div>
-
           <button
             type="button"
-            onClick={() => navigate("/sign-in", { replace: true })}
+            onClick={() =>
+              navigate("/sign-in", {
+                replace: true,
+              })
+            }
             className="app-btn-primary mt-4 w-full"
           >
             Return to sign in
@@ -115,7 +131,7 @@ export default function AuthCallback() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--background-primary)]">
       <div className="font-codec text-sm text-[var(--text-secondary)]">
-        Completing authentication...
+        Completing authentication…
       </div>
     </div>
   );

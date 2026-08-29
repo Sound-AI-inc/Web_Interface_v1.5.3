@@ -77,7 +77,7 @@ export function useCredits(): CreditsState {
       setSpent(nextSpent);
 
       if (user) {
-        const saved = await upsertUserCredits(user.id, next, total, nextSpent);
+        const saved = await upsertUserCredits(user.id, next, total);
         if (!saved) {
           setRemaining(previousRemaining);
           setSpent(previousSpent);

@@ -26,7 +26,6 @@ import {
 } from "../state/workspaceStore";
 import { useLanguage } from "../i18n/LanguageProvider";
 import { useCredits } from "../hooks/useCredits";
-import { useAuth } from "../hooks/useAuth";
 
 const LITE_TYPES = ["Audio Sample"] as const;
 const LITE_MODELS_BY_TYPE: Record<(typeof LITE_TYPES)[number], string[]> = {
@@ -118,7 +117,6 @@ export default function AudioGenerator() {
   const navigate = useNavigate();
   const { mode } = useInterfaceMode();
   const { t } = useLanguage();
-  const { user } = useAuth();
   const isPro = mode === "pro";
 
   const activeChatId = useWorkspaceStore((s) => s.activeChatId);
@@ -395,19 +393,7 @@ export default function AudioGenerator() {
 
       const chatId = ensureActiveChat();
       appendBatch(chatId, batch, response.items);
-      const createdChat = useWorkspaceStore.getState().chats.find((c) => c.id === chatId);
-      void recordGenerationHistory({
-        userId: user?.id ?? null,
-        projectId: createdChat?.projectId ?? null,
-        generationId: batch.id,
-        prompt: promptValue,
-        generationType: type,
-        model: resolvedModel,
-        format: resolvedFormat,
-        count: actualCount,
-        creditsSpent: chargeAmount,
-        status: "success",
-      });
+      void recordGenerationHistory();
       setPrompt("");
       setPending(null);
     } catch (error) {

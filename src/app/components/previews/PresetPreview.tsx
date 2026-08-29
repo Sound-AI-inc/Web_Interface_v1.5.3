@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import * as Tone from "tone";
+import type * as Tone from "tone";
 import { Play, Pause } from "lucide-react";
 import { useInterfaceMode } from "../../hooks/useInterfaceMode";
+import { loadTone } from "../../lib/toneLoader";
 import type { PresetGlance } from "../../data/mock";
 import { midiToNoteName } from "../../lib/pianoSampler";
 
@@ -27,16 +28,18 @@ export default function PresetPreview({ preset, className = "" }: PresetPreviewP
 
   useEffect(() => {
     return () => {
-      stop();
-      synthRef.current?.dispose();
-      filterRef.current?.dispose();
-      synthRef.current = null;
-      filterRef.current = null;
+      void (async () => {
+        const Tone = await loadTone();
+        stop(Tone);
+        synthRef.current?.dispose();
+        filterRef.current?.dispose();
+        synthRef.current = null;
+        filterRef.current = null;
+      })();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const buildChain = () => {
+  const buildChain = (Tone: typeof import("tone")) => {
     filterRef.current?.dispose();
     synthRef.current?.dispose();
     const filter = new Tone.Filter({
@@ -58,7 +61,7 @@ export default function PresetPreview({ preset, className = "" }: PresetPreviewP
     synthRef.current = synth;
   };
 
-  const stop = () => {
+  const stop = (Tone: typeof import("tone")) => {
     const transport = Tone.getTransport();
     scheduledIds.current.forEach((id) => transport.clear(id));
     scheduledIds.current = [];
@@ -70,11 +73,13 @@ export default function PresetPreview({ preset, className = "" }: PresetPreviewP
 
   const toggle = async () => {
     if (playing) {
-      stop();
+      const Tone = await loadTone();
+      stop(Tone);
       return;
     }
+    const Tone = await loadTone();
     await Tone.start();
-    buildChain();
+    buildChain(Tone);
     const synth = synthRef.current!;
     const transport = Tone.getTransport();
     transport.stop();
@@ -85,7 +90,7 @@ export default function PresetPreview({ preset, className = "" }: PresetPreviewP
         synth.triggerAttackRelease(midiToNoteName(n.pitch), n.duration, time, 0.7);
       }, n.start),
     );
-    transport.scheduleOnce(() => stop(), total + preset.release + 0.1);
+    transport.scheduleOnce(() => stop(Tone), total + preset.release + 0.1);
     transport.start();
     setPlaying(true);
   };
