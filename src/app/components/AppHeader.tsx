@@ -53,7 +53,7 @@ export default function AppHeader() {
         </span>
       </div>
 
-      <div className="mode-toggle" aria-label="Product mode" data-tour="interface-mode">
+      <div className="mode-toggle" aria-label="Product mode">
         {(["lite", "pro"] as const).map((nextMode) => (
           <button
             key={nextMode}
@@ -68,13 +68,12 @@ export default function AppHeader() {
       </div>
 
       <div className="flex min-w-0 items-center justify-end gap-2">
-          <button
-            type="button"
-            data-tour="credits"
-            onClick={() => navigate("/app/billing")}
-            className={`credits-pill flex items-center gap-2 ${low ? "credits-pill--low" : ""}`}
-            title={low ? t("header.lowCredits") : undefined}
-          >
+        <button
+          type="button"
+          onClick={() => navigate("/app/billing")}
+          className={`credits-pill flex items-center gap-2 ${low ? "credits-pill--low" : ""}`}
+          title={low ? t("header.lowCredits") : undefined}
+        >
           <Coins className="h-4 w-4 text-primary" />
           <span>
             <span className={low ? "text-primary" : ""}>{loading ? "…" : remaining}</span>{" "}

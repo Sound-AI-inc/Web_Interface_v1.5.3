@@ -2,12 +2,17 @@ import { useEffect, useRef, useState } from "react";
 import { Play, Pause } from "lucide-react";
 import type { LibraryAsset } from "../data/mock";
 import { getPianoSampler } from "../lib/pianoSampler";
-import { loadTone } from "../lib/toneLoader";
+import * as Tone from "tone";
 
 interface FolderFilePlayerProps {
   asset: LibraryAsset;
 }
 
+/**
+ * Ultra-compact player used inside Library folder rows. Supports all three
+ * asset kinds (audio / midi / preset) through lightweight inline playback —
+ * no waveform rendering, just a play/pause pill + title + format meta.
+ */
 export default function FolderFilePlayer({ asset }: FolderFilePlayerProps) {
   const [playing, setPlaying] = useState(false);
   const ctxRef = useRef<AudioContext | null>(null);
@@ -15,7 +20,11 @@ export default function FolderFilePlayer({ asset }: FolderFilePlayerProps) {
   const timeoutRef = useRef<number | null>(null);
   const scheduledIds = useRef<number[]>([]);
 
-  const stopAll = async () => {
+  useEffect(() => {
+    return () => stopAll();
+  }, []);
+
+  const stopAll = () => {
     try {
       sourceRef.current?.stop();
     } catch {
@@ -24,7 +33,6 @@ export default function FolderFilePlayer({ asset }: FolderFilePlayerProps) {
     sourceRef.current = null;
     if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     timeoutRef.current = null;
-    const Tone = await loadTone();
     const transport = Tone.getTransport();
     scheduledIds.current.forEach((id) => transport.clear(id));
     scheduledIds.current = [];
@@ -32,12 +40,6 @@ export default function FolderFilePlayer({ asset }: FolderFilePlayerProps) {
     transport.position = 0;
     setPlaying(false);
   };
-
-  useEffect(() => {
-    return () => {
-      void stopAll();
-    };
-  }, []);
 
   const playAudio = async () => {
     if (!ctxRef.current) ctxRef.current = new AudioContext();
@@ -62,7 +64,6 @@ export default function FolderFilePlayer({ asset }: FolderFilePlayerProps) {
 
   const playMidi = async () => {
     if (!asset.notes || asset.notes.length === 0) return;
-    const Tone = await loadTone();
     await Tone.start();
     const sampler = await getPianoSampler();
     const transport = Tone.getTransport();
@@ -89,12 +90,11 @@ export default function FolderFilePlayer({ asset }: FolderFilePlayerProps) {
         asset.durationSeconds,
       ) + 0.4;
     timeoutRef.current = window.setTimeout(() => {
-      void stopAll();
+      stopAll();
     }, dur * 1000);
   };
 
   const playPreset = async () => {
-    const Tone = await loadTone();
     await Tone.start();
     const synth = new Tone.MonoSynth({
       envelope: {
@@ -131,7 +131,7 @@ export default function FolderFilePlayer({ asset }: FolderFilePlayerProps) {
 
   const toggle = async () => {
     if (playing) {
-      await stopAll();
+      stopAll();
       return;
     }
     if (asset.kind === "audio") await playAudio();

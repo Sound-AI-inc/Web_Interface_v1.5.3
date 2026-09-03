@@ -36,20 +36,19 @@ interface NavItem {
   icon: LucideIcon;
   disabled?: boolean;
   badge?: string;
-  tour?: string;
 }
 
 const coreProduct: NavItem[] = [
-  { labelKey: "nav.audioGenerator", to: "/create", icon: Sparkles, tour: "create" },
-  { labelKey: "nav.prompts", to: "/app/prompts", icon: Lightbulb, tour: "prompts" },
+  { labelKey: "nav.audioGenerator", to: "/app/generator", icon: Sparkles },
+  { labelKey: "nav.prompts", to: "/app/prompts", icon: Lightbulb },
   { labelKey: "nav.arrangement", to: "/app/arrangement", icon: LayoutGrid, disabled: true, badge: "SOON" },
-  { labelKey: "nav.editor", to: "/app/editor", icon: Pencil, tour: "editor" },
+  { labelKey: "nav.editor", to: "/app/editor", icon: Pencil },
 ];
 
 const assetsSystem: NavItem[] = [
-  { labelKey: "nav.library", to: "/app/library", icon: LibraryIcon, tour: "library" },
-  { labelKey: "nav.export", to: "/app/export", icon: Upload, tour: "export" },
-  { labelKey: "nav.integrations", to: "/app/integrations", icon: Plug, tour: "integrations" },
+  { labelKey: "nav.library", to: "/app/library", icon: LibraryIcon },
+  { labelKey: "nav.export", to: "/app/export", icon: Upload },
+  { labelKey: "nav.integrations", to: "/app/integrations", icon: Plug },
   { labelKey: "nav.billing", to: "/app/billing", icon: CreditCard },
 ];
 
@@ -78,7 +77,6 @@ function Item({
     return (
       <button
         type="button"
-        data-tour={item.tour}
         onClick={onOpenUpgrade}
         title={collapsed ? `${label} — ${t("sidebar.pro")}` : undefined}
         className={`${collapsed ? collapsedBase : NAV_ITEM_BASE} text-text/45 hover:bg-[var(--surface-secondary)] hover:text-text`}
@@ -96,7 +94,6 @@ function Item({
   if (item.disabled) {
     return (
       <div
-        data-tour={item.tour}
         className={`${collapsed ? collapsedBase : NAV_ITEM_BASE} cursor-not-allowed text-text/30`}
         title={collapsed ? `${label}${item.badge ? ` • ${item.badge}` : ""}` : undefined}
         aria-disabled
@@ -116,12 +113,11 @@ function Item({
     );
   }
   return (
-      <NavLink
-      data-tour={item.tour}
+    <NavLink
       to={item.to}
       title={collapsed ? label : undefined}
       onClick={() => {
-        if (item.to === "/create" || item.to === "/app/generator") {
+        if (item.to === "/app/generator") {
           startNewSession();
         }
       }}

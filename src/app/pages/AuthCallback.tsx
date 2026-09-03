@@ -1,125 +1,282 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getSupabase } from "../lib/supabase";
+import { ensureSignupCredits } from "../lib/creditsService";
 import { markNeedsOnboarding } from "../lib/onboardingService";
 import { useAuth } from "../hooks/useAuth";
-
-type OAuthMode = "signin" | "signup";
-
-function readOAuthMode(url: URL): OAuthMode {
-  const mode =
-    url.searchParams.get("mode") ??
-    sessionStorage.getItem("soundai:oauth-mode");
-  sessionStorage.removeItem("soundai:oauth-mode");
-  return mode === "signup" ? "signup" : "signin";
-}
 
 export default function AuthCallback() {
   const navigate = useNavigate();
   const { markFreshSession } = useAuth();
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState<string | null>(null);
-  const processingRef = useRef(false);
+  const [hints, setHints] = useState<string[]>([]);
+
+  console.info("[auth-debug] AuthCallback RENDER", {
+    url: window.location.href,
+    search: window.location.search,
+  });
 
   useEffect(() => {
-    if (processingRef.current) return;
-    processingRef.current = true;
+    const supabase = getSupabase();
+    if (!supabase) {
+      setStatus("error");
+      setError("Supabase is not configured");
+      return;
+    }
 
-    const completeOAuth = async () => {
-      const timingStart = performance.now();
-      const supabase = getSupabase();
+    const params = new URLSearchParams(window.location.search);
+    const errorParam = params.get("error");
+    const errorDescription = params.get("error_description");
+    const urlMode = params.get("mode");
+    const storedMode = sessionStorage.getItem("soundai:oauth-mode");
+    const mode = urlMode || storedMode || "signin";
 
-      if (!supabase) {
-        throw new Error("Authentication is not configured.");
-      }
+    if (storedMode) {
+      sessionStorage.removeItem("soundai:oauth-mode");
+    }
 
-      const url = new URL(window.location.href);
+    if (errorParam) {
+      setStatus("error");
+      setError(errorDescription || errorParam);
+      return;
+    }
 
-      const code = url.searchParams.get("code");
-      const oauthError = url.searchParams.get("error");
-      const oauthErrorDescription =
-        url.searchParams.get("error_description");
+    console.info("[auth-debug] AuthCallback mounted", {
+      mode,
+      url: window.location.href,
+      search: window.location.search,
+    });
 
-      const mode = readOAuthMode(url);
+    let mounted = true;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
-      if (oauthError) {
-        throw new Error(oauthErrorDescription || oauthError);
-      }
-
-      if (!code) {
-        throw new Error("Missing OAuth authorization code.");
-      }
-
-      console.info("[auth-timing] callback_start", { mode, hasCode: Boolean(code) });
-
-      const {
-        data,
-        error: exchangeError,
-      } = await supabase.auth.exchangeCodeForSession(code);
-
-      if (exchangeError) {
-        console.error("[auth-timing] OAuth exchange failed", exchangeError);
-        throw exchangeError;
-      }
-
-      const session = data.session;
-
-      if (!session?.user) {
-        throw new Error("OAuth completed but no user session was created.");
-      }
-
-      const user = session.user;
-
-      console.info("[auth-timing] session_created", {
-        userId: user.id,
-        email: user.email,
-        elapsedMs: Math.round(performance.now() - timingStart),
+    const {
+      data: { subscription: authListener },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.info("[auth-debug] onAuthStateChange listener", {
+        event,
+        hasSession: Boolean(session),
+        userId: session?.user?.id,
       });
+      if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session && mounted) {
+        console.info("[auth-debug] SIGNED_IN received via listener", {
+          userId: session.user?.id,
+          mode,
+        });
+        void handleAuthReady(session);
+      }
+    });
 
-      window.history.replaceState(
-        {},
-        document.title,
-        "/auth/callback"
-      );
+    const handleAuthReady = async (session: any) => {
+      if (!mounted) return;
 
-      markFreshSession();
-      console.info("[auth-timing] redirect", {
-        target: mode === "signup" ? "/onboarding" : "/create",
-        elapsedMs: Math.round(performance.now() - timingStart),
-      });
+      try {
+        console.info("[auth-debug] AuthCallback session ready", {
+          userId: session.user?.id,
+          email: session.user?.email,
+          mode,
+          isNewUser: isNewUser(session.user),
+          createdAt: session.user?.created_at,
+          lastSignInAt: session.user?.last_sign_in_at,
+        });
 
-      if (mode === "signup") {
-        markNeedsOnboarding(user.id);
-        navigate("/onboarding?signup=1", { replace: true });
-      } else {
-        navigate("/create?fresh=1", { replace: true });
+        // Ensure profile exists (trigger auto-creates on signup, but ensure for safety)
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .upsert({ id: session.user.id }, { onConflict: "id" });
+
+        console.info("[auth-debug] profile upsert result", {
+          userId: session.user.id,
+          error: profileError?.message ?? null,
+        });
+
+        if (profileError) {
+          console.warn("[auth] profile upsert failed:", profileError.message);
+        }
+
+        const isSignUp = mode === "signup" || isNewUser(session.user);
+
+        if (isSignUp) {
+          markNeedsOnboarding(session.user.id);
+          // Background: initialize credits for new user (non-blocking)
+          void ensureSignupCredits(session.user.id, session.user.email);
+        } else {
+          // Sign-in of existing user: background credit sync (non-blocking)
+          void ensureSignupCredits(session.user.id, session.user.email);
+        }
+
+        setStatus("ready");
+
+        if (isSignUp) {
+          navigate("/onboarding?fresh=1&signup=1", { replace: true });
+        } else {
+          markFreshSession();
+          navigate("/create?fresh=1", { replace: true });
+        }
+      } catch (err) {
+        console.error("[auth] callback error:", err);
+        if (mounted) {
+          setStatus("error");
+          setError(err instanceof Error ? err.message : "Authentication failed");
+        }
       }
     };
 
-    void completeOAuth().catch((err) => {
-      console.error("[auth-debug] OAuth callback failed", err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Authentication failed."
-      );
-    });
-  }, [navigate, markFreshSession]);
+    const handleUnregisteredSignIn = (session: any) => {
+      if (!mounted) return;
+      console.warn("[auth-debug] Unregistered user tried to sign in", {
+        userId: session.user?.id,
+        email: session.user?.email,
+        mode,
+      });
+      setStatus("error");
+      setError("You haven't registered yet. Please complete registration first.");
+      setHints([
+        "You tried to sign in with an account that has not been registered with SoundAI.",
+        "Please go to registration and create an account first.",
+      ]);
+      // Invalidate the temporary session
+      void supabase.auth.signOut();
+    };
 
-  if (error) {
+    const waitForSession = async () => {
+      const authCode = params.get("code");
+      if (authCode) {
+        try {
+          console.info("[auth-debug] PKCE exchange attempt", { authCode, mode });
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(authCode);
+          if (exchangeError) {
+            console.warn("[auth-debug] exchange error", exchangeError.message);
+          } else if (data?.session) {
+            console.info("[auth-debug] exchange success", {
+              userId: data.session.user?.id,
+              email: data.session.user?.email,
+            });
+
+            // Sign-in mode + brand new user = attempted sign-in without registration
+            if (mode === "signin" && isNewUser(data.session.user)) {
+              handleUnregisteredSignIn(data.session);
+              return;
+            }
+
+            await handleAuthReady(data.session);
+            return;
+          }
+        } catch (err) {
+          console.warn("[auth-debug] exchange exception", err);
+        }
+      }
+
+      for (let i = 0; i < 40; i++) {
+        if (!mounted) return;
+
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          const session = data.session;
+
+          if (mode === "signin" && isNewUser(session.user)) {
+            handleUnregisteredSignIn(session);
+            return;
+          }
+
+          await handleAuthReady(session);
+          return;
+        }
+
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData.user) {
+          console.info("[auth-debug] getUser fallback found user after getSession returned null", {
+            userId: userData.user.id,
+            email: userData.user.email,
+            mode,
+          });
+
+          if (mode === "signin" && isNewUser(userData.user)) {
+            handleUnregisteredSignIn({ ...userData, user: userData.user });
+            return;
+          }
+
+          await handleAuthReady({ ...userData, user: userData.user });
+          return;
+        }
+
+        console.debug("[auth-debug] waiting for session", {
+          attempt: i + 1,
+          hasAccessToken: !!params.get("access_token"),
+          hasRefreshToken: !!params.get("refresh_token"),
+          hasCode: !!params.get("code"),
+        });
+
+        await new Promise((resolve) => {
+          timeoutId = setTimeout(resolve, 250);
+        });
+      }
+
+      if (mounted) {
+        console.error("[auth-debug] Authentication timeout after 40 attempts", {
+          url: window.location.href,
+          search: window.location.search,
+        });
+
+        const timeoutHints: string[] = [
+          "Check that the callback URL includes an access_token or code.",
+          "Make sure third-party cookies are not blocked (iframe, browser settings).",
+          "Verify Redirect URLs are configured in Supabase Authentication settings.",
+          "Ensure Google and Spotify providers are enabled in Supabase.",
+        ];
+
+        setHints(timeoutHints);
+        setStatus("error");
+        setError("Authentication timeout. Please try again.");
+      }
+    };
+
+    void waitForSession();
+
+    return () => {
+      mounted = false;
+      clearTimeout(timeoutId);
+      authListener.unsubscribe();
+    };
+  }, [navigate]);
+
+  function isNewUser(user: { created_at?: string; last_sign_in_at?: string }): boolean {
+    const created = user.created_at ? new Date(user.created_at).getTime() : 0;
+    const lastSignIn = user.last_sign_in_at ? new Date(user.last_sign_in_at).getTime() : 0;
+    if (!created || !lastSignIn) return true;
+    return lastSignIn - created < 5_000;
+  }
+
+  if (status === "loading") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--background-primary)] px-6">
-        <div className="w-full max-w-md">
-          <div className="rounded-input border border-[var(--error)]/30 bg-[var(--surface-secondary)] p-4 text-sm text-[var(--error)]">
-            {error}
+      <div className="flex min-h-screen items-center justify-center bg-[var(--background-primary)]">
+        <div className="font-codec text-sm text-[var(--text-secondary)]">Completing authentication…</div>
+      </div>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[var(--background-primary)]">
+        <div className="w-full max-w-md px-6 space-y-4">
+          <div className="rounded-input border border-[var(--error)]/30 bg-[var(--surface-secondary)] px-4 py-3 text-sm text-[var(--error)]">
+            {error || "Authentication failed"}
           </div>
+          {hints.length > 0 && (
+            <div className="rounded-input border border-[var(--border-primary)] bg-[var(--surface-secondary)] px-4 py-3 text-sm text-[var(--text-secondary)]">
+              <p className="mb-2 font-semibold text-[var(--text-primary)]">Suggestions:</p>
+              <ul className="list-inside list-disc space-y-1">
+                {hints.map((hint, idx) => (
+                  <li key={idx}>{hint}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           <button
             type="button"
-            onClick={() =>
-              navigate("/sign-in", {
-                replace: true,
-              })
-            }
-            className="app-btn-primary mt-4 w-full"
+            onClick={() => navigate("/sign-in", { replace: true })}
+            className="app-btn-primary w-full"
           >
             Return to sign in
           </button>
@@ -128,11 +285,5 @@ export default function AuthCallback() {
     );
   }
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--background-primary)]">
-      <div className="font-codec text-sm text-[var(--text-secondary)]">
-        Completing authentication…
-      </div>
-    </div>
-  );
+  return null;
 }

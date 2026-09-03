@@ -2,8 +2,7 @@ import { getSupabase } from "./supabase";
 
 export const SIGNUP_CREDITS = 20;
 export const DEFAULT_QUOTA = 20;
-export const ADMIN_CREDITS = 5000;
-export const ADMIN_EMAILS = new Set(["soundai.inc@gmail.com"]);
+
 export const PLAN_CREDIT_GRANTS: Record<string, { balance: number; quota: number }> = {
   trial: { balance: 20, quota: 20 },
   free: { balance: 20, quota: 20 },
@@ -11,7 +10,18 @@ export const PLAN_CREDIT_GRANTS: Record<string, { balance: number; quota: number
   premium: { balance: 50, quota: 50 },
   enterprise: { balance: 500, quota: 500 },
 };
-const MONTHLY_REFRESH_HOURS = 24;
+
+export const ADMIN_EMAILS = new Set(["soundai.inc@gmail.com"]);
+export const ADMIN_CREDITS = 5000;
+
+export function isAdminEmail(email: string | undefined | null): boolean {
+  if (!email) return false;
+  return ADMIN_EMAILS.has(email.toLowerCase());
+}
+
+export async function grantAdminCredits(userId: string): Promise<boolean> {
+  return upsertUserCredits(userId, ADMIN_CREDITS, ADMIN_CREDITS, new Date().toISOString());
+}
 
 export interface UserCreditsRecord {
   balance: number;
@@ -34,11 +44,10 @@ export interface GenerationHistoryRecord {
   generationId?: string;
 }
 
-export function isAdminEmail(email: string | undefined | null): boolean {
-  if (!email) return false;
-  return ADMIN_EMAILS.has(email.toLowerCase());
-}
-
+/**
+ * Single source of truth for credits: public.profiles
+ * Columns: credits_balance, credits_quota, credits_reset_at, plan
+ */
 export async function fetchUserCredits(userId: string): Promise<UserCreditsRecord | null> {
   const supabase = getSupabase();
   if (!supabase) return null;
@@ -102,10 +111,10 @@ export async function upsertUserCredits(
   }
 }
 
-export async function grantAdminCredits(userId: string): Promise<boolean> {
-  return upsertUserCredits(userId, ADMIN_CREDITS, ADMIN_CREDITS, new Date().toISOString());
-}
-
+/**
+ * Grant initial signup credits. Idempotent: only grants if balance is 0/missing.
+ * Admin emails get 5000 credits.
+ */
 export async function ensureSignupCredits(userId: string, email?: string): Promise<UserCreditsRecord> {
   if (isAdminEmail(email)) {
     await grantAdminCredits(userId);
@@ -124,6 +133,12 @@ export async function ensureSignupCredits(userId: string, email?: string): Promi
   }
   return { ...grant, spent: 0, resetAt: new Date().toISOString(), plan: "free" };
 }
+
+/**
+ * Check if monthly credit refresh is due for paid plans.
+ * Refreshes when balance <= 0 and at least 24h have passed since last reset.
+ */
+const MONTHLY_REFRESH_HOURS = 24;
 
 export async function checkMonthlyRefresh(
   userId: string,
@@ -153,11 +168,14 @@ export async function checkMonthlyRefresh(
 
   if (!shouldRefresh) return null;
 
-   await upsertUserCredits(userId, planGrant.balance, planGrant.quota, nextResetAt);
+  await upsertUserCredits(userId, planGrant.balance, planGrant.quota, nextResetAt);
   console.info("[credits] Monthly refresh applied for user", userId, "plan", plan);
   return { balance: planGrant.balance, quota: planGrant.quota, spent: 0, resetAt: nextResetAt, plan };
 }
 
+/**
+ * Add credits after subscription / plan purchase.
+ */
 export async function grantPlanCredits(
   userId: string,
   planId: string,
@@ -174,7 +192,21 @@ export async function grantPlanCredits(
   return { balance: nextBalance, quota: nextQuota, spent: 0, resetAt: existing?.resetAt ?? new Date().toISOString(), plan: planId };
 }
 
-export async function recordGenerationHistory(): Promise<void> {
-  // Generation history is logged server-side via generation_logs during API processing.
-  // Client-side record is omitted to prevent 400 errors from nonexistent table.
+export async function recordGenerationHistory(record: GenerationHistoryRecord): Promise<void> {
+  const supabase = getSupabase();
+  if (!supabase || !record.userId) return;
+
+  await supabase.from("generation_logs").insert({
+    user_id: record.userId,
+    project_id: record.projectId,
+    generation_id: record.generationId ?? null,
+    prompt: record.prompt,
+    generation_type: record.generationType,
+    model_used: record.model,
+    format: record.format,
+    count: record.count,
+    credits_spent: record.creditsSpent,
+    status: record.status,
+    generated_at: new Date().toISOString(),
+  });
 }

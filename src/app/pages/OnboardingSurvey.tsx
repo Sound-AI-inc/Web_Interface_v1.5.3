@@ -54,12 +54,12 @@ export default function OnboardingSurvey() {
     }
 
     if (isOnboardingCompleteSync(userId)) {
-      navigate("/create", { replace: true });
+      navigate("/app/generator", { replace: true });
       return;
     }
 
     if (!shouldRequireOnboarding(userId, createdAt)) {
-      navigate("/create", { replace: true });
+      navigate("/app/generator", { replace: true });
       return;
     }
 
@@ -84,7 +84,7 @@ export default function OnboardingSurvey() {
     try {
       await saveOnboarding(userId, answers);
       markFreshSession();
-      navigate("/create", { replace: true });
+      navigate("/app/generator?fresh=1", { replace: true });
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Could not save onboarding answers.");
     } finally {

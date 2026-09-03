@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, LockKeyhole, Mail } from "lucide-react";
 import type { Provider } from "@supabase/supabase-js";
 import { getSupabase, supabaseConfigured } from "../lib/supabase";
+import { ensureSignupCredits } from "../lib/creditsService";
 import { markNeedsOnboarding } from "../lib/onboardingService";
 import { useAuth } from "../hooks/useAuth";
 
@@ -63,13 +64,25 @@ export default function OAuthRegistration() {
     setNotice(null);
     const supabase = getSupabase();
     if (!supabase) {
-      setError("Auth is not configured. Please try again later.");
+      console.warn("[auth-debug] OAuth start: Supabase not configured, using fallback redirect", {
+        provider,
+        isSignUp,
+        pathname: location.pathname,
+      });
+      if (isSignUp) redirectAfterSignUp();
+      else redirectAfterSignIn();
       return;
     }
 
     const mode = isSignUp ? "signup" : "signin";
-    sessionStorage.setItem("soundai:oauth-mode", mode);
+    console.info("[auth-debug] OAuth start", {
+      provider,
+      mode,
+      pathname: location.pathname,
+      redirectTo: `${window.location.origin}/auth/callback?mode=${mode}`,
+    });
 
+    sessionStorage.setItem("soundai:oauth-mode", mode);
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
@@ -79,7 +92,21 @@ export default function OAuthRegistration() {
     });
 
     if (oauthError) {
+      console.error("[auth-debug] OAuth redirect failed", {
+        provider,
+        mode,
+        error: oauthError.message,
+      });
       setError(oauthError.message);
+    } else {
+      const codeVerifierKey = Object.keys(window.localStorage).find(k => k.endsWith("-code-verifier"));
+      console.info("[auth-debug] OAuth redirect succeeded", {
+        provider,
+        mode,
+        codeVerifierStored: !!codeVerifierKey,
+        codeVerifierKey,
+        allLocalStorageKeys: Object.keys(window.localStorage),
+      });
     }
   };
 
@@ -107,7 +134,8 @@ export default function OAuthRegistration() {
         });
         if (signUpError) throw signUpError;
         const { data: sessionData } = await supabase.auth.getSession();
-         if (sessionData.session?.user) {
+        if (sessionData.session?.user) {
+          await ensureSignupCredits(sessionData.session.user.id, sessionData.session.user.email);
           redirectAfterSignUp(sessionData.session.user.id);
         } else {
           redirectAfterSignUp();
@@ -284,7 +312,7 @@ export default function OAuthRegistration() {
               )}
 
               <button type="submit" disabled={busy} className="app-btn-primary w-full py-3">
-                {busy ? "Please waitâ€¦" : copy.cta}
+                {busy ? "Please wait…" : copy.cta}
                 <ArrowRight className="h-4 w-4" />
               </button>
               {!isSignUp && (
