@@ -44,7 +44,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           userId: data.session?.user?.id,
         });
         setSession(data.session);
-        setLoading(false);
       }
     });
 
@@ -57,13 +56,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         userId: nextSession?.user?.id,
       });
       setSession(nextSession);
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
-        if (mounted) setLoading(false);
-      }
+      if (mounted) setLoading(false);
     });
+
+    const fallbackTimeout = setTimeout(() => {
+      if (mounted) setLoading(false);
+    }, 300);
 
     return () => {
       mounted = false;
+      clearTimeout(fallbackTimeout);
       subscription.unsubscribe();
     };
   }, []);
