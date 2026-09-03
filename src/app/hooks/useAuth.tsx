@@ -39,26 +39,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     void supabase.auth.getSession().then(({ data }) => {
       if (mounted) {
+        console.info("[auth-debug] initial getSession", {
+          hasSession: Boolean(data.session),
+          userId: data.session?.user?.id,
+        });
         setSession(data.session);
         setLoading(false);
       }
-      console.info("[auth-timing] session_ready", {
-        hasSession: Boolean(data.session),
-      });
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      console.info("[auth-debug] onAuthStateChange", {
+        event,
+        hasSession: Boolean(nextSession),
+        userId: nextSession?.user?.id,
+      });
       setSession(nextSession);
       if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
         if (mounted) setLoading(false);
-      }
-      if (nextSession?.user) {
-        console.info("[auth-timing] auth_state", {
-          event,
-          userId: nextSession.user.id,
-        });
       }
     });
 

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import * as Tone from "tone";
 import { Play, Pause } from "lucide-react";
 import { useInterfaceMode } from "../../hooks/useInterfaceMode";
 import { getPianoSampler, midiToNoteName } from "../../lib/pianoSampler";
-import { loadTone } from "../../lib/toneLoader";
 import type { MidiNoteLite } from "../../data/mock";
 
 interface MidiPreviewProps {
@@ -40,13 +40,11 @@ export default function MidiPreview({ notes, durationSeconds, className = "" }: 
   }, [notes]);
 
   useEffect(() => {
-    return () => {
-      void stop();
-    };
+    return () => stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const stop = async () => {
-    const Tone = await loadTone();
+  const stop = () => {
     const transport = Tone.getTransport();
     scheduledIds.current.forEach((id) => transport.clear(id));
     scheduledIds.current = [];
@@ -60,11 +58,10 @@ export default function MidiPreview({ notes, durationSeconds, className = "" }: 
 
   const toggle = async () => {
     if (playing) {
-      await stop();
+      stop();
       return;
     }
     setLoading(true);
-    const Tone = await loadTone();
     await Tone.start();
     const sampler = await getPianoSampler();
     setLoading(false);

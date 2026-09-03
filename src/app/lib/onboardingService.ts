@@ -214,9 +214,7 @@ export async function saveOnboarding(userId: string, payload: OnboardingData): P
   const completedAt = new Date().toISOString();
   const record: OnboardingRecord = { ...payload, completedAt };
   const saved = await syncToSupabase(userId, payload, completedAt);
-  if (!saved) {
-    console.warn("[onboarding] Supabase save failed, saving to local storage only");
-  }
+  if (!saved) throw new Error("Could not save onboarding answers. Please try again.");
   writeLocal(userId, record);
   markOnboardingBypass(userId);
   clearNeedsOnboarding(userId);

@@ -1,8 +1,8 @@
--- Schema sync: Ensure profiles table has credits_balance, credits_quota, credits_reset_at
--- Run this in Supabase SQL Editor if you get:
--- "column profiles.credits_balance does not exist"
--- These columns are defined in supabase/schema/profiles.sql
+-- Migration: Add credits columns to profiles + grant admin credits
+-- Run this in Supabase SQL Editor (may show "Success. No rows returned" for DDL).
+-- Idempotent: safe to run multiple times.
 
+-- Add credits columns if missing
 alter table public.profiles
   add column if not exists credits_balance integer not null default 0;
 
@@ -12,13 +12,18 @@ alter table public.profiles
 alter table public.profiles
   add column if not exists credits_reset_at timestamptz;
 
--- Ensure existing profiles get default credit values
+alter table public.profiles
+  add column if not exists plan text not null default 'free'
+    check (plan in ('free', 'premium', 'enterprise'));
+
+-- Backfill existing profiles with defaults
 update public.profiles
   set credits_balance = 0,
-      credits_quota = 20
+      credits_quota = 20,
+      plan = 'free'
   where credits_balance is null;
 
--- Grant 5000 credits to admin account(s)
+-- Grant 5000 admin credits to soundai.inc@gmail.com
 update public.profiles
   set credits_balance = 5000,
       credits_quota = 5000
