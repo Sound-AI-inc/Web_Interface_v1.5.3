@@ -1,6 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Suspense, lazy } from "react";
-import { AuthProvider } from "./app/hooks/useAuth";
+import { AuthProvider, useAuth } from "./app/hooks/useAuth";
 import { LanguageProvider } from "./app/i18n/LanguageProvider";
 
 const AppLayout = lazy(() => import("./app/AppLayout"));
@@ -31,13 +31,48 @@ function RouteFallback() {
   );
 }
 
+function RootRedirect() {
+  const { session, loading, configured } = useAuth();
+
+  console.info("[auth-debug] route guard", {
+    pathname: window.location.pathname,
+    loading,
+    hasSession: !!session,
+    userId: session?.user?.id ?? null,
+  });
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[var(--background-primary)]">
+        <div className="font-codec text-sm text-[var(--text-secondary)]">Loading SoundAI...</div>
+      </div>
+    );
+  }
+
+  if (configured && session) {
+    console.info("[auth-debug] redirect", {
+      from: "/",
+      to: "/app/generator",
+      reason: "authenticated",
+    });
+    return <Navigate to="/app/generator" replace />;
+  }
+
+  console.info("[auth-debug] redirect", {
+    from: "/",
+    to: "/sign-up",
+    reason: "unauthenticated",
+  });
+  return <Navigate to="/sign-up" replace />;
+}
+
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Suspense fallback={<RouteFallback />}>
           <Routes>
-            <Route path="/" element={<Navigate to="/sign-up" replace />} />
+            <Route path="/" element={<RootRedirect />} />
             <Route path="/auth" element={<OAuthRegistration />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/sign-in" element={<OAuthRegistration />} />

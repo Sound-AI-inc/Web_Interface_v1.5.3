@@ -1,13 +1,9 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { getSupabase } from "../lib/supabase";
 import { ensureSignupCredits } from "../lib/creditsService";
 import { markNeedsOnboarding } from "../lib/onboardingService";
-import { useAuth } from "../hooks/useAuth";
 
 export default function AuthCallback() {
-  const navigate = useNavigate();
-  const { markFreshSession } = useAuth();
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState<string | null>(null);
   const [hints, setHints] = useState<string[]>([]);
@@ -64,7 +60,6 @@ export default function AuthCallback() {
           lastSignInAt: session.user?.last_sign_in_at,
         });
 
-        // Ensure profile exists (trigger auto-creates on signup, but ensure for safety)
         const { error: profileError } = await supabase
           .from("profiles")
           .upsert({ id: session.user.id }, { onConflict: "id" });
@@ -82,21 +77,27 @@ export default function AuthCallback() {
 
         if (isSignUp) {
           markNeedsOnboarding(session.user.id);
-          // Background: initialize credits for new user (non-blocking)
           void ensureSignupCredits(session.user.id, session.user.email);
         } else {
-          // Sign-in of existing user: background credit sync (non-blocking)
           void ensureSignupCredits(session.user.id, session.user.email);
         }
 
         setStatus("ready");
 
+        let destination: string;
         if (isSignUp) {
-          navigate("/onboarding?fresh=1&signup=1", { replace: true });
+          destination = `/onboarding?fresh=1&signup=1`;
         } else {
-          markFreshSession();
-          navigate("/app/generator?fresh=1", { replace: true });
+          destination = `/app/generator?fresh=1`;
         }
+
+        console.info("[auth-debug] callback:redirect", {
+          destination,
+          isSignUp,
+          mode,
+        });
+
+        window.location.replace(destination);
       } catch (err) {
         console.error("[auth] callback error:", err);
         if (mounted) {
@@ -119,7 +120,6 @@ export default function AuthCallback() {
         "You tried to sign in with an account that has not been registered with SoundAI.",
         "Please go to registration and create an account first.",
       ]);
-      // Invalidate the temporary session
       void supabase.auth.signOut();
     };
 
@@ -127,17 +127,16 @@ export default function AuthCallback() {
       const authCode = params.get("code");
       if (authCode) {
         try {
-          console.info("[auth-debug] PKCE exchange attempt", { authCode, mode });
+          console.info("[auth-debug] callback:exchange:start", { mode });
           const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(authCode);
           if (exchangeError) {
-            console.warn("[auth-debug] exchange error", exchangeError.message);
+            console.warn("[auth-debug] callback:exchange:error", exchangeError.message);
           } else if (data?.session) {
-            console.info("[auth-debug] exchange success", {
+            console.info("[auth-debug] callback:exchange:success", {
               userId: data.session.user?.id,
               email: data.session.user?.email,
             });
 
-            // Sign-in mode + brand new user = attempted sign-in without registration
             if (mode === "signin" && isNewUser(data.session.user)) {
               handleUnregisteredSignIn(data.session);
               return;
@@ -147,7 +146,7 @@ export default function AuthCallback() {
             return;
           }
         } catch (err) {
-          console.warn("[auth-debug] exchange exception", err);
+          console.warn("[auth-debug] callback:exchange:exception", err);
         }
       }
 
@@ -163,13 +162,17 @@ export default function AuthCallback() {
             return;
           }
 
+          console.info("[auth-debug] callback:session-found", {
+            attempt: i + 1,
+            userId: session.user?.id,
+          });
           await handleAuthReady(session);
           return;
         }
 
         const { data: userData } = await supabase.auth.getUser();
         if (userData.user) {
-          console.info("[auth-debug] getUser fallback found user after getSession returned null", {
+          console.info("[auth-debug] callback:getUser-fallback", {
             userId: userData.user.id,
             email: userData.user.email,
             mode,
@@ -184,11 +187,8 @@ export default function AuthCallback() {
           return;
         }
 
-        console.debug("[auth-debug] waiting for session", {
+        console.debug("[auth-debug] callback:waiting", {
           attempt: i + 1,
-          hasAccessToken: !!params.get("access_token"),
-          hasRefreshToken: !!params.get("refresh_token"),
-          hasCode: !!params.get("code"),
         });
 
         await new Promise((resolve) => {
@@ -197,7 +197,7 @@ export default function AuthCallback() {
       }
 
       if (mounted) {
-        console.error("[auth-debug] Authentication timeout after 40 attempts", {
+        console.error("[auth-debug] callback:timeout", {
           url: window.location.href,
           search: window.location.search,
         });
@@ -221,7 +221,7 @@ export default function AuthCallback() {
       mounted = false;
       clearTimeout(timeoutId);
     };
-  }, [navigate]);
+  }, []);
 
   function isNewUser(user: { created_at?: string; last_sign_in_at?: string }): boolean {
     const created = user.created_at ? new Date(user.created_at).getTime() : 0;
@@ -257,7 +257,7 @@ export default function AuthCallback() {
           )}
           <button
             type="button"
-            onClick={() => navigate("/sign-in", { replace: true })}
+            onClick={() => (window.location.href = "/sign-in")}
             className="app-btn-primary w-full"
           >
             Return to sign in
