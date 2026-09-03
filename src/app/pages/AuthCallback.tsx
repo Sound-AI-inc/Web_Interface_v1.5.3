@@ -51,23 +51,6 @@ export default function AuthCallback() {
     let mounted = true;
     let timeoutId: ReturnType<typeof setTimeout>;
 
-    const {
-      data: { subscription: authListener },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      console.info("[auth-debug] onAuthStateChange listener", {
-        event,
-        hasSession: Boolean(session),
-        userId: session?.user?.id,
-      });
-      if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session && mounted) {
-        console.info("[auth-debug] SIGNED_IN received via listener", {
-          userId: session.user?.id,
-          mode,
-        });
-        void handleAuthReady(session);
-      }
-    });
-
     const handleAuthReady = async (session: any) => {
       if (!mounted) return;
 
@@ -112,7 +95,7 @@ export default function AuthCallback() {
           navigate("/onboarding?fresh=1&signup=1", { replace: true });
         } else {
           markFreshSession();
-          navigate("/create?fresh=1", { replace: true });
+          navigate("/app/generator?fresh=1", { replace: true });
         }
       } catch (err) {
         console.error("[auth] callback error:", err);
@@ -237,7 +220,6 @@ export default function AuthCallback() {
     return () => {
       mounted = false;
       clearTimeout(timeoutId);
-      authListener.unsubscribe();
     };
   }, [navigate]);
 
