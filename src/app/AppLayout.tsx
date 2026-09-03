@@ -15,10 +15,8 @@ import {
   fetchOnboardingStatus,
   isOnboardingCompleteSync,
   shouldRequireOnboarding,
-  shouldShowGuidedTour,
 } from "./lib/onboardingService";
 import { fetchUserCredits, ensureSignupCredits } from "./lib/creditsService";
-import GuidedTourModal from "./components/GuidedTourModal";
 
 const MODE_STORAGE_KEY = "soundai:interface-mode";
 
@@ -38,7 +36,6 @@ export default function AppLayout() {
   const startNewSession = useWorkspaceStore((s) => s.startNewSession);
   const isWorkspaceRoute = location.pathname.includes("/generator");
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
-  const [showGuidedTour, setShowGuidedTour] = useState(false);
 
   const setMode = useCallback((next: InterfaceMode) => {
     setModeState(next);
@@ -78,7 +75,6 @@ export default function AppLayout() {
     if (!session?.user?.id) {
       console.info("[auth-debug] AppLayout redirect to /sign-in because no session");
       setOnboardingComplete(true);
-      setShowGuidedTour(false);
       return;
     }
 
@@ -88,14 +84,12 @@ export default function AppLayout() {
     if (isOnboardingCompleteSync(userId)) {
       console.info("[auth-debug] AppLayout allow workspace, onboarding complete sync", { userId });
       setOnboardingComplete(true);
-      setShowGuidedTour(shouldShowGuidedTour(userId));
       return;
     }
 
     if (!shouldRequireOnboarding(userId, createdAt)) {
       console.info("[auth-debug] AppLayout allow workspace, no onboarding required", { userId, createdAt });
       setOnboardingComplete(true);
-      setShowGuidedTour(shouldShowGuidedTour(userId));
       return;
     }
 
@@ -103,7 +97,6 @@ export default function AppLayout() {
     void fetchOnboardingStatus(userId).then((record) => {
       const completed = Boolean(record?.completedAt);
       setOnboardingComplete(completed);
-      setShowGuidedTour(completed && shouldShowGuidedTour(userId));
     });
   }, [session?.user?.id, session?.user?.created_at]);
 
@@ -157,11 +150,6 @@ export default function AppLayout() {
             mode === "pro" ? "theme-pro" : "theme-lite"
           }`}
         >
-          <GuidedTourModal
-            open={showGuidedTour}
-            userId={session?.user?.id}
-            onClose={() => setShowGuidedTour(false)}
-          />
           <Sidebar
             onOpenSettings={() => setSettingsModalOpen(true)}
             onOpenUpgrade={() => setUpgradeModalOpen(true)}
