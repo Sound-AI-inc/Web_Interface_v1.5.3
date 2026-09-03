@@ -75,18 +75,19 @@ export default function OAuthRegistration() {
     }
 
     const mode = isSignUp ? "signup" : "signin";
+    const callbackUrl = `${window.location.origin}/?mode=${mode}`;
     console.info("[auth-debug] OAuth start", {
       provider,
       mode,
       pathname: location.pathname,
-      redirectTo: `${window.location.origin}/auth/callback?mode=${mode}`,
+      redirectTo: callbackUrl,
     });
 
     sessionStorage.setItem("soundai:oauth-mode", mode);
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?mode=${mode}`,
+        redirectTo: callbackUrl,
         queryParams: provider === "google" ? { access_type: "offline", prompt: "consent" } : undefined,
       },
     });

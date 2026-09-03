@@ -3,6 +3,8 @@ import { getSupabase } from "../lib/supabase";
 import { ensureSignupCredits } from "../lib/creditsService";
 import { markNeedsOnboarding } from "../lib/onboardingService";
 
+const CALLBACK_ROUTE = "/auth/callback";
+
 export default function AuthCallback() {
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState<string | null>(null);
@@ -11,6 +13,7 @@ export default function AuthCallback() {
   console.info("[auth-debug] AuthCallback RENDER", {
     url: window.location.href,
     search: window.location.search,
+    hash: window.location.hash,
   });
 
   useEffect(() => {
@@ -22,8 +25,9 @@ export default function AuthCallback() {
     }
 
     const params = new URLSearchParams(window.location.search);
-    const errorParam = params.get("error");
-    const errorDescription = params.get("error_description");
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const errorParam = params.get("error") || hashParams.get("error");
+    const errorDescription = params.get("error_description") || hashParams.get("error_description");
     const urlMode = params.get("mode");
     const storedMode = sessionStorage.getItem("soundai:oauth-mode");
     const mode = urlMode || storedMode || "signin";
@@ -42,6 +46,7 @@ export default function AuthCallback() {
       mode,
       url: window.location.href,
       search: window.location.search,
+      hash: window.location.hash,
     });
 
     let mounted = true;
@@ -124,7 +129,7 @@ export default function AuthCallback() {
     };
 
     const waitForSession = async () => {
-      const authCode = params.get("code");
+      const authCode = params.get("code") || hashParams.get("code");
       if (authCode) {
         try {
           console.info("[auth-debug] callback:exchange:start", { mode });
@@ -269,3 +274,5 @@ export default function AuthCallback() {
 
   return null;
 }
+
+export { CALLBACK_ROUTE };
