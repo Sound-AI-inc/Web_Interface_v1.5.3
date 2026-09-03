@@ -34,17 +34,33 @@ function RouteFallback() {
 function RootRedirect() {
   const { session, loading, configured } = useAuth();
 
+  const oauthMode = typeof window !== "undefined" ? sessionStorage.getItem("soundai:oauth-mode") : null;
+  const hasOAuthIntent = Boolean(oauthMode);
+
   console.info("[auth-debug] route guard", {
     pathname: window.location.pathname,
     loading,
     hasSession: !!session,
     userId: session?.user?.id ?? null,
+    hasOAuthIntent,
+    oauthMode,
   });
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--background-primary)]">
         <div className="font-codec text-sm text-[var(--text-secondary)]">Loading SoundAI...</div>
+      </div>
+    );
+  }
+
+  if (hasOAuthIntent && !session) {
+    console.info("[auth-debug] OAuth landing detected, waiting for session", {
+      mode: oauthMode,
+    });
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[var(--background-primary)]">
+        <div className="font-codec text-sm text-[var(--text-secondary)]">Completing authentication…</div>
       </div>
     );
   }
