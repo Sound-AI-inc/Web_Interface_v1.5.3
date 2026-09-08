@@ -1,4 +1,30 @@
-import { getSupabase } from "./supabase";
+const API_BASE = (import.meta.env.VITE_AI_GENERATION_API_URL as string | undefined)?.replace(/\/generate$/, "") || "";
+
+async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const supabase = (await import("./supabase")).getSupabase();
+  if (!supabase) throw new Error("Supabase not configured");
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("AUTH_REQUIRED");
+
+  const url = `${API_BASE}${path}`.replace(/\/+/g, "/");
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      ...(options?.headers ?? {}),
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `HTTP ${response.status}`);
+  }
+
+  return response.json() as Promise<T>;
+}
 
 export const SIGNUP_CREDITS = 20;
 export const DEFAULT_QUOTA = 20;
@@ -17,10 +43,6 @@ export const ADMIN_CREDITS = 5000;
 export function isAdminEmail(email: string | undefined | null): boolean {
   if (!email) return false;
   return ADMIN_EMAILS.has(email.toLowerCase());
-}
-
-export async function grantAdminCredits(userId: string): Promise<boolean> {
-  return upsertUserCredits(userId, ADMIN_CREDITS, ADMIN_CREDITS, new Date().toISOString());
 }
 
 export interface UserCreditsRecord {
@@ -44,104 +66,50 @@ export interface GenerationHistoryRecord {
   generationId?: string;
 }
 
-/**
- * Single source of truth for credits: public.profiles
- * Columns: credits_balance, credits_quota, credits_reset_at, plan
- */
-export async function fetchUserCredits(userId: string): Promise<UserCreditsRecord | null> {
-  const supabase = getSupabase();
-  if (!supabase) return null;
-
+export async function fetchUserCredits(_userId: string): Promise<UserCreditsRecord | null> {
   try {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("credits_balance, credits_quota, credits_reset_at, plan")
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (error) {
-      console.warn("[credits] Supabase fetch failed:", error.message);
-      return null;
-    }
-
-    if (data) {
-      return {
-        balance: typeof data.credits_balance === "number" ? data.credits_balance : SIGNUP_CREDITS,
-        quota: typeof data.credits_quota === "number" ? data.credits_quota : DEFAULT_QUOTA,
-        spent: 0,
-        resetAt: data.credits_reset_at ?? null,
-        plan: (data.plan as string) ?? "free",
-      };
-    }
-  } catch (err) {
-    console.warn("[credits] Supabase fetch error:", err);
+    const result = await apiFetch<{ credits: { remaining: number; plan: string; monthly_allowance: number; reset_at: string | null } }>("/api/credits");
+    return {
+      balance: result.credits.remaining,
+      quota: result.credits.monthly_allowance || DEFAULT_QUOTA,
+      spent: 0,
+      resetAt: result.credits.reset_at,
+      plan: result.credits.plan,
+    };
+  } catch {
+    return null;
   }
-
-  return null;
 }
 
 export async function upsertUserCredits(
-  userId: string,
-  balance: number,
-  quota: number,
-  resetAt?: string | null,
+  _userId: string,
+  _balance: number,
+  _quota: number,
+  _resetAt?: string | null,
 ): Promise<boolean> {
-  const supabase = getSupabase();
-  if (!supabase) return true;
-
-  try {
-    const { error } = await supabase
-      .from("profiles")
-      .upsert({
-        id: userId,
-        credits_balance: balance,
-        credits_quota: quota,
-        credits_reset_at: resetAt ?? new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
-
-    if (error) {
-      console.warn("[credits] Supabase upsert failed:", error.message);
-      return false;
-    }
-    return true;
-  } catch (err) {
-    console.warn("[credits] Supabase upsert error:", err);
-    return false;
-  }
+  return true;
 }
 
-/**
- * Grant initial signup credits. Idempotent: only grants if balance is 0/missing.
- * Admin emails get 5000 credits.
- */
-export async function ensureSignupCredits(userId: string, email?: string): Promise<UserCreditsRecord> {
-  if (isAdminEmail(email)) {
-    await grantAdminCredits(userId);
-    return { balance: ADMIN_CREDITS, quota: ADMIN_CREDITS, spent: 0, resetAt: new Date().toISOString(), plan: "free" };
-  }
-
-  const existing = await fetchUserCredits(userId);
+export async function ensureSignupCredits(_userId: string, _email?: string): Promise<UserCreditsRecord> {
+  const existing = await fetchUserCredits(_userId);
   if (existing && existing.balance > 0) return existing;
 
-  const grant = { balance: SIGNUP_CREDITS, quota: DEFAULT_QUOTA };
-  const saved = await upsertUserCredits(userId, grant.balance, grant.quota);
-  if (saved) {
-    console.info("[credits] Signup credits initialized for user", userId);
-  } else {
-    console.warn("[credits] Failed to initialize signup credits for user", userId);
+  const grant = isAdminEmail(_email) ? { balance: ADMIN_CREDITS, quota: ADMIN_CREDITS } : { balance: SIGNUP_CREDITS, quota: DEFAULT_QUOTA };
+
+  try {
+    await apiFetch<{ credits: { remaining: number; plan: string; monthly_allowance: number; reset_at: string | null } }>("/api/credits", {
+      method: "POST",
+      body: JSON.stringify({ action: "grant", amount: grant.balance, type: isAdminEmail(_email) ? "admin_grant" : "trial_grant", reason: "signup" }),
+    });
+  } catch {
+    console.warn("[credits] Backend grant failed, frontend cannot initialize credits");
   }
-  return { ...grant, spent: 0, resetAt: new Date().toISOString(), plan: "free" };
+
+  return { ...grant, spent: 0, resetAt: new Date().toISOString(), plan: "free" }
 }
 
-/**
- * Check if monthly credit refresh is due for paid plans.
- * Refreshes when balance <= 0 and at least 24h have passed since last reset.
- */
-const MONTHLY_REFRESH_HOURS = 24;
-
 export async function checkMonthlyRefresh(
-  userId: string,
+  _userId: string,
   plan: string,
   currentBalance: number,
   currentResetAt: string | null,
@@ -161,39 +129,52 @@ export async function checkMonthlyRefresh(
   } else {
     const lastReset = new Date(currentResetAt).getTime();
     const elapsedHours = (now - lastReset) / (1000 * 60 * 60);
-    if (currentBalance <= 0 && elapsedHours >= MONTHLY_REFRESH_HOURS) {
+    if (currentBalance <= 0 && elapsedHours >= 24) {
       shouldRefresh = true;
     }
   }
 
   if (!shouldRefresh) return null;
 
-  await upsertUserCredits(userId, planGrant.balance, planGrant.quota, nextResetAt);
-  console.info("[credits] Monthly refresh applied for user", userId, "plan", plan);
+  try {
+    await apiFetch<{ credits: { remaining: number; plan: string; monthly_allowance: number; reset_at: string | null } }>("/api/credits", {
+      method: "POST",
+      body: JSON.stringify({ action: "grant", amount: planGrant.balance, type: "timed_refill", reason: "monthly refresh" }),
+    });
+  } catch {
+    console.warn("[credits] Monthly refresh failed");
+  }
+
   return { balance: planGrant.balance, quota: planGrant.quota, spent: 0, resetAt: nextResetAt, plan };
 }
 
-/**
- * Add credits after subscription / plan purchase.
- */
 export async function grantPlanCredits(
-  userId: string,
+  _userId: string,
   planId: string,
   packageCredits?: number,
 ): Promise<UserCreditsRecord> {
   const planGrant = PLAN_CREDIT_GRANTS[planId] ?? { balance: SIGNUP_CREDITS, quota: DEFAULT_QUOTA };
   const add = packageCredits ?? planGrant.balance;
 
-  const existing = await fetchUserCredits(userId);
-  const nextBalance = (existing?.balance ?? 0) + add;
-  const nextQuota = Math.max(existing?.quota ?? DEFAULT_QUOTA, packageCredits ?? planGrant.quota);
-
-  await upsertUserCredits(userId, nextBalance, nextQuota, existing?.resetAt ?? new Date().toISOString());
-  return { balance: nextBalance, quota: nextQuota, spent: 0, resetAt: existing?.resetAt ?? new Date().toISOString(), plan: planId };
+  try {
+    const result = await apiFetch<{ credits: { remaining: number; plan: string; monthly_allowance: number; reset_at: string | null } }>("/api/credits", {
+      method: "POST",
+      body: JSON.stringify({ action: "grant", amount: add, type: "subscription_grant", reason: `plan:${planId}` }),
+    });
+    return {
+      balance: result.credits.remaining,
+      quota: result.credits.monthly_allowance || planGrant.quota,
+      spent: 0,
+      resetAt: result.credits.reset_at,
+      plan: result.credits.plan,
+    };
+  } catch {
+    return { balance: add, quota: planGrant.quota, spent: 0, resetAt: new Date().toISOString(), plan: planId };
+  }
 }
 
 export async function recordGenerationHistory(record: GenerationHistoryRecord): Promise<void> {
-  const supabase = getSupabase();
+  const supabase = (await import("./supabase")).getSupabase();
   if (!supabase || !record.userId) return;
 
   await supabase.from("generation_logs").insert({

@@ -6,6 +6,7 @@ import { selectGenerationModel } from "../src/app/lib/ai/router";
 import { assertServerRuntime } from "../src/app/lib/ai/runtime";
 import type { GenerationRequest, SoundAIUser } from "../src/app/lib/ai/types";
 import { resolveUserTier, enforceModelAccess } from "./_lib/auth";
+import { isAdminUser, getAdminBalance } from "./_lib/admin";
 import { generationCacheKey, canCacheGeneration, getCachedGeneration, storeCachedGeneration } from "./_lib/cache";
 import { consumeCredits } from "./_lib/credits";
 import { errorCode, errorStatus, HttpError } from "./_lib/http";
@@ -103,9 +104,8 @@ export default async function handler(request: IncomingMessage, response: Server
       }
     }
 
-    await consumeCredits(supabase, user.id, selected.model.output_type);
-
     const job = await enqueueGenerationJob(user, securedRequest);
+    const jobId = job.id;
     const routed = await processGenerationJob(job, {
       hfApiKey: process.env.HF_API_KEY,
       hfEndpointBaseUrl: process.env.HUGGINGFACE_INFERENCE_BASE_URL,
@@ -113,6 +113,16 @@ export default async function handler(request: IncomingMessage, response: Server
       timeoutMs: Number(process.env.AI_INFERENCE_TIMEOUT_MS ?? 60000),
       retries: Number(process.env.AI_INFERENCE_RETRIES ?? 2),
     });
+
+    const isAdmin = isAdminUser(authUser.email);
+    const adminBalance = getAdminBalance();
+    let creditResult: { cost: number; remaining: number } | null = null;
+
+    if (!isAdmin || adminBalance <= 0) {
+      creditResult = await consumeCredits(supabase, user.id, selected.model.output_type, jobId);
+    } else {
+      creditResult = { cost: 0, remaining: adminBalance };
+    }
 
     if (cacheKey && canCacheGeneration(routed.model, user.plan, securedRequest)) {
       await storeCachedGeneration(supabase, cacheKey, routed.model, routed.result);
@@ -126,7 +136,13 @@ export default async function handler(request: IncomingMessage, response: Server
       status: "success",
     });
 
-    json(response, 200, routed);
+    json(response, 200, {
+      ...routed,
+      credits: {
+        remaining: creditResult.remaining,
+        cost: creditResult.cost,
+      },
+    });
   } catch (error) {
     await recordGenerationMetric(supabase, {
       user_id: userId,
