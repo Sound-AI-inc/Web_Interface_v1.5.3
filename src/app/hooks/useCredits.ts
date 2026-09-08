@@ -1,10 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  DEFAULT_QUOTA,
-  SIGNUP_CREDITS,
-  fetchUserCredits,
-  upsertUserCredits,
-} from "../lib/creditsService";
+import { SIGNUP_CREDITS, DEFAULT_QUOTA, fetchUserCredits } from "../lib/creditsService";
 import { useAuth } from "./useAuth";
 
 export interface CreditsState {
@@ -14,7 +9,6 @@ export interface CreditsState {
   loading: boolean;
   low: boolean;
   refresh: () => Promise<void>;
-  deduct: (amount: number) => Promise<boolean>;
   applyGrant: (balance: number, quota: number) => void;
 }
 
@@ -64,32 +58,6 @@ export function useCredits(): CreditsState {
     setTotal(quota);
   }, []);
 
-  const deduct = useCallback(
-    async (amount: number): Promise<boolean> => {
-      if (amount <= 0) return true;
-      if (remaining < amount) return false;
-
-      const previousRemaining = remaining;
-      const previousSpent = spent;
-      const next = remaining - amount;
-      const nextSpent = spent + amount;
-      setRemaining(next);
-      setSpent(nextSpent);
-
-      if (user) {
-        const saved = await upsertUserCredits(user.id, next, total);
-        if (!saved) {
-          setRemaining(previousRemaining);
-          setSpent(previousSpent);
-          return false;
-        }
-      }
-
-      return true;
-    },
-    [remaining, spent, total, user],
-  );
-
   return {
     remaining,
     total,
@@ -97,7 +65,6 @@ export function useCredits(): CreditsState {
     loading,
     low: remaining / Math.max(total, 1) < 0.2,
     refresh,
-    deduct,
     applyGrant,
   };
 }

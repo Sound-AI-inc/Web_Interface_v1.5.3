@@ -137,7 +137,7 @@ export default function AudioGenerator() {
   const assetsPanelCollapsed = useWorkspaceStore((s) => s.assetsPanelCollapsed);
   const setAssetsPanelCollapsed = useWorkspaceStore((s) => s.setAssetsPanelCollapsed);
   const addFromResult = useLibraryStore((s) => s.addFromResult);
-  const { remaining, deduct } = useCredits();
+  const { remaining, total: _total, refresh: refreshCredits } = useCredits();
 
   const history = activeChat?.history ?? [];
   const sessionAssets = activeChat?.sessionAssets ?? [];
@@ -379,11 +379,9 @@ export default function AudioGenerator() {
       const actualCount = Math.max(1, response.items.length);
       const chargeAmount = Math.min(creditCost, actualCount);
 
-      const charged = await deduct(chargeAmount);
-      if (!charged) {
-        setGenerationWarning(t("generator.insufficientCredits"));
-        setPending(null);
-        return;
+      const backendRemaining = response.credits?.remaining;
+      if (typeof backendRemaining === "number") {
+        void refreshCredits();
       }
 
       if (actualCount < generationCount) {

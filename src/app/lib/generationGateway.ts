@@ -17,12 +17,16 @@ export interface GenerationGatewayResponse {
   source: "backend" | "demo";
   backendTarget?: "soundcraft" | "midicraft" | "vstcraft";
   warning?: string;
+  credits?: {
+    remaining: number;
+    cost: number;
+  };
 }
 
 const SOUNDCRAFT_API_URL = import.meta.env.VITE_SOUNDCRAFT_API_URL as string | undefined;
 const MIDICRAFT_API_URL = import.meta.env.VITE_MIDICRAFT_API_URL as string | undefined;
 const VSTCRAFT_API_URL = import.meta.env.VITE_VSTCRAFT_API_URL as string | undefined;
-const AI_GENERATION_API_URL = (import.meta.env.VITE_AI_GENERATION_API_URL as string | undefined) ?? "/api/generate";
+const AI_GENERATION_API_URL = (import.meta.env.VITE_AI_GENERATION_API_URL as string | undefined)?.trim() || "/api/generate";
 const APPROVED_LITE_AUDIO_MODELS = new Set([
   "facebook/musicgen-small",
   "facebook/audiogen-medium",
@@ -178,7 +182,7 @@ function orchestrationResultToAudioResult(
 
 async function requestAIOrchestration(request: GenerationGatewayRequest): Promise<GenerationGatewayResponse | null> {
   const component = requestComponent(request.type);
-  const response = await postAuthenticatedJson<RoutedGenerationResponse>(AI_GENERATION_API_URL, {
+  const response = await postAuthenticatedJson<RoutedGenerationResponse & { credits?: { remaining: number; cost: number } }>(AI_GENERATION_API_URL, {
     request: {
       prompt: request.prompt,
       component,
@@ -195,6 +199,7 @@ async function requestAIOrchestration(request: GenerationGatewayRequest): Promis
     source: "backend",
     backendTarget: component === "SoundCraft" ? "soundcraft" : component === "MidiCraft" ? "midicraft" : "vstcraft",
     warning: response.fallback_used ? "Pro route unavailable; Lite fallback was used." : undefined,
+    credits: response.credits,
   };
 }
 
