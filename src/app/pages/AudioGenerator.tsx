@@ -70,11 +70,6 @@ const GENERATION_STAGES = [
   "Finalizing results",
 ] as const;
 const MIN_GENERATION_VISUAL_MS = 1800;
-const PRO_CREDIT_COST_BY_TYPE: Record<string, number> = {
-  "Audio Sample": 2,
-  "MIDI Melody": 3,
-  "VST Preset": 4,
-};
 
 interface PendingGeneration {
   id: string;
@@ -137,7 +132,7 @@ export default function AudioGenerator() {
   const assetsPanelCollapsed = useWorkspaceStore((s) => s.assetsPanelCollapsed);
   const setAssetsPanelCollapsed = useWorkspaceStore((s) => s.setAssetsPanelCollapsed);
   const addFromResult = useLibraryStore((s) => s.addFromResult);
-  const { remaining, total: _total, refresh: refreshCredits } = useCredits();
+  const { refresh: refreshCredits } = useCredits();
 
   const history = activeChat?.history ?? [];
   const sessionAssets = activeChat?.sessionAssets ?? [];
@@ -309,14 +304,10 @@ export default function AudioGenerator() {
   const handleGenerate = async () => {
     if (isGenerating || prompt.trim().length < 3) return;
 
-    const creditCost = generationCount * (isPro ? (PRO_CREDIT_COST_BY_TYPE[type] ?? 2) : 1);
-    if (remaining < creditCost) {
-      setGenerationWarning(t("generator.insufficientCredits"));
-      return;
-    }
-
+    // No client-side credit pre-check: the server enforces entitlements and
+    // reserves credits atomically. The UI only shows backend-confirmed state.
     const promptValue = prompt.trim();
-    const pendingId = `${Date.now()}`;
+    const pendingId = crypto.randomUUID();
     setIsGenerating(true);
     setGenerationWarning(null);
     setPending({
@@ -357,6 +348,7 @@ export default function AudioGenerator() {
         model: resolvedModel,
         format: resolvedFormat,
         count: generationCount,
+        idempotencyKey: pendingId,
       });
 
       const elapsed = Date.now() - startedAt;
@@ -377,8 +369,8 @@ export default function AudioGenerator() {
       };
 
       const actualCount = Math.max(1, response.items.length);
-      const chargeAmount = Math.min(creditCost, actualCount);
 
+      // Backend-confirmed balance: refresh from server.
       const backendRemaining = response.credits?.remaining;
       if (typeof backendRemaining === "number") {
         void refreshCredits();
@@ -387,7 +379,7 @@ export default function AudioGenerator() {
       if (actualCount < generationCount) {
         setGenerationWarning(
           (response.warning ? `${response.warning} ` : "") +
-            `Requested ${generationCount} variants; received ${actualCount}. Credits charged: ${chargeAmount}.`,
+            `Requested ${generationCount} variants; received ${actualCount}. Credits charged: ${response.credits?.consumed ?? 0}.`,
         );
       }
 
@@ -397,18 +389,19 @@ export default function AudioGenerator() {
       void recordGenerationHistory({
         userId: user?.id ?? null,
         projectId: createdChat?.projectId ?? null,
-        generationId: batch.id,
+        generationId: pendingId,
         prompt: promptValue,
         generationType: type,
         model: resolvedModel,
         format: resolvedFormat,
         count: actualCount,
-        creditsSpent: chargeAmount,
+        creditsSpent: response.credits?.consumed ?? 0,
         status: "success",
       });
       setPrompt("");
       setPending(null);
     } catch (error) {
+      // Server restores credits on failure automatically.
       setGenerationWarning(
         error instanceof Error ? error.message : "Generation failed unexpectedly.",
       );

@@ -66,14 +66,28 @@ export interface GenerationHistoryRecord {
   generationId?: string;
 }
 
+interface CreditsResponse {
+  credits: {
+    balance: number;
+    reserved: number;
+    plan: string;
+    monthly_allowance: number;
+    last_refill_at: string | null;
+    next_refill_at: string | null;
+    subscription_status: string | null;
+    generation_costs: Record<string, number>;
+    entitlements: Record<string, unknown>;
+  };
+}
+
 export async function fetchUserCredits(_userId: string): Promise<UserCreditsRecord | null> {
   try {
-    const result = await apiFetch<{ credits: { remaining: number; plan: string; monthly_allowance: number; reset_at: string | null } }>("/api/credits");
+    const result = await apiFetch<CreditsResponse>("/api/credits");
     return {
-      balance: result.credits.remaining,
+      balance: result.credits.balance,
       quota: result.credits.monthly_allowance || DEFAULT_QUOTA,
-      spent: 0,
-      resetAt: result.credits.reset_at,
+      spent: Math.max(0, (result.credits.monthly_allowance || DEFAULT_QUOTA) - result.credits.balance),
+      resetAt: result.credits.next_refill_at,
       plan: result.credits.plan,
     };
   } catch {
@@ -87,90 +101,38 @@ export async function upsertUserCredits(
   _quota: number,
   _resetAt?: string | null,
 ): Promise<boolean> {
+  // No-op: credits are server-authoritative. Grants are server-initiated only.
   return true;
 }
 
 export async function ensureSignupCredits(_userId: string, _email?: string): Promise<UserCreditsRecord> {
+  // Signup credits are granted server-side via the auth trigger / subscription webhook.
+  // This function now just fetches the current state.
   const existing = await fetchUserCredits(_userId);
-  if (existing && existing.balance > 0) return existing;
-
-  const grant = isAdminEmail(_email) ? { balance: ADMIN_CREDITS, quota: ADMIN_CREDITS } : { balance: SIGNUP_CREDITS, quota: DEFAULT_QUOTA };
-
-  try {
-    await apiFetch<{ credits: { remaining: number; plan: string; monthly_allowance: number; reset_at: string | null } }>("/api/credits", {
-      method: "POST",
-      body: JSON.stringify({ action: "grant", amount: grant.balance, type: isAdminEmail(_email) ? "admin_grant" : "trial_grant", reason: "signup" }),
-    });
-  } catch {
-    console.warn("[credits] Backend grant failed, frontend cannot initialize credits");
-  }
-
-  return { ...grant, spent: 0, resetAt: new Date().toISOString(), plan: "free" }
+  if (existing) return existing;
+  return { balance: 0, quota: DEFAULT_QUOTA, spent: 0, resetAt: null, plan: "free" };
 }
 
 export async function checkMonthlyRefresh(
   _userId: string,
-  plan: string,
-  currentBalance: number,
-  currentResetAt: string | null,
+  _plan: string,
+  _currentBalance: number,
+  _currentResetAt: string | null,
 ): Promise<UserCreditsRecord | null> {
-  if (plan === "free" || plan === "trial") return null;
-
-  const planGrant = PLAN_CREDIT_GRANTS[plan];
-  if (!planGrant) return null;
-
-  const now = Date.now();
-  let nextResetAt = currentResetAt;
-  let shouldRefresh = false;
-
-  if (!currentResetAt) {
-    nextResetAt = new Date(now).toISOString();
-    if (currentBalance <= 0) shouldRefresh = true;
-  } else {
-    const lastReset = new Date(currentResetAt).getTime();
-    const elapsedHours = (now - lastReset) / (1000 * 60 * 60);
-    if (currentBalance <= 0 && elapsedHours >= 24) {
-      shouldRefresh = true;
-    }
-  }
-
-  if (!shouldRefresh) return null;
-
-  try {
-    await apiFetch<{ credits: { remaining: number; plan: string; monthly_allowance: number; reset_at: string | null } }>("/api/credits", {
-      method: "POST",
-      body: JSON.stringify({ action: "grant", amount: planGrant.balance, type: "timed_refill", reason: "monthly refresh" }),
-    });
-  } catch {
-    console.warn("[credits] Monthly refresh failed");
-  }
-
-  return { balance: planGrant.balance, quota: planGrant.quota, spent: 0, resetAt: nextResetAt, plan };
+  // Refill is server-initiated. The frontend should not trigger grants.
+  return null;
 }
 
 export async function grantPlanCredits(
   _userId: string,
-  planId: string,
-  packageCredits?: number,
+  _planId: string,
+  _packageCredits?: number,
 ): Promise<UserCreditsRecord> {
-  const planGrant = PLAN_CREDIT_GRANTS[planId] ?? { balance: SIGNUP_CREDITS, quota: DEFAULT_QUOTA };
-  const add = packageCredits ?? planGrant.balance;
-
-  try {
-    const result = await apiFetch<{ credits: { remaining: number; plan: string; monthly_allowance: number; reset_at: string | null } }>("/api/credits", {
-      method: "POST",
-      body: JSON.stringify({ action: "grant", amount: add, type: "subscription_grant", reason: `plan:${planId}` }),
-    });
-    return {
-      balance: result.credits.remaining,
-      quota: result.credits.monthly_allowance || planGrant.quota,
-      spent: 0,
-      resetAt: result.credits.reset_at,
-      plan: result.credits.plan,
-    };
-  } catch {
-    return { balance: add, quota: planGrant.quota, spent: 0, resetAt: new Date().toISOString(), plan: planId };
-  }
+  // Grants are now server-initiated via Stripe webhooks / subscription lifecycle.
+  // This function is kept for backward compatibility but delegates to the server.
+  const result = await fetchUserCredits(_userId);
+  if (result) return result;
+  return { balance: 0, quota: DEFAULT_QUOTA, spent: 0, resetAt: null, plan: _planId };
 }
 
 export async function recordGenerationHistory(record: GenerationHistoryRecord): Promise<void> {

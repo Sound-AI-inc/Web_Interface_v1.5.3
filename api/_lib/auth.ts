@@ -8,6 +8,8 @@ export type AuthenticatedUser = {
   id: string;
   tier: UserPlan;
   email?: string;
+  planId?: string;
+  subscriptionStatus?: string | null;
 };
 
 function bearerToken(request: IncomingMessage): string {
@@ -28,6 +30,10 @@ function tierFromUser(user: User): UserPlan {
   return normalizeTier(appMetadata.plan ?? appMetadata.tier ?? appMetadata.subscription_tier);
 }
 
+/**
+ * Resolve the user's plan from the subscriptions table, falling back to
+ * app_metadata. This is the single source of truth for entitlement checks.
+ */
 export async function resolveUserTier(
   supabase: SupabaseClient,
   request: IncomingMessage,
@@ -39,10 +45,40 @@ export async function resolveUserTier(
     throw new HttpError(401, "INVALID_SESSION", "Invalid Supabase session");
   }
 
+  const baseTier = tierFromUser(data.user);
+
+  // Try to resolve from subscriptions table first.
+  const { data: sub } = await supabase
+    .from("subscriptions")
+    .select("plan_id, status")
+    .eq("user_id", data.user.id)
+    .in("status", ["trialing", "active"])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let tier: UserPlan = baseTier;
+  let planId: string | undefined;
+  let subscriptionStatus: string | null = null;
+
+  if (sub) {
+    subscriptionStatus = sub.status;
+    planId = sub.plan_id;
+    if (planId === "free_trial" || planId === "standard_monthly" || planId === "standard_annual") {
+      tier = "free";
+    } else if (planId?.startsWith("premium_flex")) {
+      tier = "premium";
+    } else if (planId === "enterprise_custom") {
+      tier = "enterprise";
+    }
+  }
+
   return {
     id: data.user.id,
-    tier: tierFromUser(data.user),
+    tier,
     email: data.user.email,
+    planId,
+    subscriptionStatus,
   };
 }
 

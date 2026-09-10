@@ -10,6 +10,7 @@ export interface GenerationGatewayRequest {
   model: string;
   format: string;
   count: number;
+  idempotencyKey?: string;
 }
 
 export interface GenerationGatewayResponse {
@@ -18,8 +19,10 @@ export interface GenerationGatewayResponse {
   backendTarget?: "soundcraft" | "midicraft" | "vstcraft";
   warning?: string;
   credits?: {
+    consumed: number;
     remaining: number;
-    cost: number;
+    balance: number;
+    reserved: number;
   };
 }
 
@@ -182,7 +185,7 @@ function orchestrationResultToAudioResult(
 
 async function requestAIOrchestration(request: GenerationGatewayRequest): Promise<GenerationGatewayResponse | null> {
   const component = requestComponent(request.type);
-  const response = await postAuthenticatedJson<RoutedGenerationResponse & { credits?: { remaining: number; cost: number } }>(AI_GENERATION_API_URL, {
+  const response = await postAuthenticatedJson<RoutedGenerationResponse & { credits?: { consumed: number; remaining: number; balance: number; reserved: number } }>(AI_GENERATION_API_URL, {
     request: {
       prompt: request.prompt,
       component,
@@ -192,6 +195,8 @@ async function requestAIOrchestration(request: GenerationGatewayRequest): Promis
       output_type: requestOutputType(request.type),
       commercial_intent: request.mode === "pro",
     },
+    count: request.count,
+    idempotency_key: request.idempotencyKey,
   });
 
   return {

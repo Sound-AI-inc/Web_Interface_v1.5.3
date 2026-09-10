@@ -8,7 +8,7 @@ import type { GenerationRequest, SoundAIUser } from "../src/app/lib/ai/types";
 import { resolveUserTier, enforceModelAccess } from "./_lib/auth";
 import { isAdminUser, getAdminBalance } from "./_lib/admin";
 import { generationCacheKey, canCacheGeneration, getCachedGeneration, storeCachedGeneration } from "./_lib/cache";
-import { consumeCredits } from "./_lib/credits";
+import { consumeCredits, reserveCredits, restoreCredits } from "./_lib/credits";
 import { errorCode, errorStatus, HttpError } from "./_lib/http";
 import { recordGenerationMetric } from "./_lib/observability";
 import { applyRateLimit } from "./_lib/rateLimit";
@@ -61,6 +61,8 @@ export default async function handler(request: IncomingMessage, response: Server
   let modelId = "unknown";
   let tier: SoundAIUser["plan"] = "free";
   let supabase: SupabaseClient | null = null;
+  let generationId: string | null = null;
+  let reservedAmount = 0;
 
   try {
     supabase = getServerSupabase();
@@ -76,6 +78,27 @@ export default async function handler(request: IncomingMessage, response: Server
     modelId = selected.model.id;
 
     await applyRateLimit(request, authUser);
+
+    // Resolve count from payload (default 1).
+    const count = Math.max(1, Number((payload as { count?: unknown }).count) || 1);
+
+    // Idempotency: if a client-supplied key is provided, check for a prior result.
+    const idempotencyKey = (payload as { idempotency_key?: unknown }).idempotency_key;
+    if (typeof idempotencyKey === "string" && idempotencyKey.trim()) {
+      const { data: existing } = await supabase
+        .from("idempotency_keys")
+        .select("status, result")
+        .eq("key", idempotencyKey.trim())
+        .maybeSingle();
+      if (existing?.status === "completed" && existing.result) {
+        json(response, 200, existing.result);
+        return;
+      }
+      if (existing?.status === "pending") {
+        json(response, 409, { error: "IDEMPOTENCY_REPLAY", message: "Request already in progress" });
+        return;
+      }
+    }
 
     const cacheable = canCacheGeneration(selected.model, user.plan, securedRequest);
     const cacheKey = cacheable ? generationCacheKey(selected.model, securedRequest) : null;
@@ -104,8 +127,24 @@ export default async function handler(request: IncomingMessage, response: Server
       }
     }
 
+    // Generate a generation_id for the reservation/ledger linkage.
+    generationId = crypto.randomUUID();
+
+    // Admin preview/test override: skip credit reservation.
+    const isAdmin = isAdminUser(authUser.email);
+    const adminBalance = getAdminBalance();
+    let creditResult: { cost: number; remaining: number; balance: number; reserved: number } | null = null;
+
+    if (!isAdmin || adminBalance <= 0) {
+      // Reserve credits BEFORE generation (atomic check).
+      creditResult = await reserveCredits(supabase, user.id, selected.model.output_type, count, generationId);
+      reservedAmount = creditResult.cost;
+    } else {
+      creditResult = { cost: 0, remaining: adminBalance, balance: adminBalance, reserved: 0 };
+    }
+
+    // Execute generation.
     const job = await enqueueGenerationJob(user, securedRequest);
-    const jobId = job.id;
     const routed = await processGenerationJob(job, {
       hfApiKey: process.env.HF_API_KEY,
       hfEndpointBaseUrl: process.env.HUGGINGFACE_INFERENCE_BASE_URL,
@@ -114,14 +153,9 @@ export default async function handler(request: IncomingMessage, response: Server
       retries: Number(process.env.AI_INFERENCE_RETRIES ?? 2),
     });
 
-    const isAdmin = isAdminUser(authUser.email);
-    const adminBalance = getAdminBalance();
-    let creditResult: { cost: number; remaining: number } | null = null;
-
+    // Consume reserved credits on success.
     if (!isAdmin || adminBalance <= 0) {
-      creditResult = await consumeCredits(supabase, user.id, selected.model.output_type, jobId);
-    } else {
-      creditResult = { cost: 0, remaining: adminBalance };
+      creditResult = await consumeCredits(supabase, user.id, generationId);
     }
 
     if (cacheKey && canCacheGeneration(routed.model, user.plan, securedRequest)) {
@@ -136,14 +170,39 @@ export default async function handler(request: IncomingMessage, response: Server
       status: "success",
     });
 
-    json(response, 200, {
+    const result = {
       ...routed,
       credits: {
+        consumed: creditResult.cost,
         remaining: creditResult.remaining,
-        cost: creditResult.cost,
+        balance: creditResult.balance,
+        reserved: creditResult.reserved,
       },
-    });
+    };
+
+    // Persist idempotency result.
+    if (typeof idempotencyKey === "string" && idempotencyKey.trim()) {
+      await supabase.from("idempotency_keys").upsert({
+        key: idempotencyKey.trim(),
+        user_id: userId,
+        action: "generate",
+        status: "completed",
+        result,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      }, { onConflict: "key" });
+    }
+
+    json(response, 200, result);
   } catch (error) {
+    // Restore reserved credits on failure.
+    if (supabase && generationId && reservedAmount > 0) {
+      try {
+        await restoreCredits(supabase, userId, generationId, "Generation failed; credits restored");
+      } catch {
+        // Restore failure is non-fatal for the error response.
+      }
+    }
+
     await recordGenerationMetric(supabase, {
       user_id: userId,
       model_id: modelId,

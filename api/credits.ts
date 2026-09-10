@@ -4,7 +4,6 @@ import { assertServerRuntime } from "../src/app/lib/ai/runtime";
 import { resolveUserTier } from "./_lib/auth";
 import { isAdminUser, getAdminBalance } from "./_lib/admin";
 import { errorStatus, errorCode, HttpError } from "./_lib/http";
-import { readJson } from "./_lib/readJson";
 
 function json(response: ServerResponse, statusCode: number, body: unknown): void {
   response.statusCode = statusCode;
@@ -25,75 +24,9 @@ function getServerSupabase(): SupabaseClient {
   });
 }
 
-async function grantCredits(
-  supabase: SupabaseClient,
-  userId: string,
-  amount: number,
-  type: string,
-  reason: string | null,
-  plan: string,
-): Promise<{ remaining: number; plan: string; monthly_allowance: number; reset_at: string | null }> {
-  const isAdmin = isAdminUser(null);
-  const adminBalance = getAdminBalance();
-
-  if (type === "admin_grant" && isAdmin && adminBalance > 0) {
-    const { data, error } = await supabase
-      .from("user_credits")
-      .upsert(
-        {
-          user_id: userId,
-          remaining: adminBalance,
-          plan: plan,
-          monthly_allowance: adminBalance,
-          reset_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id" }
-      )
-      .select("remaining, plan, monthly_allowance, reset_at")
-      .single();
-
-    if (error) throw error;
-    return {
-      remaining: Number(data.remaining),
-      plan: data.plan,
-      monthly_allowance: Number(data.monthly_allowance),
-      reset_at: data.reset_at,
-    };
-  }
-
-  const { data, error } = await supabase.schema("private").rpc("grant_user_credits", {
-    p_user_id: userId,
-    p_amount: amount,
-    p_type: type,
-    p_reason: reason,
-    p_plan: plan,
-  });
-
-  if (error) throw new Error(error.message);
-  const remaining = Number(data);
-
-  const record = await supabase
-    .from("user_credits")
-    .select("remaining, plan, monthly_allowance, reset_at")
-    .eq("user_id", userId)
-    .single();
-
-  const creditData = record.data;
-  if (record.error || !creditData) {
-    return { remaining, plan, monthly_allowance: amount, reset_at: new Date().toISOString() };
-  }
-
-  return {
-    remaining: Number(creditData.remaining),
-    plan: creditData.plan,
-    monthly_allowance: Number(creditData.monthly_allowance),
-    reset_at: creditData.reset_at,
-  };
-}
-
 export default async function handler(request: IncomingMessage, response: ServerResponse): Promise<void> {
   assertServerRuntime();
+
   if (request.method === "GET") {
     try {
       const supabase = getServerSupabase();
@@ -105,10 +38,15 @@ export default async function handler(request: IncomingMessage, response: Server
       if (isAdmin && adminBalance > 0) {
         json(response, 200, {
           credits: {
-            remaining: adminBalance,
+            balance: adminBalance,
+            reserved: 0,
             plan: authUser.tier,
             monthly_allowance: adminBalance,
-            reset_at: null,
+            last_refill_at: null,
+            next_refill_at: null,
+            subscription_status: "admin_override",
+            generation_costs: {},
+            entitlements: {},
             admin_override: true,
           },
         });
@@ -117,7 +55,7 @@ export default async function handler(request: IncomingMessage, response: Server
 
       const { data, error } = await supabase
         .from("user_credits")
-        .select("remaining, plan, monthly_allowance, reset_at")
+        .select("balance, reserved, plan, monthly_allowance, last_refill_at, next_refill_at, subscription_status")
         .eq("user_id", authUser.id)
         .maybeSingle();
 
@@ -126,19 +64,52 @@ export default async function handler(request: IncomingMessage, response: Server
         return;
       }
 
+      // Resolve entitlements from the plan.
+      const planId = data?.plan ?? authUser.tier;
+      const { data: entitlements } = await supabase
+        .from("plan_entitlements")
+        .select("feature_key, enabled, value")
+        .eq("plan_id", planId);
+
+      const entitlementMap: Record<string, unknown> = {};
+      for (const row of entitlements ?? []) {
+        if (row.enabled) {
+          entitlementMap[row.feature_key] = row.value;
+        }
+      }
+
+      // Resolve generation costs.
+      const { data: costConfig } = await supabase
+        .from("generation_cost_config")
+        .select("generation_type, credit_cost")
+        .eq("is_active", true);
+
+      const costs: Record<string, number> = {};
+      for (const row of costConfig ?? []) {
+        costs[row.generation_type] = Number(row.credit_cost);
+      }
+
       const credits = data ?? {
-        remaining: 0,
+        balance: 0,
+        reserved: 0,
         plan: authUser.tier,
         monthly_allowance: 0,
-        reset_at: null,
+        last_refill_at: null,
+        next_refill_at: null,
+        subscription_status: null,
       };
 
       json(response, 200, {
         credits: {
-          remaining: Number(credits.remaining) ?? 0,
-          plan: credits.plan ?? authUser.tier,
-          monthly_allowance: Number(credits.monthly_allowance) ?? 0,
-          reset_at: credits.reset_at ?? null,
+          balance: Number(credits.balance),
+          reserved: Number(credits.reserved),
+          plan: credits.plan,
+          monthly_allowance: Number(credits.monthly_allowance),
+          last_refill_at: credits.last_refill_at,
+          next_refill_at: credits.next_refill_at,
+          subscription_status: credits.subscription_status,
+          generation_costs: costs,
+          entitlements: entitlementMap,
         },
       });
     } catch (error) {
@@ -149,39 +120,13 @@ export default async function handler(request: IncomingMessage, response: Server
     return;
   }
 
+  // POST is no longer open for arbitrary grants. Grants are server-initiated only
+  // (signup, subscription lifecycle, refill, admin override via env).
   if (request.method === "POST") {
-    try {
-      const supabase = getServerSupabase();
-      const authUser = await resolveUserTier(supabase, request);
-      const body = await readJson<{ action?: string; amount?: number; type?: string; reason?: string }>(request);
-
-      if (body.action !== "grant" || typeof body.amount !== "number") {
-        json(response, 400, { error: "INVALID_REQUEST", message: "Expected action=grant with amount" });
-        return;
-      }
-
-      const result = await grantCredits(
-        supabase,
-        authUser.id,
-        body.amount,
-        body.type || "adjustment",
-        body.reason || null,
-        authUser.tier,
-      );
-
-      json(response, 200, {
-        credits: {
-          remaining: result.remaining,
-          plan: result.plan,
-          monthly_allowance: result.monthly_allowance,
-          reset_at: result.reset_at,
-        },
-      });
-    } catch (error) {
-      json(response, errorStatus(error), {
-        error: errorCode(error),
-      });
-    }
+    json(response, 403, {
+      error: "GRANT_NOT_ALLOWED",
+      message: "Credit grants are server-initiated. Use the subscription or refill endpoints.",
+    });
     return;
   }
 
