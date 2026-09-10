@@ -2,6 +2,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ModelOutputType } from "../../src/app/lib/ai/types";
 import { HttpError } from "./http";
 
+function mapOutputTypeToGenerationType(outputType: ModelOutputType): string {
+  if (outputType === "audio") return "audio_sample";
+  if (outputType === "preset") return "vst_preset";
+  return outputType;
+}
+
 export interface CreditResult {
   cost: number;
   remaining: number;
@@ -15,7 +21,7 @@ export interface CreditResult {
  */
 export async function resolveGenerationCost(
   supabase: SupabaseClient,
-  generationType: ModelOutputType,
+  generationType: string,
   count: number,
 ): Promise<number> {
   const { data, error } = await supabase.schema("private").rpc("get_generation_cost", {
@@ -40,7 +46,7 @@ export async function reserveCredits(
   count: number,
   generationId?: string,
 ): Promise<CreditResult> {
-  const cost = await resolveGenerationCost(supabase, generationType, count);
+  const cost = await resolveGenerationCost(supabase, mapOutputTypeToGenerationType(generationType), count);
   const { data, error } = await supabase.schema("private").rpc("reserve_credits", {
     p_user_id: userId,
     p_amount: cost,

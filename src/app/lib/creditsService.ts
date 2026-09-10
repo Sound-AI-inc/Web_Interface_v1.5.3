@@ -135,21 +135,7 @@ export async function grantPlanCredits(
   return { balance: 0, quota: DEFAULT_QUOTA, spent: 0, resetAt: null, plan: _planId };
 }
 
-export async function recordGenerationHistory(record: GenerationHistoryRecord): Promise<void> {
-  const supabase = (await import("./supabase")).getSupabase();
-  if (!supabase || !record.userId) return;
-
-  await supabase.from("generation_logs").insert({
-    user_id: record.userId,
-    project_id: record.projectId,
-    generation_id: record.generationId ?? null,
-    prompt: record.prompt,
-    generation_type: record.generationType,
-    model_used: record.model,
-    format: record.format,
-    count: record.count,
-    credits_spent: record.creditsSpent,
-    status: record.status,
-    generated_at: new Date().toISOString(),
-  });
+export async function recordGenerationHistory(_record: GenerationHistoryRecord): Promise<void> {
+  // Generation metrics are persisted server-side by /api/generate.
+  // Client-side inserts used a legacy schema and are intentionally disabled.
 }

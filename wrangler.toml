@@ -1,7 +1,7 @@
 name = "web-interface-v1-5-3"
 compatibility_date = "2026-01-01"
 compatibility_flags = ["nodejs_compat"]
-main = "worker.js"
+main = "worker/index.ts"
 
 [assets]
 directory = "dist"
@@ -12,3 +12,12 @@ VITE_WEBSITE_URL = "https://web-interface-v1-5-3.soundai-inc.workers.dev"
 
 [build]
 command = "npm run build"
+
+# Preview/test environment: enable admin credit override via Cloudflare secrets/vars.
+[env.preview-tests]
+name = "web-interface-v1-5-3-preview"
+
+[env.preview-tests.vars]
+CREDIT_TEST_ADMIN_ENABLED = "true"
+CREDIT_TEST_ADMIN_EMAIL = "soundai.inc@gmail.com"
+CREDIT_TEST_ADMIN_BALANCE = "5000"

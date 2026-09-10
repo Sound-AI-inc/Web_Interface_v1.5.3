@@ -27,8 +27,16 @@ insert into public.generation_cost_config (generation_type, model_class, complex
   ('advanced_audio', 'internal', 'pro',    3, 1, true),
   ('advanced_edit',  'internal', 'pro',    4, 1, true),
   ('batch',          'internal', 'pro',    5, 1, true),
-  ('audio_sample',   'internal', 'pro',    2, 1, true)
+  ('audio_sample',   'internal', 'pro',    3, 1, true)
 on conflict do nothing;
+
+-- Ensure production deployments use the authoritative Audio Sample cost.
+update public.generation_cost_config
+   set credit_cost = 3,
+       updated_at = now()
+ where generation_type = 'audio_sample'
+   and is_active = true
+   and credit_cost <> 3;
 
 -- RPC: resolve active generation cost at call time.
 create or replace function private.get_generation_cost(

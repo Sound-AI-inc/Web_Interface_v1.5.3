@@ -83,7 +83,7 @@ async function upsertSubscription(
     : null;
 
   // Resolve user_id from metadata or customer.
-  const userId = ((obj.metadata as Record<string, unknown> | undefined)?.user_id as string) ?? null;
+  let userId = ((obj.metadata as Record<string, unknown> | undefined)?.user_id as string) ?? null;
 
   if (!userId) {
     // Try to resolve from Stripe customer.

@@ -1,0 +1,9 @@
+-- SoundAI production schema bootstrap (Supabase SQL Editor).
+-- Run each file below in order, or paste their contents sequentially:
+--   1. generation_logs.sql
+--   2. user_credits.sql
+--   3. generation_cost_config.sql
+--   4. idempotency_keys.sql
+--   5. subscriptions.sql
+--   6. plan_allowances.sql
+--   7. plan_entitlements.sql
