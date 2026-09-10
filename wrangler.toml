@@ -9,6 +9,7 @@ binding = "ASSETS"
 
 [vars]
 VITE_WEBSITE_URL = "https://web-interface-v1-5-3.soundai-inc.workers.dev"
+SUPABASE_URL = "https://xnjugeewwjclgsaynthi.supabase.co"
 
 [build]
 command = "npm run build"
@@ -18,6 +19,8 @@ command = "npm run build"
 name = "web-interface-v1-5-3-preview"
 
 [env.preview-tests.vars]
+VITE_WEBSITE_URL = "https://web-interface-v1-5-3-preview.soundai-inc.workers.dev"
+SUPABASE_URL = "https://xnjugeewwjclgsaynthi.supabase.co"
 CREDIT_TEST_ADMIN_ENABLED = "true"
 CREDIT_TEST_ADMIN_EMAIL = "soundai.inc@gmail.com"
 CREDIT_TEST_ADMIN_BALANCE = "5000"
