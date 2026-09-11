@@ -3,19 +3,12 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // Route /api/* to Cloudflare Functions (if deployed).
-    // The Functions binding is optional — if not present, return 404 for API routes.
     if (path.startsWith("/api/")) {
-      try {
-        // @ts-expect-error - Functions binding is optional
-        if (env.FUNCTIONS) {
-          // @ts-expect-error
-          return await env.ASSETS.fetch(request);
-        }
-      } catch {
-        // Fall through to 404.
+      const assetResponse = await env.ASSETS.fetch(request);
+      if (assetResponse.status !== 404) {
+        return assetResponse;
       }
-      return new Response(JSON.stringify({ error: "API_NOT_AVAILABLE" }), {
+      return new Response(JSON.stringify({ error: "API_NOT_FOUND", path }), {
         status: 404,
         headers: { "Content-Type": "application/json" },
       });
