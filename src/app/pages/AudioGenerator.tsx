@@ -370,11 +370,8 @@ export default function AudioGenerator() {
 
       const actualCount = Math.max(1, response.items.length);
 
-      // Backend-confirmed balance: refresh from server.
-      const backendRemaining = response.credits?.remaining;
-      if (typeof backendRemaining === "number") {
-        void refreshCredits();
-      }
+      // Backend-confirmed balance: always refresh from /api/credits after generation.
+      void refreshCredits();
 
       if (actualCount < generationCount) {
         setGenerationWarning(
@@ -401,7 +398,8 @@ export default function AudioGenerator() {
       setPrompt("");
       setPending(null);
     } catch (error) {
-      // Server restores credits on failure automatically.
+      // Server restores credits on failure automatically; refresh authoritative state.
+      void refreshCredits();
       setGenerationWarning(
         error instanceof Error ? error.message : "Generation failed unexpectedly.",
       );

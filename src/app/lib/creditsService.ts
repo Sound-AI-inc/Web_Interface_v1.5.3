@@ -83,10 +83,11 @@ interface CreditsResponse {
 export async function fetchUserCredits(_userId: string): Promise<UserCreditsRecord | null> {
   try {
     const result = await apiFetch<CreditsResponse>("/api/credits");
+    const balance = Number(result.credits.balance);
     return {
-      balance: result.credits.balance,
+      balance,
       quota: result.credits.monthly_allowance || DEFAULT_QUOTA,
-      spent: Math.max(0, (result.credits.monthly_allowance || DEFAULT_QUOTA) - result.credits.balance),
+      spent: Math.max(0, (result.credits.monthly_allowance || DEFAULT_QUOTA) - balance),
       resetAt: result.credits.next_refill_at,
       plan: result.credits.plan,
     };

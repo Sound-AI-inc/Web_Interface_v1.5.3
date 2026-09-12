@@ -1,3 +1,7 @@
+-- Generation logs + cache. ADDITIVE and NON-DESTRUCTIVE.
+-- Existing columns are never dropped; new Credit Engine columns are added
+-- only when missing.
+
 create table if not exists public.generation_logs (
   id uuid primary key default gen_random_uuid(),
   user_id text not null,
@@ -9,13 +13,10 @@ create table if not exists public.generation_logs (
   created_at timestamptz not null default now()
 );
 
-alter table public.generation_logs drop column if exists component;
-alter table public.generation_logs drop column if exists token_usage;
-alter table public.generation_logs drop column if exists error;
-alter table public.generation_logs drop column if exists metadata;
-alter table public.generation_logs add column if not exists status text not null default 'success';
-alter table public.generation_logs add column if not exists error_code text;
-alter table public.generation_logs alter column status drop default;
+-- Credit Engine linkage (nullable: historical rows predate the ledger link).
+alter table public.generation_logs add column if not exists transaction_id uuid;
+alter table public.generation_logs add column if not exists generation_id uuid;
+alter table public.generation_logs add column if not exists metadata jsonb;
 
 alter table public.generation_logs enable row level security;
 
@@ -25,6 +26,10 @@ create index if not exists generation_logs_user_created_at_idx
 create index if not exists generation_logs_model_created_at_idx
   on public.generation_logs (model_id, created_at desc);
 
+create index if not exists generation_logs_generation_id_idx
+  on public.generation_logs (generation_id);
+
+drop policy if exists "Users can read their own generation logs" on public.generation_logs;
 create policy "Users can read their own generation logs"
   on public.generation_logs
   for select

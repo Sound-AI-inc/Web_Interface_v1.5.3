@@ -119,6 +119,8 @@ async function upsertSubscription(
   }, { onConflict: "stripe_subscription_id" });
 
   // Grant subscription credits on active/trialing status.
+  // Idempotent: the Stripe event ID is the stable grant reference, so a
+  // duplicate webhook delivery credits the user exactly once.
   if (status === "active" || status === "trialing") {
     const { data: allowance } = await supabase
       .from("plan_allowances")
@@ -134,6 +136,7 @@ async function upsertSubscription(
         p_reason: `stripe:${event.type}`,
         p_plan: planId,
         p_monthly_allowance: credits,
+        p_grant_reference: `stripe:${event.id}`,
       });
     }
   }
@@ -160,6 +163,29 @@ export default async function handler(request: IncomingMessage, response: Server
     const event = await verifySignature(payload, sigHeader);
     const supabase = getServerSupabase();
 
+    // Stripe-event idempotency: duplicate deliveries of the same event are
+    // acknowledged without reprocessing (no duplicate subscription credits).
+    const { data: existingEvent } = await supabase
+      .from("idempotency_keys")
+      .select("status")
+      .eq("key", `stripe:${event.id}`)
+      .maybeSingle();
+
+    if (existingEvent?.status === "completed") {
+      json(response, 200, { received: true, deduplicated: true });
+      return;
+    }
+
+    if (!existingEvent) {
+      await supabase.from("idempotency_keys").insert({
+        key: `stripe:${event.id}`,
+        user_id: "stripe-webhook",
+        action: `stripe:${event.type}`,
+        status: "pending",
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      });
+    }
+
     switch (event.type) {
       case "checkout.session.completed":
       case "customer.subscription.created":
@@ -177,6 +203,15 @@ export default async function handler(request: IncomingMessage, response: Server
         // Unknown event — ack.
         break;
     }
+
+    await supabase.from("idempotency_keys").upsert({
+      key: `stripe:${event.id}`,
+      user_id: "stripe-webhook",
+      action: `stripe:${event.type}`,
+      status: "completed",
+      result: { type: event.type },
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    }, { onConflict: "key" });
 
     json(response, 200, { received: true });
   } catch (error) {
