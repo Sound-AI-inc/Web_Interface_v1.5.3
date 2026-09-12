@@ -3,6 +3,9 @@
 
 create table if not exists public.idempotency_keys (
   key text primary key,
+  -- Intentionally TEXT (not uuid): the Stripe webhook stores the sentinel
+  -- 'stripe-webhook' here. This column is only ever compared to text
+  -- (lookups by key), never to auth.users.id, so no cast is needed.
   user_id text not null,
   action text not null,
   status text not null default 'pending'

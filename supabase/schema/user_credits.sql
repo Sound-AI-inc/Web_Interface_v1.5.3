@@ -13,7 +13,8 @@ create schema if not exists private;
 -- ---------------------------------------------------------------------------
 create table if not exists public.user_credits (
   id uuid primary key default gen_random_uuid(),
-  user_id text not null,
+  -- Legacy production user_id is UUID (matches auth.users.id). Never alter.
+  user_id uuid not null,
   current_credits integer not null default 0,
   total_earned_credits integer not null default 0,
   balance integer not null default 0 check (balance >= 0),
@@ -65,7 +66,8 @@ create unique index if not exists user_credits_user_id_uidx
 -- ---------------------------------------------------------------------------
 create table if not exists public.credit_transactions (
   id uuid primary key default gen_random_uuid(),
-  user_id text not null,
+  -- Legacy production user_id is UUID (matches auth.users.id). Never alter.
+  user_id uuid not null,
   type text check (type in (
     'trial_grant', 'subscription_grant', 'credit_purchase', 'generation_spend',
     'generation_reserve', 'generation_restore', 'timed_refill', 'refund',
@@ -125,19 +127,19 @@ create policy "Users can read own credits"
   on public.user_credits
   for select
   to authenticated
-  using (auth.uid()::text = user_id);
+  using (auth.uid() = user_id);
 
 create policy "Users can read own transactions"
   on public.credit_transactions
   for select
   to authenticated
-  using (auth.uid()::text = user_id);
+  using (auth.uid() = user_id);
 
 -- ---------------------------------------------------------------------------
 -- 3. reserve_credits — atomic reservation before generation.
 -- ---------------------------------------------------------------------------
 create or replace function private.reserve_credits(
-  p_user_id text,
+  p_user_id uuid,
   p_amount integer,
   p_generation_id uuid default null,
   p_reason text default null
@@ -185,8 +187,8 @@ begin
 end;
 $$;
 
-revoke all on function private.reserve_credits(text, integer, uuid, text) from public, anon, authenticated;
-grant execute on function private.reserve_credits(text, integer, uuid, text) to service_role;
+revoke all on function private.reserve_credits(uuid, integer, uuid, text) from public, anon, authenticated;
+grant execute on function private.reserve_credits(uuid, integer, uuid, text) to service_role;
 
 -- ---------------------------------------------------------------------------
 -- 4. consume_credits — consumes the ORIGINAL reservation only.
@@ -195,7 +197,7 @@ grant execute on function private.reserve_credits(text, integer, uuid, text) to 
 --    generation-specific (p_generation_id is required).
 -- ---------------------------------------------------------------------------
 create or replace function private.consume_credits(
-  p_user_id text,
+  p_user_id uuid,
   p_amount integer,
   p_generation_id uuid default null,
   p_reason text default null
@@ -261,14 +263,14 @@ begin
 end;
 $$;
 
-revoke all on function private.consume_credits(text, integer, uuid, text) from public, anon, authenticated;
-grant execute on function private.consume_credits(text, integer, uuid, text) to service_role;
+revoke all on function private.consume_credits(uuid, integer, uuid, text) from public, anon, authenticated;
+grant execute on function private.consume_credits(uuid, integer, uuid, text) to service_role;
 
 -- ---------------------------------------------------------------------------
 -- 5. restore_credits — atomic restoration after failed generation.
 -- ---------------------------------------------------------------------------
 create or replace function private.restore_credits(
-  p_user_id text,
+  p_user_id uuid,
   p_amount integer,
   p_generation_id uuid default null,
   p_reason text default null
@@ -336,8 +338,8 @@ begin
 end;
 $$;
 
-revoke all on function private.restore_credits(text, integer, uuid, text) from public, anon, authenticated;
-grant execute on function private.restore_credits(text, integer, uuid, text) to service_role;
+revoke all on function private.restore_credits(uuid, integer, uuid, text) from public, anon, authenticated;
+grant execute on function private.restore_credits(uuid, integer, uuid, text) to service_role;
 
 -- ---------------------------------------------------------------------------
 -- 6. grant_credits — idempotent grants.
@@ -347,7 +349,7 @@ grant execute on function private.restore_credits(text, integer, uuid, text) to 
 --    the second call returns the current balance with no ledger change.
 -- ---------------------------------------------------------------------------
 create or replace function private.grant_credits(
-  p_user_id text,
+  p_user_id uuid,
   p_amount integer,
   p_type text default 'trial_grant',
   p_reason text default null,
@@ -414,12 +416,12 @@ begin
 end;
 $$;
 
-revoke all on function private.grant_credits(text, integer, text, text, text, integer, text) from public, anon, authenticated;
-grant execute on function private.grant_credits(text, integer, text, text, text, integer, text) to service_role;
+revoke all on function private.grant_credits(uuid, integer, text, text, text, integer, text) from public, anon, authenticated;
+grant execute on function private.grant_credits(uuid, integer, text, text, text, integer, text) to service_role;
 
 -- Back-compat wrapper for the previous 6-argument signature.
 create or replace function private.grant_credits(
-  p_user_id text,
+  p_user_id uuid,
   p_amount integer,
   p_type text default 'trial_grant',
   p_reason text default null,
@@ -436,8 +438,8 @@ begin
 end;
 $$;
 
-revoke all on function private.grant_credits(text, integer, text, text, text, integer) from public, anon, authenticated;
-grant execute on function private.grant_credits(text, integer, text, text, text, integer) to service_role;
+revoke all on function private.grant_credits(uuid, integer, text, text, text, integer) from public, anon, authenticated;
+grant execute on function private.grant_credits(uuid, integer, text, text, text, integer) to service_role;
 
 -- ---------------------------------------------------------------------------
 -- 7. refill_credits — deterministic server-side refill enforcement.
@@ -461,7 +463,7 @@ grant execute on function private.grant_credits(text, integer, text, text, text,
 --      p_enforce_cap), upgrade preserves remaining credits.
 -- ---------------------------------------------------------------------------
 create or replace function private.refill_credits(
-  p_user_id text,
+  p_user_id uuid,
   p_amount integer default null,
   p_reason text default null,
   p_enforce_cap boolean default true
@@ -516,10 +518,10 @@ begin
         v_trial_expires_at timestamptz;
       begin
         execute 'select trial_expires_at from public.user_credits where user_id = $1'
-          using p_user_id into v_trial_expires_at;
+          into v_trial_expires_at using p_user_id;
         if v_trial_expires_at is not null and v_trial_expires_at <= now() then
           raise exception 'TRIAL_EXPIRED' using errcode = 'P0001';
-        end;
+        end if;
       exception when undefined_column then
         -- No legacy trial column: fall back to subscription_status/next_refill_at.
         null;
@@ -593,12 +595,12 @@ begin
 end;
 $$;
 
-revoke all on function private.refill_credits(text, integer, text, boolean) from public, anon, authenticated;
-grant execute on function private.refill_credits(text, integer, text, boolean) to service_role;
+revoke all on function private.refill_credits(uuid, integer, text, boolean) from public, anon, authenticated;
+grant execute on function private.refill_credits(uuid, integer, text, boolean) to service_role;
 
 -- Back-compat wrapper for the previous 3-argument signature.
 create or replace function private.refill_credits(
-  p_user_id text,
+  p_user_id uuid,
   p_amount integer,
   p_reason text default null
 )
@@ -612,5 +614,5 @@ begin
 end;
 $$;
 
-revoke all on function private.refill_credits(text, integer, text) from public, anon, authenticated;
-grant execute on function private.refill_credits(text, integer, text) to service_role;
+revoke all on function private.refill_credits(uuid, integer, text) from public, anon, authenticated;
+grant execute on function private.refill_credits(uuid, integer, text) to service_role;

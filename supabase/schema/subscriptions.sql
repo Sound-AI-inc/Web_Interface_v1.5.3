@@ -3,11 +3,11 @@
 
 create table if not exists public.subscriptions (
   id uuid primary key default gen_random_uuid(),
-  -- Legacy wallets use text user IDs while auth.users.id is uuid, so no
-  -- FOREIGN KEY is declared here (text = uuid has no operator). Compare
-  -- with an explicit cast instead: auth.users.id::text = subscriptions.user_id.
-  -- Legacy column types are never altered.
-  user_id text not null,
+  -- Legacy wallet user IDs are UUID (matches auth.users.id). Never alter.
+  -- No FOREIGN KEY is declared here to avoid cascade deletes of billing
+  -- history; compare with an explicit same-type expression instead:
+  -- auth.uid() = subscriptions.user_id.
+  user_id uuid not null,
   stripe_customer_id text unique,
   stripe_subscription_id text unique,
   stripe_price_id text,
@@ -43,6 +43,6 @@ create policy "Users can read own subscriptions"
   on public.subscriptions
   for select
   to authenticated
-  using (auth.uid()::text = user_id);
+  using (auth.uid() = user_id);
 
 -- Server-side writes only (service role). No authenticated insert/update.

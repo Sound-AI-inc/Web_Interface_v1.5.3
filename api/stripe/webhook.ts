@@ -129,7 +129,7 @@ async function upsertSubscription(
       .maybeSingle();
     const credits = allowance?.monthly_allowance ?? 0;
     if (credits > 0) {
-      await supabase.schema("private").rpc("grant_credits", {
+      await supabase.rpc("grant_credits", {
         p_user_id: userId,
         p_amount: credits,
         p_type: status === "trialing" ? "trial_grant" : "subscription_grant",

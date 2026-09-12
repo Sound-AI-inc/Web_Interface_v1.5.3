@@ -4,7 +4,8 @@
 
 create table if not exists public.generation_logs (
   id uuid primary key default gen_random_uuid(),
-  user_id text not null,
+  -- UUID to match legacy wallet user IDs (auth.users.id). Never alter.
+  user_id uuid not null,
   model_id text not null,
   tier text not null check (tier in ('lite', 'pro')),
   latency_ms integer not null check (latency_ms >= 0),
@@ -34,7 +35,7 @@ create policy "Users can read their own generation logs"
   on public.generation_logs
   for select
   to authenticated
-  using (auth.uid()::text = user_id);
+  using (auth.uid() = user_id);
 
 -- Inserts are intended to happen from server-side API routes with the service role key.
 -- Do not expose SUPABASE_SERVICE_ROLE_KEY to browser code or NEXT_PUBLIC_/VITE_ env vars.

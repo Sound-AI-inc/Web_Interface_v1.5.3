@@ -24,7 +24,7 @@ export async function resolveGenerationCost(
   generationType: string,
   count: number,
 ): Promise<number> {
-  const { data, error } = await supabase.schema("private").rpc("get_generation_cost", {
+  const { data, error } = await supabase.rpc("get_generation_cost", {
     p_generation_type: generationType,
     p_count: Math.max(1, count),
   });
@@ -47,7 +47,7 @@ export async function reserveCredits(
   generationId?: string,
 ): Promise<CreditResult> {
   const cost = await resolveGenerationCost(supabase, mapOutputTypeToGenerationType(generationType), count);
-  const { data, error } = await supabase.schema("private").rpc("reserve_credits", {
+  const { data, error } = await supabase.rpc("reserve_credits", {
     p_user_id: userId,
     p_amount: cost,
     p_generation_id: generationId ?? null,
@@ -111,7 +111,7 @@ export async function consumeCredits(
     };
   }
 
-  const { data, error } = await supabase.schema("private").rpc("consume_credits", {
+  const { data, error } = await supabase.rpc("consume_credits", {
     p_user_id: userId,
     p_amount: cost,
     p_generation_id: generationId ?? null,
@@ -171,7 +171,7 @@ export async function restoreCredits(
     };
   }
 
-  const { data, error } = await supabase.schema("private").rpc("restore_credits", {
+  const { data, error } = await supabase.rpc("restore_credits", {
     p_user_id: userId,
     p_amount: cost,
     p_generation_id: generationId ?? null,
