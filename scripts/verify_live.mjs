@@ -44,22 +44,34 @@ async function main() {
 
   console.log("== 4. wallets ==");
   const { data: wallets } = await supabase.from("user_credits").select("user_id,current_credits,total_earned_credits,balance,reserved,plan,monthly_allowance");
-  check("wallet count = 2", wallets?.length === 2, `got ${wallets?.length}`);
   const dupUsers = new Set((wallets || []).map((w) => w.user_id));
-  check("no duplicate user_id", dupUsers.size === (wallets || []).length);
-  for (const w of wallets || []) {
-    check(`wallet ${w.user_id.slice(0, 8)} balance=current (${w.balance}=${w.current_credits})`, w.balance === w.current_credits);
-    console.log(`    earned=${w.total_earned_credits} reserved=${w.reserved} plan=${w.plan} allowance=${w.monthly_allowance}`);
+  check("no duplicate user_id", dupUsers.size === (wallets || []).length, `total wallets=${wallets?.length} (2 original + E2E test wallets)`);
+  // Original production wallets: exact audit baseline, legacy untouched.
+  const baseline = {
+    "3618ceb7-90d4-4d57-b5d0-09cc0223c601": { current: 7, earned: 10 },
+    "3d7cae55-d2da-4656-b9d2-073fab1de31b": { current: 509969, earned: 509999 },
+  };
+  for (const [uid, b] of Object.entries(baseline)) {
+    const w = (wallets || []).find((x) => x.user_id === uid);
+    const ok = w && w.current_credits === b.current && w.total_earned_credits === b.earned && w.balance === b.current;
+    check(`original wallet ${uid.slice(0, 8)} intact (current=${b.current}, balance=current)`, !!ok, w ? JSON.stringify({ current: w.current_credits, earned: w.total_earned_credits, balance: w.balance, reserved: w.reserved }) : "missing");
   }
+  // Fresh engine wallets (E2E): balance comes from grants; legacy current_credits stays 0 by design.
+  const e2eWallets = (wallets || []).filter((w) => !(w.user_id in baseline));
+  check("E2E wallets all reserved=0 (no stranded reservations)", e2eWallets.every((w) => w.reserved === 0), `e2e=${e2eWallets.length}`);
 
   console.log("== 5. transactions ==");
   const { data: txns, count } = await supabase.from("credit_transactions").select("id", { count: "exact" });
-  check("txn count = 38", count === 38, `got ${count}`);
+  check("txn count >= 38 (38 history + E2E evidence)", (count || 0) >= 38, `got ${count}`);
   const ids = new Set((txns || []).map((t) => t.id));
   check("no duplicate txn ids", ids.size === (txns || []).length);
-  const { data: hist } = await supabase.from("credit_transactions").select("id,type,balance_after");
-  const histNullBal = (hist || []).filter((t) => t.balance_after === null).length;
-  check("historical balance_after NULL preserved", histNullBal === (hist || []).length, `${histNullBal}/${(hist || []).length} NULL`);
+  const { data: hist } = await supabase.from("credit_transactions").select("id,type,balance_after,transaction_type");
+  const nullBal = (hist || []).filter((t) => t.balance_after === null);
+  // Exactly the 38 pre-engine rows keep NULL balance_after (never fabricated).
+  check("historical balance_after NULL == 38", nullBal.length === 38, `NULL=${nullBal.length}`);
+  check("NULL rows are all pre-engine history", nullBal.every((t) => t.transaction_type === "earned" || t.transaction_type === "spent"), "");
+  const engTx = (hist || []).filter((t) => t.balance_after !== null);
+  check("all engine txns wrote balance_after", engTx.every((t) => t.type !== null && t.balance_after >= 0), `engine=${engTx.length}`);
   const { data: typed } = await supabase.from("credit_transactions").select("id,type").not("type", "is", null);
   console.log(`    mapped historical types: ${(typed || []).length} (trial_grant/admin_adjustment/generation_spend)`);
   const { data: legacy } = await supabase.from("credit_transactions").select("transaction_type,description,reference_id").limit(3);
