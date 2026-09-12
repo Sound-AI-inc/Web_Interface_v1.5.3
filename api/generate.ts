@@ -227,6 +227,12 @@ export default async function handler(request: IncomingMessage, response: Server
 
     json(response, 200, result);
   } catch (error) {
+    // Server-side diagnostic (wrangler tail). Response stays generic.
+    try {
+      console.error("generate failed", errorCode(error), error instanceof Error ? error.message : String(error));
+    } catch {
+      // Logging must never break error handling.
+    }
     // Restore reserved credits on failure.
     if (supabase && generationId && reservedAmount > 0) {
       try {

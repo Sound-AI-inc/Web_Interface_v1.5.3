@@ -117,8 +117,11 @@ async function main() {
   w = await wallet(D.id);
   const eSpend = (await txns(D.id, "generation_spend")).filter((t) => t.generation_id === genE);
   check("E dup consume: single spend txn", eSpend.length === 1, `spends=${eSpend.length} balance=${w.balance}`);
-  const wrongAmt = await rpc("consume_credits", { p_user_id: B.id, p_amount: 999, p_generation_id: genB, p_reason: "e2e mismatch" });
-  check("E arbitrary consume rejected", !!wrongAmt.error && /MISMATCH|NO_RESERVATION/.test(wrongAmt.error.message), wrongAmt.error?.message.slice(0, 60));
+  const genE2 = randomUUID();
+  await rpc("reserve_credits", { p_user_id: D.id, p_amount: 3, p_generation_id: genE2, p_reason: "e2e E fresh" });
+  const wrongAmt = await rpc("consume_credits", { p_user_id: D.id, p_amount: 999, p_generation_id: genE2, p_reason: "e2e mismatch" });
+  check("E arbitrary consume rejected CONSUME_AMOUNT_MISMATCH", !!wrongAmt.error && /MISMATCH/.test(wrongAmt.error.message), wrongAmt.error?.message.slice(0, 60) || "no error");
+  await rpc("restore_credits", { p_user_id: D.id, p_amount: 3, p_generation_id: genE2, p_reason: "e2e E cleanup" });
 
   console.log("== F. grant/Stripe-event idempotency ==");
   const F = await makeUser("F");
