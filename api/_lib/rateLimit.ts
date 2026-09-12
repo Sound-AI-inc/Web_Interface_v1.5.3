@@ -16,10 +16,21 @@ const routeRules: Record<string, Record<AuthenticatedUser["tier"], LimitRule>> =
   },
 };
 
+function headerValue(request: IncomingMessage, name: string): string | undefined {
+  const header = request.headers[name];
+  const value = Array.isArray(header) ? header[0] : header;
+  return value?.split(",")[0]?.trim() || undefined;
+}
+
 function clientIp(request: IncomingMessage): string {
-  const forwarded = request.headers["x-forwarded-for"];
-  const value = Array.isArray(forwarded) ? forwarded[0] : forwarded;
-  return value?.split(",")[0]?.trim() || request.socket.remoteAddress || "unknown";
+  // Cloudflare Workers: prefer cf-connecting-ip; the Node-shim request has
+  // no socket, so socket access must be optional (was: TypeError -> 500).
+  return (
+    headerValue(request, "cf-connecting-ip") ??
+    headerValue(request, "x-forwarded-for") ??
+    (request.socket as { remoteAddress?: string } | undefined)?.remoteAddress ??
+    "unknown"
+  );
 }
 
 async function redisPipeline(commands: unknown[][]): Promise<unknown[]> {
