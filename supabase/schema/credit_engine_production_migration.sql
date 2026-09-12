@@ -206,8 +206,11 @@ begin
     raise exception 'INSUFFICIENT_CREDITS' using errcode = 'P0001';
   end if;
 
-  insert into public.credit_transactions (user_id, type, amount, balance_after, generation_id, reason)
-  values (p_user_id, 'generation_reserve', p_amount, v_balance, p_generation_id, p_reason);
+  -- Legacy compat: transaction_type/descriptions are NOT NULL in production.
+  -- Engine columns (type/amount/balance_after) stay authoritative; legacy
+  -- values are best-effort maps of observed legacy vocab ('earned'/'spent').
+  insert into public.credit_transactions (user_id, type, amount, balance_after, generation_id, reason, transaction_type, description)
+  values (p_user_id, 'generation_reserve', p_amount, v_balance, p_generation_id, p_reason, 'spent', coalesce(p_reason, 'generation_reserve'));
 
   return v_balance;
 end;
@@ -282,8 +285,8 @@ begin
     raise exception 'INSUFFICIENT_CREDITS' using errcode = 'P0001';
   end if;
 
-  insert into public.credit_transactions (user_id, type, amount, balance_after, generation_id, reason)
-  values (p_user_id, 'generation_spend', p_amount, v_balance, p_generation_id, p_reason);
+  insert into public.credit_transactions (user_id, type, amount, balance_after, generation_id, reason, transaction_type, description)
+  values (p_user_id, 'generation_spend', p_amount, v_balance, p_generation_id, p_reason, 'spent', coalesce(p_reason, 'generation_spend'));
 
   return v_balance;
 end;
@@ -357,8 +360,8 @@ begin
     raise exception 'INSUFFICIENT_CREDITS' using errcode = 'P0001';
   end if;
 
-  insert into public.credit_transactions (user_id, type, amount, balance_after, generation_id, reason)
-  values (p_user_id, 'generation_restore', p_amount, v_balance, p_generation_id, p_reason);
+  insert into public.credit_transactions (user_id, type, amount, balance_after, generation_id, reason, transaction_type, description)
+  values (p_user_id, 'generation_restore', p_amount, v_balance, p_generation_id, p_reason, 'earned', coalesce(p_reason, 'generation_restore'));
 
   return v_balance;
 end;
@@ -410,8 +413,10 @@ begin
 
   v_allowance := coalesce(p_monthly_allowance, p_amount);
 
-  insert into public.user_credits (user_id, balance, reserved, plan, monthly_allowance, last_refill_at, next_refill_at, subscription_status)
-  values (p_user_id, p_amount, 0, p_plan, v_allowance, now(), now() + interval '24 hours', p_type)
+  -- id/trial_activated are legacy NOT NULL columns in production; set them
+  -- explicitly so fresh engine wallets insert cleanly (harmless when defaults exist).
+  insert into public.user_credits (id, user_id, balance, reserved, plan, monthly_allowance, last_refill_at, next_refill_at, subscription_status, trial_activated)
+  values (gen_random_uuid(), p_user_id, p_amount, 0, p_plan, v_allowance, now(), now() + interval '24 hours', p_type, (p_plan = 'trial'))
   on conflict (user_id) do update
     set balance = public.user_credits.balance + p_amount,
         -- Upgrade preserves remaining credits: only additive changes here.
@@ -423,10 +428,11 @@ begin
   select balance into v_remaining from public.user_credits where user_id = p_user_id;
 
   begin
-    insert into public.credit_transactions (user_id, type, amount, balance_after, reason, plan, metadata)
+    insert into public.credit_transactions (user_id, type, amount, balance_after, reason, plan, metadata, transaction_type, description)
     values (
       p_user_id, p_type, p_amount, v_remaining, p_reason, p_plan,
-      case when p_grant_reference is null then null else jsonb_build_object('grant_reference', p_grant_reference) end
+      case when p_grant_reference is null then null else jsonb_build_object('grant_reference', p_grant_reference) end,
+      'earned', coalesce(p_reason, p_type)
     );
   exception when unique_violation then
     -- Lost a race with a concurrent duplicate delivery: the other call won
@@ -614,8 +620,8 @@ begin
    where user_id = p_user_id
    returning balance into v_balance;
 
-  insert into public.credit_transactions (user_id, type, amount, balance_after, reason, plan)
-  values (p_user_id, 'timed_refill', v_refill_amount, v_balance, p_reason, v_wallet.plan);
+  insert into public.credit_transactions (user_id, type, amount, balance_after, reason, plan, transaction_type, description)
+  values (p_user_id, 'timed_refill', v_refill_amount, v_balance, p_reason, v_wallet.plan, 'earned', coalesce(p_reason, 'timed_refill'));
 
   return v_balance;
 end;
