@@ -67,7 +67,8 @@ export default async function handler(request: IncomingMessage, response: Server
 
   try {
     supabase = getServerSupabase();
-    const payload = validateGenerateRequest(await readJson<unknown>(request));
+    const rawPayload = await readJson<unknown>(request);
+    const payload = validateGenerateRequest(rawPayload);
     const authUser = await resolveUserTier(supabase, request);
     userId = authUser.id;
     tier = authUser.tier;
@@ -80,11 +81,12 @@ export default async function handler(request: IncomingMessage, response: Server
 
     await applyRateLimit(request, authUser);
 
-    // Resolve count from payload (default 1).
-    const count = Math.max(1, Number((payload as { count?: unknown }).count) || 1);
+    // Resolve count and idempotency key from the RAW body: validation
+    // returns only the sanitized request object (count/key would be lost).
+    const count = Math.max(1, Number((rawPayload as { count?: unknown }).count) || 1);
 
     // Idempotency: if a client-supplied key is provided, check for a prior result.
-    const idempotencyKey = (payload as { idempotency_key?: unknown }).idempotency_key;
+    const idempotencyKey = (rawPayload as { idempotency_key?: unknown }).idempotency_key;
     if (typeof idempotencyKey === "string" && idempotencyKey.trim()) {
       const { data: existing } = await supabase
         .from("idempotency_keys")
