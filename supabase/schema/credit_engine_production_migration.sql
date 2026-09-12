@@ -916,7 +916,11 @@ alter table public.idempotency_keys enable row level security;
 
 create table if not exists public.subscriptions (
   id uuid primary key default gen_random_uuid(),
-  user_id text not null references auth.users (id) on delete cascade,
+  -- Legacy wallets use text user IDs while auth.users.id is uuid, so no
+  -- FOREIGN KEY is declared here (text = uuid has no operator). Compare
+  -- with an explicit cast instead: auth.users.id::text = subscriptions.user_id.
+  -- Legacy column types are never altered.
+  user_id text not null,
   stripe_customer_id text unique,
   stripe_subscription_id text unique,
   stripe_price_id text,
@@ -941,6 +945,9 @@ create unique index if not exists subscriptions_user_active_idx
 
 create index if not exists subscriptions_stripe_sub_id_idx
   on public.subscriptions (stripe_subscription_id);
+
+create index if not exists subscriptions_user_id_idx
+  on public.subscriptions (user_id);
 
 alter table public.subscriptions enable row level security;
 
