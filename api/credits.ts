@@ -99,9 +99,11 @@ export default async function handler(request: IncomingMessage, response: Server
         subscription_status: null,
       };
 
+      const balance = Number(credits.balance);
       json(response, 200, {
         credits: {
-          balance: Number(credits.balance),
+          balance,
+          remaining: balance,
           reserved: Number(credits.reserved),
           plan: credits.plan,
           monthly_allowance: Number(credits.monthly_allowance),

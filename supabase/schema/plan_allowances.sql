@@ -25,5 +25,5 @@ values
   ('premium_flex_500',  500, 500,  24,  120, true,  'cap'),
   ('premium_flex_1000', 1000,1000, 24,  120, true,  'cap'),
   ('premium_flex_3000', 3000,3000, 24,  120, true,  'cap'),
-  ('enterprise_custom', 0,   0,    0,   0,   false, 'preserve')
+  ('enterprise_custom', 0,   0,    24,  120, false, 'preserve')
 on conflict (plan_id) do nothing;

@@ -1,4 +1,9 @@
--- Generation cost config: centralized credit costs per generation type.
+-- Generation cost config: centralized, server-authoritative credit costs.
+-- Authoritative costs:
+--   MIDI = 1 | VST Preset = 1 | Audio Sample = 3 | Advanced Audio = 3
+--   Advanced Editing = 4 | Batch = 5
+-- Total charge is ALWAYS unit_cost x result_count, computed server-side
+-- (private.get_generation_cost). The client must never determine the charge.
 -- Run in Supabase SQL Editor.
 
 create table if not exists public.generation_cost_config (
@@ -19,26 +24,45 @@ create table if not exists public.generation_cost_config (
 create index if not exists generation_cost_config_active_idx
   on public.generation_cost_config (is_active, effective_from, effective_to);
 
--- Seed costs matching the credit economy spec.
--- Costs are server-authoritative and multiplied by result count at call time.
-insert into public.generation_cost_config (generation_type, model_class, complexity, credit_cost, batch_multiplier, is_active) values
-  ('midi',        'github',   'standard', 1, 1, true),
-  ('vst_preset',  'internal', 'standard', 1, 1, true),
-  ('advanced_audio', 'internal', 'pro',    3, 1, true),
-  ('advanced_edit',  'internal', 'pro',    4, 1, true),
-  ('batch',          'internal', 'pro',    5, 1, true),
-  ('audio_sample',   'internal', 'pro',    3, 1, true)
-on conflict do nothing;
+-- Seed costs. Idempotent: each row inserts only when no active row exists
+-- for the same (generation_type, model_class, complexity).
+insert into public.generation_cost_config (generation_type, model_class, complexity, credit_cost, batch_multiplier, is_active)
+select v.generation_type, v.model_class, v.complexity, v.credit_cost, 1, true
+from (values
+  ('midi',           'github',   'standard', 1),
+  ('midi',           'internal', 'standard', 1),
+  ('vst_preset',     'internal', 'standard', 1),
+  ('audio_sample',   'internal', 'pro',      3),
+  ('advanced_audio', 'internal', 'pro',      3),
+  ('advanced_edit',  'internal', 'pro',      4),
+  ('batch',          'internal', 'pro',      5)
+) as v(generation_type, model_class, complexity, credit_cost)
+where not exists (
+  select 1 from public.generation_cost_config c
+   where c.generation_type = v.generation_type
+     and c.model_class = v.model_class
+     and c.complexity = v.complexity
+     and c.is_active = true
+);
 
--- Ensure production deployments use the authoritative Audio Sample cost.
+-- Enforce the authoritative costs on every active row (corrects any drift,
+-- e.g. a legacy audio_sample cost of 2).
 update public.generation_cost_config
-   set credit_cost = 3,
+   set credit_cost = expected.cost,
        updated_at = now()
- where generation_type = 'audio_sample'
-   and is_active = true
-   and credit_cost <> 3;
+  from (values
+    ('midi', 1),
+    ('vst_preset', 1),
+    ('audio_sample', 3),
+    ('advanced_audio', 3),
+    ('advanced_edit', 4),
+    ('batch', 5)
+  ) as expected(generation_type, cost)
+ where generation_cost_config.generation_type = expected.generation_type
+   and generation_cost_config.is_active = true
+   and generation_cost_config.credit_cost <> expected.cost;
 
--- RPC: resolve active generation cost at call time.
+-- RPC: resolve active generation cost at call time (unit_cost x count).
 create or replace function private.get_generation_cost(
   p_generation_type text,
   p_model_class text default null,
@@ -54,6 +78,10 @@ declare
   v_cost integer;
   v_multiplier integer;
 begin
+  if p_count is null or p_count <= 0 then
+    raise exception 'INVALID_AMOUNT' using errcode = 'P0001';
+  end if;
+
   select credit_cost, batch_multiplier into v_cost, v_multiplier
   from public.generation_cost_config
   where generation_type = p_generation_type

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { SIGNUP_CREDITS, DEFAULT_QUOTA, fetchUserCredits } from "../lib/creditsService";
+import { DEFAULT_QUOTA, fetchUserCredits } from "../lib/creditsService";
 import { useAuth } from "./useAuth";
 
 export interface CreditsState {
@@ -14,14 +14,14 @@ export interface CreditsState {
 
 export function useCredits(): CreditsState {
   const { user } = useAuth();
-  const [remaining, setRemaining] = useState(SIGNUP_CREDITS);
+  const [remaining, setRemaining] = useState(0);
   const [total, setTotal] = useState(DEFAULT_QUOTA);
   const [spent, setSpent] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     if (!user) {
-      setRemaining(SIGNUP_CREDITS);
+      setRemaining(0);
       setTotal(DEFAULT_QUOTA);
       setSpent(0);
       setLoading(false);
@@ -35,15 +35,9 @@ export function useCredits(): CreditsState {
         setRemaining(data.balance);
         setTotal(data.quota);
         setSpent(data.spent);
-      } else {
-        setRemaining(SIGNUP_CREDITS);
-        setTotal(DEFAULT_QUOTA);
-        setSpent(0);
       }
     } catch {
-      setRemaining(SIGNUP_CREDITS);
-      setTotal(DEFAULT_QUOTA);
-      setSpent(0);
+      // Keep last backend-confirmed balance. Never invent a local trial grant.
     } finally {
       setLoading(false);
     }

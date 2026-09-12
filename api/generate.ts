@@ -63,6 +63,7 @@ export default async function handler(request: IncomingMessage, response: Server
   let supabase: SupabaseClient | null = null;
   let generationId: string | null = null;
   let reservedAmount = 0;
+  let storedIdempotencyKey: string | null = null;
 
   try {
     supabase = getServerSupabase();
@@ -127,6 +128,38 @@ export default async function handler(request: IncomingMessage, response: Server
       }
     }
 
+    const normalizedIdempotencyKey =
+      typeof idempotencyKey === "string" && idempotencyKey.trim() ? idempotencyKey.trim() : null;
+    storedIdempotencyKey = normalizedIdempotencyKey;
+    if (normalizedIdempotencyKey) {
+      // Atomic claim: plain insert wins the race. A concurrent duplicate
+      // gets a 23505 conflict and is treated as a replay (no double charge).
+      const { error: idempotencyClaimError } = await supabase.from("idempotency_keys").insert({
+        key: normalizedIdempotencyKey,
+        user_id: userId,
+        action: "generate",
+        status: "pending",
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      });
+      if (idempotencyClaimError) {
+        const conflictCode = (idempotencyClaimError as { code?: string }).code;
+        if (conflictCode === "23505") {
+          const { data: replay } = await supabase
+            .from("idempotency_keys")
+            .select("status, result")
+            .eq("key", normalizedIdempotencyKey)
+            .maybeSingle();
+          if (replay?.status === "completed" && replay.result) {
+            json(response, 200, replay.result);
+            return;
+          }
+          json(response, 409, { error: "IDEMPOTENCY_REPLAY", message: "Request already in progress" });
+          return;
+        }
+        throw new HttpError(500, "IDEMPOTENCY_STORE_FAILED", idempotencyClaimError.message);
+      }
+    }
+
     // Generate a generation_id for the reservation/ledger linkage.
     generationId = crypto.randomUUID();
 
@@ -181,9 +214,9 @@ export default async function handler(request: IncomingMessage, response: Server
     };
 
     // Persist idempotency result.
-    if (typeof idempotencyKey === "string" && idempotencyKey.trim()) {
+    if (normalizedIdempotencyKey) {
       await supabase.from("idempotency_keys").upsert({
-        key: idempotencyKey.trim(),
+        key: normalizedIdempotencyKey,
         user_id: userId,
         action: "generate",
         status: "completed",
@@ -200,6 +233,20 @@ export default async function handler(request: IncomingMessage, response: Server
         await restoreCredits(supabase, userId, generationId, "Generation failed; credits restored");
       } catch {
         // Restore failure is non-fatal for the error response.
+      }
+    }
+
+    if (supabase && storedIdempotencyKey) {
+      try {
+        await supabase.from("idempotency_keys").upsert({
+          key: storedIdempotencyKey,
+          user_id: userId,
+          action: "generate",
+          status: "failed",
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        }, { onConflict: "key" });
+      } catch {
+        // Idempotency cleanup is non-fatal.
       }
     }
 

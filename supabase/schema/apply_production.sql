@@ -1,9 +1,31 @@
--- SoundAI production schema bootstrap (Supabase SQL Editor).
--- Run each file below in order, or paste their contents sequentially:
---   1. generation_logs.sql
---   2. user_credits.sql
---   3. generation_cost_config.sql
---   4. idempotency_keys.sql
---   5. subscriptions.sql
---   6. plan_allowances.sql
---   7. plan_entitlements.sql
+-- SoundAI Credit Engine production migration manifest (Supabase SQL Editor).
+-- Paste the contents of each file sequentially IN THIS ORDER, or paste the
+-- single self-contained file credit_engine_production_migration.sql instead.
+--
+-- Migration order (additive, non-destructive — no drops, no PK changes):
+--   1.  credit_engine_migration_state.sql  (migration-state marker)
+--   2.  user_credits.sql                   (user_credits additive columns)
+--   3.  credit_engine_backfill.sql          (one-time current_credits -> balance)
+--   4.  credit_engine_backfill.sql          (unique user_id constraint)
+--   5.  user_credits.sql                   (credit_transactions additive columns)
+--   6.  credit_engine_backfill.sql          (historical transaction mapping)
+--   7.  generation_logs.sql                (generation_logs)
+--   8.  generation_logs.sql                (generation_cache)
+--   9.  idempotency_keys.sql               (idempotency_keys)
+--   10. subscriptions.sql                  (subscriptions)
+--   11. plan_allowances.sql                (plan_allowances)
+--   12. plan_entitlements.sql              (plan_entitlements)
+--   13. generation_cost_config.sql          (generation_cost_config + costs)
+--   14. user_credits.sql                   (corrected Credit Engine RPCs)
+--   15. user_credits.sql                   (RLS / policies)
+--
+-- Before committing, credit_engine_backfill.sql verifies:
+--   user_credits row count, credit_transactions row count,
+--   current_credits vs balance, no unexpected NULLs,
+--   no duplicate user_id, no duplicate transaction IDs.
+-- Expected audit baseline: user_credits = 2, credit_transactions = 38.
+-- Records are never deleted or recreated.
+--
+-- Explicitly OUT OF SCOPE for this migration:
+--   - migrate_profiles_credits.sql (do NOT execute; profiles is not a source)
+--   - dropping user_credits.id / PK changes / legacy column drops

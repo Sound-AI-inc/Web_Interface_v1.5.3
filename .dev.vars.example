@@ -1,6 +1,6 @@
 # Local overrides for Cloudflare Workers / Pages Functions development
 # These values are loaded by wrangler and should NEVER be committed.
-SUPABASE_URL=
+SUPABASE_URL=https://xnjugeewwjclgsaynthi.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=
 HF_API_KEY=
 HUGGINGFACE_INFERENCE_BASE_URL=
