@@ -3,6 +3,8 @@ import { MessageSquare, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import PageContainer from "../components/PageContainer";
 import ItemContextMenu, { type ContextMenuTarget } from "../components/workspace/ItemContextMenu";
+import ConfirmDialog from "../components/ConfirmDialog";
+import { useToast } from "../components/Toast";
 import { focusComposerInput } from "../lib/focusComposer";
 import {
   selectProjectChats,
@@ -34,6 +36,10 @@ export default function ProjectWorkspace() {
   const [menuRect, setMenuRect] = useState<DOMRect | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
+  // UX-014: non-blocking confirmation replaces window.confirm().
+  const [deleteTarget, setDeleteTarget] = useState<ContextMenuTarget | null>(null);
+  const [confirmDeleteProject, setConfirmDeleteProject] = useState(false);
+  const { notify } = useToast();
 
   const project = projects.find((p) => p.id === projectId);
   const projectChats = useMemo(
@@ -62,22 +68,22 @@ export default function ProjectWorkspace() {
     setMenuRect(null);
   };
 
-  const handleShare = (target: ContextMenuTarget) => {
-    const label = target.kind === "chat" ? target.title : target.name;
-    const link = `${window.location.origin}/app/generator?share=${target.id}`;
-    void navigator.clipboard?.writeText(link);
-    window.alert(`${t("context.shareCopied")}\n${label}`);
+  const confirmDeleteTarget = () => {
+    if (!deleteTarget) return;
+    if (deleteTarget.kind === "project") {
+      deleteProject(deleteTarget.id);
+      notify("Project deleted.", "success");
+      navigate("/app/generator", { replace: true });
+    } else {
+      deleteChat(deleteTarget.id);
+      notify("Chat deleted.", "success");
+    }
+    setDeleteTarget(null);
   };
 
   const handleDelete = (target: ContextMenuTarget) => {
-    if (target.kind === "project") {
-      if (!window.confirm(t("project.deleteConfirm"))) return;
-      deleteProject(target.id);
-      navigate("/app/generator", { replace: true });
-      return;
-    }
-    if (!window.confirm(t("context.deleteChatConfirm"))) return;
-    deleteChat(target.id);
+    // Open the confirmation dialog; actual deletion happens on confirm.
+    setDeleteTarget(target);
   };
 
   const commitRename = () => {
@@ -88,17 +94,20 @@ export default function ProjectWorkspace() {
     setRenameDraft("");
   };
 
+  // UX-013: project context travels in the URL so refresh, direct links,
+  // and back/forward preserve it. The generator also hydrates store state
+  // from ?projectId= as a fallback.
   const openChat = (chatId: string) => {
     setActiveProject(project.id);
     setActiveChat(chatId);
-    navigate("/app/generator");
+    navigate(`/app/generator?projectId=${project.id}`);
     focusComposerInput();
   };
 
   const startNewChat = () => {
     setActiveProject(project.id);
     startNewSession(project.id);
-    navigate("/app/generator");
+    navigate(`/app/generator?projectId=${project.id}`);
     focusComposerInput();
   };
 
@@ -122,11 +131,8 @@ export default function ProjectWorkspace() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              if (!window.confirm(t("project.deleteConfirm"))) return;
-              deleteProject(project.id);
-              navigate("/app/generator", { replace: true });
-            }}
+            onClick={() => setConfirmDeleteProject(true)}
+            aria-label={t("project.delete")}
             className="composer-control inline-flex h-9 items-center gap-2 rounded-full px-3 font-codec text-[12px] text-[var(--error)]"
           >
             <Trash2 className="h-4 w-4" />
@@ -151,7 +157,6 @@ export default function ProjectWorkspace() {
             }
           }}
           onDelete={() => handleDelete(menuTarget)}
-          onShare={() => handleShare(menuTarget)}
           onMoveToProject={(pid) => {
             if (menuTarget.kind === "chat") moveChatToProject(menuTarget.id, pid);
           }}
@@ -227,7 +232,8 @@ export default function ProjectWorkspace() {
                       e,
                     )
                   }
-                  className="composer-control flex h-9 w-9 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity group-hover:opacity-100"
+                  className="composer-control flex h-9 w-9 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                  aria-label="Chat options"
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </button>
@@ -236,6 +242,31 @@ export default function ProjectWorkspace() {
           </ul>
         )}
       </div>
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title={deleteTarget?.kind === "project" ? "Delete project?" : "Delete chat?"}
+        body={
+          deleteTarget?.kind === "project"
+            ? t("project.deleteConfirm")
+            : t("context.deleteChatConfirm")
+        }
+        confirmLabel="Delete"
+        onConfirm={confirmDeleteTarget}
+        onCancel={() => setDeleteTarget(null)}
+      />
+      <ConfirmDialog
+        open={confirmDeleteProject}
+        title="Delete project?"
+        body={t("project.deleteConfirm")}
+        confirmLabel="Delete"
+        onConfirm={() => {
+          setConfirmDeleteProject(false);
+          deleteProject(project.id);
+          notify("Project deleted.", "success");
+          navigate("/app/generator", { replace: true });
+        }}
+        onCancel={() => setConfirmDeleteProject(false)}
+      />
     </PageContainer>
   );
 }

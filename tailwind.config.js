@@ -8,9 +8,10 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-        button: "10px",
-        card: "12px",
-        input: "12px",
+        // Phase 3 radius scale — same pixel values as before, token-first.
+        button: "var(--radius-md)",
+        card: "var(--radius-lg)",
+        input: "var(--radius-lg)",
       },
       colors: {
         // SoundAI brand tokens (strict)

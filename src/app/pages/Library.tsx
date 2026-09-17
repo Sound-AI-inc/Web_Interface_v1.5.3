@@ -16,6 +16,8 @@ import {
 import ProGate from "../components/ProGate";
 import ResultCard, { toCardItem } from "../components/ResultCard";
 import FolderFilePlayer from "../components/FolderFilePlayer";
+import ConfirmDialog from "../components/ConfirmDialog";
+import { useToast } from "../components/Toast";
 import WorkspacePageShell from "../components/workspace/WorkspacePageShell";
 import type { LibraryAsset, ResultKind } from "../data/mock";
 import { setEditorIntent } from "../lib/editorIntent";
@@ -65,6 +67,11 @@ function LibraryWorkspace() {
   const [assetRenameValue, setAssetRenameValue] = useState("");
   const [moveMenuFor, setMoveMenuFor] = useState<string | null>(null);
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
+  // UX-014: destructive deletes confirm via dialog, never window.confirm().
+  const [confirmDelete, setConfirmDelete] = useState<
+    { kind: "folder" | "asset"; id: string; name: string } | null
+  >(null);
+  const { notify } = useToast();
 
   const stats = useMemo(
     () => [
@@ -136,8 +143,21 @@ function LibraryWorkspace() {
   };
 
   const onDeleteFolder = (id: string) => {
-    deleteFolder(id);
-    if (selectedFolder === id) setSelectedFolder(LIBRARY_ROOT_ID);
+    const folder = folders.find((f) => f.id === id);
+    setConfirmDelete({ kind: "folder", id, name: folder?.name ?? "folder" });
+  };
+
+  const confirmDeleteTarget = () => {
+    if (!confirmDelete) return;
+    if (confirmDelete.kind === "folder") {
+      deleteFolder(confirmDelete.id);
+      if (selectedFolder === confirmDelete.id) setSelectedFolder(LIBRARY_ROOT_ID);
+      notify("Folder deleted.", "success");
+    } else {
+      deleteAsset(confirmDelete.id);
+      notify("Asset deleted.", "success");
+    }
+    setConfirmDelete(null);
   };
 
   const countFor = (fid: string) =>
@@ -146,6 +166,29 @@ function LibraryWorkspace() {
   const openInEditor = (asset: LibraryAsset) => {
     setEditorIntent({ assetId: asset.id, kind: asset.kind, title: asset.title });
     navigate("/app/editor");
+  };
+
+  const assetDownloadUrl = (asset: LibraryAsset): string | null =>
+    asset.metadata?.previewUrl ?? asset.metadata?.assetUrl ?? null;
+
+  const handleDownload = (asset: LibraryAsset) => {
+    const url = assetDownloadUrl(asset);
+    if (!url) {
+      notify("Preview unavailable — inference service not connected.", "error");
+      return;
+    }
+    try {
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${asset.title}.${(asset.format || "bin").toLowerCase().replace(/[^a-z0-9]+/g, "") || "bin"}`;
+      anchor.rel = "noopener";
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      notify("Download started.", "success");
+    } catch {
+      notify("Download failed — try again.", "error");
+    }
   };
 
   const commitAssetRename = () => {
@@ -166,7 +209,13 @@ function LibraryWorkspace() {
             <h3 className="font-codec text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
               Folders
             </h3>
-            <button type="button" onClick={onCreateFolder} className="premium-icon-btn h-8 w-auto px-2 text-[11px]">
+            <button
+              type="button"
+              onClick={onCreateFolder}
+              aria-label="Create folder"
+              title="Create folder"
+              className="premium-icon-btn h-8 w-auto px-2 text-[11px]"
+            >
               <FolderPlus className="h-3.5 w-3.5" /> New
             </button>
           </div>
@@ -192,7 +241,13 @@ function LibraryWorkspace() {
                           : "text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
                     }`}
                   >
-                    <button type="button" onClick={() => toggleFolder(f.id)} className="shrink-0 opacity-50 hover:opacity-100">
+                    <button
+                      type="button"
+                      onClick={() => toggleFolder(f.id)}
+                      aria-label={expanded ? `Collapse ${f.name}` : `Expand ${f.name}`}
+                      aria-expanded={expanded}
+                      className="shrink-0 opacity-50 hover:opacity-100"
+                    >
                       {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                     </button>
                     <FolderIcon className={`h-3.5 w-3.5 shrink-0 ${active ? "text-primary" : ""}`} />
@@ -214,11 +269,21 @@ function LibraryWorkspace() {
                     )}
                     <span className="font-codec text-[10px] opacity-40">{countFor(f.id)}</span>
                     {!isRoot && !renaming && (
-                      <div className="flex shrink-0 items-center opacity-0 transition-opacity group-hover:opacity-100">
-                        <button type="button" onClick={() => startRename(f.id, f.name)} className="premium-icon-btn h-6 w-6">
+                      <div className="flex shrink-0 items-center opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                        <button
+                          type="button"
+                          onClick={() => startRename(f.id, f.name)}
+                          aria-label={`Rename ${f.name}`}
+                          className="premium-icon-btn h-6 w-6 focus-visible:opacity-100"
+                        >
                           <Pencil className="h-3 w-3" />
                         </button>
-                        <button type="button" onClick={() => onDeleteFolder(f.id)} className="premium-icon-btn h-6 w-6">
+                        <button
+                          type="button"
+                          onClick={() => onDeleteFolder(f.id)}
+                          aria-label={`Delete ${f.name}`}
+                          className="premium-icon-btn h-6 w-6 focus-visible:opacity-100"
+                        >
                           <Trash2 className="h-3 w-3" />
                         </button>
                       </div>
@@ -309,6 +374,7 @@ function LibraryWorkspace() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search library…"
+                aria-label="Search library"
                 className="app-input premium-search pl-10"
               />
             </div>
@@ -344,6 +410,15 @@ function LibraryWorkspace() {
                     savedToLibrary
                     variant="library"
                     onEdit={() => openInEditor(a)}
+                    onDownload={() => handleDownload(a)}
+                    downloadDisabled={!assetDownloadUrl(a)}
+                    downloadTitle={
+                      assetDownloadUrl(a)
+                        ? undefined
+                        : "Preview unavailable — inference service not connected."
+                    }
+                    onDragStart={(e) => onDragStartAsset(e, a.id)}
+                    onDragEnd={() => {}}
                   />
                 )}
                 <div className="absolute right-5 top-5 z-10 flex items-center gap-1">
@@ -351,7 +426,8 @@ function LibraryWorkspace() {
                     type="button"
                     onClick={() => toggleFavorite(a.id)}
                     className={`premium-asset-action h-7 w-7 ${favoriteIds.includes(a.id) ? "text-primary" : ""}`}
-                    aria-label="Favorite"
+                    aria-label={favoriteIds.includes(a.id) ? `Remove ${a.title} from favorites` : `Add ${a.title} to favorites`}
+                    aria-pressed={favoriteIds.includes(a.id)}
                   >
                     <Star className={`h-3 w-3 ${favoriteIds.includes(a.id) ? "fill-current" : ""}`} />
                   </button>
@@ -362,21 +438,25 @@ function LibraryWorkspace() {
                       setAssetRenameValue(a.title);
                     }}
                     className="premium-asset-action h-7 w-7"
-                    aria-label="Rename"
+                    aria-label={`Rename ${a.title}`}
                   >
                     <Pencil className="h-3 w-3" />
                   </button>
                   <button
                     type="button"
-                    onClick={() => deleteAsset(a.id)}
+                    onClick={() =>
+                      setConfirmDelete({ kind: "asset", id: a.id, name: a.title })
+                    }
                     className="premium-asset-action h-7 w-7"
-                    aria-label="Delete"
+                    aria-label={`Delete ${a.title}`}
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
                   <button
                     type="button"
                     onClick={() => setMoveMenuFor(moveMenuFor === a.id ? null : a.id)}
+                    aria-label={`Move ${a.title}`}
+                    aria-expanded={moveMenuFor === a.id}
                     className="premium-asset-action h-7 px-2 text-[10px]"
                   >
                     <FolderIcon className="h-3 w-3" />
@@ -443,6 +523,18 @@ function LibraryWorkspace() {
           )}
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        title={confirmDelete?.kind === "folder" ? "Delete folder?" : "Delete asset?"}
+        body={
+          confirmDelete?.kind === "folder"
+            ? `Delete “${confirmDelete?.name}”? Assets inside move back to the library root.`
+            : `Delete “${confirmDelete?.name}” from your library?`
+        }
+        confirmLabel="Delete"
+        onConfirm={confirmDeleteTarget}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </WorkspacePageShell>
   );
 }

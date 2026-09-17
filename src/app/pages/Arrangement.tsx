@@ -1,4 +1,5 @@
-import { LayoutGrid, Lock } from "lucide-react";
+import { LayoutGrid } from "lucide-react";
+import { Link } from "react-router-dom";
 import PageContainer from "../components/PageContainer";
 import { useLanguage } from "../i18n/LanguageProvider";
 
@@ -46,12 +47,13 @@ export default function Arrangement() {
             </div>
             <h2 className="font-poppins text-lg font-semibold text-text">Arrangement · Coming soon</h2>
             <p className="mt-2 font-codec text-sm text-text/60">
-              AI-assisted arrangement tools are coming soon. Build full-song
-              structure from a single prompt — verses, drops, bridges and more.
+              Arrangement workflows are not available yet. AI-assisted arrangement
+              tools are coming soon. Build full-song structure from a single prompt
+              — verses, drops, bridges and more.
             </p>
-            <button disabled className="app-btn-primary mt-6 h-10 gap-2">
-              <Lock className="h-3.5 w-3.5" /> Locked
-            </button>
+            <Link to="/app/generator" className="app-btn-primary mt-6 inline-flex h-10 items-center gap-2 px-5">
+              Back to Generator
+            </Link>
           </div>
         </div>
       </div>

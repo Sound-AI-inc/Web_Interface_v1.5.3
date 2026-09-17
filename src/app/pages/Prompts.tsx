@@ -6,6 +6,7 @@ import ViewModeToggle from "../components/workspace/ViewModeToggle";
 import WorkspacePageShell from "../components/workspace/WorkspacePageShell";
 import { prompts as promptSeed, type PromptItem } from "../data/mock";
 import { setComposerPrefill } from "../lib/composerPrefill";
+import { useToast } from "../components/Toast";
 import { useLanguage } from "../i18n/LanguageProvider";
 import {
   EMPTY_PROMPT_DRAFT,
@@ -32,6 +33,7 @@ export default function Prompts() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<PromptDraft>(EMPTY_PROMPT_DRAFT);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const { notify } = useToast();
 
   const stats = useMemo(
     () => [
@@ -112,9 +114,10 @@ export default function Prompts() {
     try {
       await navigator.clipboard.writeText(prompt.body);
       setCopiedId(prompt.id);
+      notify("Prompt copied to clipboard.", "success");
       window.setTimeout(() => setCopiedId(null), 1600);
     } catch {
-      window.alert(prompt.body);
+      notify("Copy failed — select the text manually.", "error");
     }
   };
 

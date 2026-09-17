@@ -10,6 +10,8 @@ import {
   Plus,
 } from "lucide-react";
 import ItemContextMenu, { type ContextMenuTarget } from "./ItemContextMenu";
+import ConfirmDialog from "../ConfirmDialog";
+import { useToast } from "../Toast";
 import {
   selectProjectChats,
   selectStandaloneChats,
@@ -25,9 +27,11 @@ function openWorkspaceChat(
   chatId: string,
   setActiveChat: (id: string) => void,
   navigate: (path: string) => void,
+  projectId?: string | null,
 ) {
   setActiveChat(chatId);
-  navigate(GENERATOR_PATH);
+  // UX-013: keep project context in the URL (refresh/direct-link safe).
+  navigate(projectId ? `/app/generator?projectId=${projectId}` : GENERATOR_PATH);
   focusComposerInput();
 }
 
@@ -37,7 +41,7 @@ function ChatRow({
   onOpen,
   onContextMenu,
 }: {
-  chat: { id: string; title: string; pinned?: boolean };
+  chat: { id: string; title: string; pinned?: boolean; projectId?: string | null };
   activeChatId: string;
   onOpen: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
@@ -66,8 +70,8 @@ function ChatRow({
       <button
         type="button"
         onClick={onContextMenu}
-        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-button text-[var(--text-muted)] opacity-0 transition-opacity group-hover:opacity-100"
-        aria-label="Chat options"
+        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-button text-[var(--text-muted)] opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
+        aria-label={`Options for ${chat.title}`}
       >
         <MoreHorizontal className="h-3.5 w-3.5" />
       </button>
@@ -105,6 +109,9 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
   const [renameDraft, setRenameDraft] = useState("");
   const [menuTarget, setMenuTarget] = useState<ContextMenuTarget | null>(null);
   const [menuRect, setMenuRect] = useState<DOMRect | null>(null);
+  // UX-014: non-blocking confirmation replaces window.confirm().
+  const [deleteTarget, setDeleteTarget] = useState<ContextMenuTarget | null>(null);
+  const { notify } = useToast();
 
   useEffect(() => {
     setExpandedProjectIds((prev) => {
@@ -153,23 +160,23 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
     setRenameDraft("");
   };
 
-  const handleShare = (target: ContextMenuTarget) => {
-    const label = target.kind === "chat" ? target.title : target.name;
-    const link = `${window.location.origin}/app/generator?share=${target.id}`;
-    void navigator.clipboard?.writeText(link);
-    window.alert(`${t("context.shareCopied")}\n${label}`);
+  const confirmDeleteTarget = () => {
+    if (!deleteTarget) return;
+    if (deleteTarget.kind === "project") {
+      deleteProject(deleteTarget.id);
+      notify("Project deleted.", "success");
+      navigate(GENERATOR_PATH);
+    } else {
+      deleteChat(deleteTarget.id);
+      notify("Chat deleted.", "success");
+      if (activeChatId === deleteTarget.id) navigate(GENERATOR_PATH);
+    }
+    setDeleteTarget(null);
   };
 
   const handleDeleteTarget = (target: ContextMenuTarget) => {
-    if (target.kind === "project") {
-      if (!window.confirm(t("project.deleteConfirm"))) return;
-      deleteProject(target.id);
-      navigate(GENERATOR_PATH);
-      return;
-    }
-    if (!window.confirm(t("context.deleteChatConfirm"))) return;
-    deleteChat(target.id);
-    if (activeChatId === target.id) navigate(GENERATOR_PATH);
+    // Open the confirmation dialog; actual deletion happens on confirm.
+    setDeleteTarget(target);
   };
 
   if (collapsed) {
@@ -178,7 +185,9 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
         <button
           type="button"
           title={t("workspace.chats")}
+          aria-label={t("workspace.chats")}
           onClick={() => setChatsOpen((v) => !v)}
+          aria-expanded={chatsOpen}
           className="flex h-9 w-9 items-center justify-center rounded-button text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
         >
           <MessageSquare className="h-4 w-4" />
@@ -186,7 +195,9 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
         <button
           type="button"
           title={t("workspace.projects")}
+          aria-label={t("workspace.projects")}
           onClick={() => setProjectsOpen((v) => !v)}
+          aria-expanded={projectsOpen}
           className="flex h-9 w-9 items-center justify-center rounded-button text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
         >
           <FolderKanban className="h-4 w-4" />
@@ -208,7 +219,6 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
             else startRename(menuTarget.id, menuTarget.name);
           }}
           onDelete={() => handleDeleteTarget(menuTarget)}
-          onShare={() => handleShare(menuTarget)}
           onMoveToProject={(projectId) => {
             if (menuTarget.kind === "chat") moveChatToProject(menuTarget.id, projectId);
           }}
@@ -250,7 +260,7 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
                   key={chat.id}
                   chat={chat}
                   activeChatId={activeChatId}
-                  onOpen={() => openWorkspaceChat(chat.id, setActiveChat, navigate)}
+                  onOpen={() => openWorkspaceChat(chat.id, setActiveChat, navigate, chat.projectId)}
                   onContextMenu={(e) =>
                     openMenu(
                       { kind: "chat", id: chat.id, title: chat.title, projectId: chat.projectId },
@@ -314,6 +324,8 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
                           return next;
                         })
                       }
+                      aria-label={expanded ? `Collapse ${project.name}` : `Expand ${project.name}`}
+                      aria-expanded={expanded}
                       className="flex h-8 w-7 shrink-0 items-center justify-center text-[var(--text-muted)]"
                     >
                       {expanded ? (
@@ -356,17 +368,19 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
                     <button
                       type="button"
                       title={t("workspace.renameProject")}
+                      aria-label={`Rename ${project.name}`}
                       onClick={() => startRename(project.id, project.name)}
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-button text-[var(--text-muted)] opacity-0 group-hover:opacity-100"
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-button text-[var(--text-muted)] opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
                     >
                       <Pencil className="h-3 w-3" />
                     </button>
                     <button
                       type="button"
+                      aria-label={`Options for ${project.name}`}
                       onClick={(e) =>
                         openMenu({ kind: "project", id: project.id, name: project.name }, e)
                       }
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-button text-[var(--text-muted)] opacity-0 group-hover:opacity-100"
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-button text-[var(--text-muted)] opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
                     >
                       <MoreHorizontal className="h-3.5 w-3.5" />
                     </button>
@@ -391,7 +405,7 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
                             key={chat.id}
                             chat={chat}
                             activeChatId={activeChatId}
-                            onOpen={() => openWorkspaceChat(chat.id, setActiveChat, navigate)}
+                            onOpen={() => openWorkspaceChat(chat.id, setActiveChat, navigate, chat.projectId)}
                             onContextMenu={(e) =>
                               openMenu(
                                 {
@@ -423,6 +437,18 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title={deleteTarget?.kind === "project" ? "Delete project?" : "Delete chat?"}
+        body={
+          deleteTarget?.kind === "project"
+            ? t("project.deleteConfirm")
+            : t("context.deleteChatConfirm")
+        }
+        confirmLabel="Delete"
+        onConfirm={confirmDeleteTarget}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

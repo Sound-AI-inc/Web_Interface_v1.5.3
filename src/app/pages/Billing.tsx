@@ -1,25 +1,55 @@
+import { useEffect, useState } from "react";
 import PageContainer from "../components/PageContainer";
 import BillingCard from "../components/BillingCard";
 import BillingComparisonTable from "../components/BillingComparisonTable";
 import { plans } from "../data/mock";
 import { useAuth } from "../hooks/useAuth";
 import { useCredits } from "../hooks/useCredits";
-import { grantPlanCredits } from "../lib/creditsService";
+import { fetchUserCredits } from "../lib/creditsService";
+import { useToast } from "../components/Toast";
 import { useLanguage } from "../i18n/LanguageProvider";
+
+const STRIPE_NOTICE =
+  "Stripe billing is not yet connected. Checkout will become available when billing is enabled.";
 
 export default function Billing() {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const { remaining, total, applyGrant, refresh } = useCredits();
+  const { remaining, total } = useCredits();
+  const { notify } = useToast();
+  const [serverPlan, setServerPlan] = useState<string | null>(null);
+  const [resetAt, setResetAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setServerPlan(null);
+      setResetAt(null);
+      return;
+    }
+    let cancelled = false;
+    void fetchUserCredits(user.id).then((credits) => {
+      if (cancelled || !credits) return;
+      setServerPlan(credits.plan);
+      setResetAt(credits.resetAt);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
   const usedCredits = Math.max(0, total - remaining);
   const totalCredits = total;
   const pct = totalCredits > 0 ? (usedCredits / totalCredits) * 100 : 0;
+  const currentPlan = plans.find((p) => p.id === serverPlan) ?? null;
 
-  const handleSubscribe = async (planId: string, packageCredits?: number) => {
-    if (!user) return;
-    const grant = await grantPlanCredits(user.id, planId, packageCredits);
-    applyGrant(grant.balance, grant.quota);
-    await refresh();
+  // UX-006/007: STRIPE-DEPENDENT preview only. Never grant credits or
+  // activate subscriptions from the client.
+  const handleSubscribe = () => {
+    notify(STRIPE_NOTICE, "info");
+  };
+
+  const handleManagePlan = () => {
+    notify(STRIPE_NOTICE, "info");
   };
 
   return (
@@ -28,9 +58,25 @@ export default function Billing() {
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="token-card rounded-card p-5">
             <div className="app-section-title mb-2">{t("billing.currentPlan")}</div>
-            <div className="font-poppins text-xl font-semibold text-[var(--text-primary)]">Standard</div>
-            <p className="app-meta mt-1">Renews on May 14</p>
-            <button className="app-btn-ghost mt-4 h-9 w-full">{t("billing.managePlan")}</button>
+            <div className="font-poppins text-xl font-semibold text-[var(--text-primary)]">
+              {currentPlan ? currentPlan.name : (serverPlan ?? "Free")}
+            </div>
+            <p className="app-meta mt-1">
+              {resetAt
+                ? `Renews ${new Date(resetAt).toLocaleDateString()}`
+                : "Plan status synced from the server"}
+            </p>
+            <button
+              type="button"
+              onClick={handleManagePlan}
+              title={STRIPE_NOTICE}
+              className="app-btn-ghost mt-4 h-9 w-full"
+            >
+              {t("billing.managePlan")}
+            </button>
+            <p className="mt-2 font-codec text-[11px] italic text-[var(--text-muted)]">
+              Stripe-dependent — plan changes are not yet available.
+            </p>
           </div>
           <div className="token-card rounded-card p-5 md:col-span-2">
             <div className="app-section-title mb-2">{t("billing.credits")}</div>
@@ -50,12 +96,15 @@ export default function Billing() {
         </div>
 
         <h2 className="app-section-title mb-4">{t("billing.plans")}</h2>
+        <div className="mb-4 rounded-[12px] border border-[var(--border-primary)] bg-[var(--surface-secondary)] px-4 py-2.5 font-codec text-[12px] leading-5 text-[var(--text-secondary)]">
+          Plan comparison is a preview. {STRIPE_NOTICE}
+        </div>
         <div className="grid grid-cols-1 items-stretch gap-5 md:grid-cols-2 xl:grid-cols-4">
           {plans.map((p) => (
             <BillingCard
               key={p.id}
               plan={p}
-              current={p.id === "trial"}
+              current={serverPlan ? p.id === serverPlan : false}
               onSubscribe={handleSubscribe}
             />
           ))}
@@ -65,43 +114,13 @@ export default function Billing() {
         <BillingComparisonTable />
 
         <h2 className="app-section-title mb-4 mt-10">{t("billing.recentInvoices")}</h2>
-        <div className="token-card overflow-hidden rounded-card">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-[var(--border-primary)]">
-                <th className="px-5 py-3 font-codec text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
-                  {t("billing.colDate")}
-                </th>
-                <th className="px-5 py-3 font-codec text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
-                  {t("billing.colPlan")}
-                </th>
-                <th className="px-5 py-3 font-codec text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
-                  {t("billing.colAmount")}
-                </th>
-                <th className="px-5 py-3 font-codec text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
-                  {t("billing.colStatus")}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { date: "Apr 14, 2026", plan: "Standard", amount: "$19.00", status: "Paid" },
-                { date: "Mar 14, 2026", plan: "Standard", amount: "$19.00", status: "Paid" },
-                { date: "Feb 14, 2026", plan: "Standard", amount: "$19.00", status: "Paid" },
-              ].map((r) => (
-                <tr key={r.date} className="border-b border-[var(--border-primary)] last:border-0">
-                  <td className="px-5 py-3 font-codec text-sm text-[var(--text-primary)]">{r.date}</td>
-                  <td className="px-5 py-3 font-codec text-sm text-[var(--text-secondary)]">{r.plan}</td>
-                  <td className="px-5 py-3 font-codec text-sm text-[var(--text-secondary)]">{r.amount}</td>
-                  <td className="px-5 py-3 font-codec text-sm">
-                    <span className="rounded-full bg-primary/10 px-2.5 py-0.5 font-poppins text-[11px] font-medium text-primary">
-                      {r.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="token-card rounded-card border border-dashed border-[var(--border-primary)] p-8 text-center">
+          <p className="font-codec text-sm text-[var(--text-secondary)]">
+            No invoices yet.
+          </p>
+          <p className="mt-1 font-codec text-[12px] text-[var(--text-muted)]">
+            Billing history will appear here once Stripe billing is connected.
+          </p>
         </div>
       </div>
     </PageContainer>

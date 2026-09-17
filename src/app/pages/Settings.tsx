@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import WorkspacePageShell from "../components/workspace/WorkspacePageShell";
 import SettingsContent from "../components/SettingsContent";
+import Integrations from "./Integrations";
 import { useLanguage } from "../i18n/LanguageProvider";
 
 type SettingsSection =
@@ -13,7 +14,8 @@ type SettingsSection =
   | "security"
   | "subscription"
   | "credits"
-  | "integrations";
+  | "integrations"
+  | "archive";
 
 const SECTIONS: { id: SettingsSection; labelKey: string; route?: string }[] = [
   { id: "profile", labelKey: "settings.profile", route: "/app/profile" },
@@ -24,7 +26,8 @@ const SECTIONS: { id: SettingsSection; labelKey: string; route?: string }[] = [
   { id: "security", labelKey: "settings.security" },
   { id: "subscription", labelKey: "settings.subscription", route: "/app/billing" },
   { id: "credits", labelKey: "settings.creditsSection" },
-  { id: "integrations", labelKey: "settings.integrationsSection", route: "/app/integrations" },
+  { id: "integrations", labelKey: "settings.integrationsSection" },
+  { id: "archive", labelKey: "settings.archiveSection", route: "/app/archive" },
 ];
 
 export default function Settings() {
@@ -68,6 +71,7 @@ export default function Settings() {
           {(active === "workspace" || active === "language" || active === "account" || active === "security" || active === "credits") && (
             <SettingsContent />
           )}
+          {active === "integrations" && <Integrations />}
           {active === "profile" && (
             <div className="rounded-card border border-[var(--border-primary)] bg-[var(--surface-primary)] p-6">
               <p className="font-codec text-sm text-[var(--text-secondary)]">

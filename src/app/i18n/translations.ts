@@ -102,6 +102,17 @@ export type TranslationKey =
   | "editor.synth"
   | "editor.undo"
   | "editor.redo"
+  | "editor.saveToLibrary"
+  | "editor.noAssetToSave"
+  | "editor.savedToLibrary"
+  // Auth
+  | "auth.signUp"
+  | "auth.signIn"
+  | "auth.createAccount"
+  | "auth.alreadyHaveAccount"
+  | "auth.needAccount"
+  | "auth.backToWebsite"
+  | "auth.subtitle"
   // Library
   | "library.title"
   | "library.subtitle"
@@ -225,6 +236,12 @@ export type TranslationKey =
   | "workspace.vstPresets"
   | "workspace.noAssets"
   | "workspace.starToSave"
+  | "workspace.preview.show"
+  | "workspace.preview.hide"
+  | "workspace.preview.clickToPreview"
+  | "workspace.preview.unavailable"
+  | "workspace.preview.preset"
+  | "workspace.preview.stopPreview"
   | "workspace.renameProject"
   | "workspace.noChats"
   | "workspace.noChatsInProject"
@@ -248,6 +265,27 @@ export type TranslationKey =
   // Notifications
   | "notifications.title"
   | "notifications.subtitle"
+  | "notifications.empty.title"
+  | "notifications.empty.body"
+  // Archive
+  | "archive.title"
+  | "archive.subtitle"
+  | "archive.chats"
+  | "archive.noChats"
+  | "archive.projects"
+  | "archive.noProjects"
+  | "archive.emptyTitle"
+  | "archive.emptyDesc"
+  | "archive.deleteProjectTitle"
+  | "archive.deleteChatTitle"
+  | "archive.deleteProjectConfirm"
+  | "archive.deleteChatConfirm"
+  | "archive.deleteForever"
+  | "archive.typeChat"
+  | "archive.typeProject"
+  | "archive.restore"
+  // Composer
+  | "composer.attach"
   // Help
   | "help.notFound"
   | "menu.supportChat"
@@ -413,7 +451,26 @@ export type TranslationKey =
   | "settings.security"
   | "settings.subscription"
   | "settings.creditsSection"
-  | "settings.integrationsSection";
+  | "settings.integrationsSection"
+  // DAW Integrations
+  | "integrations.daw.title"
+  | "integrations.daw.subtitle"
+  | "integrations.daw.workflow"
+  | "integrations.daw.openExport"
+  | "integrations.daw.exportAssets"
+  | "integrations.daw.openExportPage"
+  | "integrations.daw.status.exportReady"
+  | "integrations.daw.status.comingSoon"
+  | "integrations.daw.status.notSupported"
+  | "integrations.other.title"
+  // Drag & Drop
+  | "drag.dropToDaw"
+  | "drag.dropHere"
+  | "drag.dragging"
+  // Result Card DAW
+  | "result.dawCompatible"
+  | "result.dragToDaw"
+  | "result.downloadForDaw";
 
 type Dict = Partial<Record<TranslationKey, string>>;
 
@@ -491,6 +548,16 @@ const en: Record<TranslationKey, string> = {
   "editor.synth": "Synth",
   "editor.undo": "Undo",
   "editor.redo": "Redo",
+  "editor.saveToLibrary": "Save to Library",
+  "editor.noAssetToSave": "No asset to save — open an asset from Create or Library first.",
+  "editor.savedToLibrary": "Saved to Library",
+  "auth.signUp": "Sign up",
+  "auth.signIn": "Sign in",
+  "auth.createAccount": "Create account",
+  "auth.alreadyHaveAccount": "Already have an account?",
+  "auth.needAccount": "Need an account?",
+  "auth.backToWebsite": "Back to website",
+  "auth.subtitle": "Create audio samples, MIDI, and VST presets with AI.",
   "library.title": "Library",
   "library.subtitle": "Your generated assets, organized",
   "library.folders": "Folders",
@@ -611,6 +678,12 @@ const en: Record<TranslationKey, string> = {
   "workspace.vstPresets": "VST Presets",
   "workspace.noAssets": "No assets yet",
   "workspace.starToSave": "Star results to save",
+  "workspace.preview.show": "Show preview",
+  "workspace.preview.hide": "Hide preview",
+  "workspace.preview.clickToPreview": "Click to preview",
+  "workspace.preview.unavailable": "Preview unavailable",
+  "workspace.preview.preset": "Preview preset",
+  "workspace.preview.stopPreview": "Stop preview",
   "workspace.renameProject": "Rename project",
   "workspace.noChats": "No chats yet — create from Create",
   "workspace.noChatsInProject": "No chats in this project yet",
@@ -631,6 +704,25 @@ const en: Record<TranslationKey, string> = {
   "voice.notSupported": "Voice input is not supported in this browser.",
   "notifications.title": "Notifications",
   "notifications.subtitle": "Updates about generations, billing and product news.",
+  "notifications.empty.title": "No notifications yet",
+  "notifications.empty.body": "We'll let you know when generations finish, credits run low, or there's product news.",
+  "archive.title": "Archive",
+  "archive.subtitle": "Archived chats and projects. Restore or delete permanently.",
+  "archive.chats": "Chats",
+  "archive.noChats": "No archived chats.",
+  "archive.projects": "Projects",
+  "archive.noProjects": "No archived projects.",
+  "archive.emptyTitle": "Archive is empty",
+  "archive.emptyDesc": "Archived items will appear here. Use the context menu in Create or Projects to archive.",
+  "archive.deleteProjectTitle": "Delete project?",
+  "archive.deleteChatTitle": "Delete chat?",
+  "archive.deleteProjectConfirm": "Permanently delete this project? This cannot be undone.",
+  "archive.deleteChatConfirm": "Permanently delete this chat? This cannot be undone.",
+  "archive.deleteForever": "Delete forever",
+  "archive.typeChat": "Chat",
+  "archive.typeProject": "Project",
+  "archive.restore": "Restore",
+  "composer.attach": "Attach file",
   "help.notFound": "Help page not found",
   "menu.supportChat": "Support chat",
   "help.api.title": "API Console",
@@ -791,6 +883,22 @@ const en: Record<TranslationKey, string> = {
   "settings.subscription": "Subscription",
   "settings.creditsSection": "Credits",
   "settings.integrationsSection": "Integrations",
+  "integrations.daw.title": "DAW Integrations",
+  "integrations.daw.subtitle": "Connect SoundAI to your production workflow",
+  "integrations.daw.workflow": "Workflow",
+  "integrations.daw.openExport": "Open Export",
+  "integrations.daw.exportAssets": "Export Assets",
+  "integrations.daw.openExportPage": "Open Export Page",
+  "integrations.daw.status.exportReady": "Export Ready",
+  "integrations.daw.status.comingSoon": "Coming Soon",
+  "integrations.daw.status.notSupported": "Not Supported",
+  "integrations.other.title": "Other Integrations",
+  "drag.dropToDaw": "Drag to your DAW",
+  "drag.dropHere": "Drop here to export",
+  "drag.dragging": "Dragging…",
+  "result.dawCompatible": "DAW Compatible",
+  "result.dragToDaw": "Drag to DAW",
+  "result.downloadForDaw": "Download for DAW",
 };
 
 const ru: Dict = {
@@ -968,6 +1076,23 @@ const ru: Dict = {
   "settings.preferLossless": "Предпочитать lossless-форматы",
   "settings.preferLosslessDesc":
     "Использовать WAV / FLAC, если формат поддерживается.",
+  "settings.integrationsSection": "Интеграции",
+  "integrations.daw.title": "Интеграции с DAW",
+  "integrations.daw.subtitle": "Подключите SoundAI к вашему производственному рабочему процессу",
+  "integrations.daw.workflow": "Рабочий процесс",
+  "integrations.daw.openExport": "Открыть экспорт",
+  "integrations.daw.exportAssets": "Экспортировать ассеты",
+  "integrations.daw.openExportPage": "Открыть страницу экспорта",
+  "integrations.daw.status.exportReady": "Готов к экспорту",
+  "integrations.daw.status.comingSoon": "Скоро",
+  "integrations.daw.status.notSupported": "Не поддерживается",
+  "integrations.other.title": "Остальные интеграции",
+  "drag.dropToDaw": "Перетащите в ваш DAW",
+  "drag.dropHere": "Перетащите сюда для экспорта",
+  "drag.dragging": "Перетаскивание…",
+  "result.dawCompatible": "Совместим с DAW",
+  "result.dragToDaw": "Перетащить в DAW",
+  "result.downloadForDaw": "Скачать для DAW",
   "workspace.projects": "Проекты",
   "workspace.chats": "Чаты",
   "workspace.newChat": "Новый чат",
@@ -988,6 +1113,12 @@ const ru: Dict = {
   "workspace.vstPresets": "VST пресеты",
   "workspace.noAssets": "Пока нет ассетов",
   "workspace.starToSave": "Отмечайте звёздочкой",
+  "workspace.preview.show": "Показать превью",
+  "workspace.preview.hide": "Скрыть превью",
+  "workspace.preview.clickToPreview": "Нажмите для прослушивания",
+  "workspace.preview.unavailable": "Превью недоступно",
+  "workspace.preview.preset": "Прослушать пресет",
+  "workspace.preview.stopPreview": "Остановить превью",
   "workspace.renameProject": "Переименовать проект",
   "workspace.noChats": "Чатов пока нет — создайте в Create",
   "workspace.noChatsInProject": "В проекте пока нет чатов",
@@ -1008,6 +1139,24 @@ const ru: Dict = {
   "voice.notSupported": "Голосовой ввод не поддерживается в этом браузере.",
   "notifications.title": "Уведомления",
   "notifications.subtitle": "Генерации, биллинг и новости продукта.",
+  "notifications.empty.title": "Уведомлений пока нет",
+  "notifications.empty.body": "Мы сообщим, когда генерации завершатся, кредиты закончатся или появятся новости продукта.",
+  "archive.title": "Архив",
+  "archive.subtitle": "Архивированные чаты и проекты. Восстановить или удалить навсегда.",
+  "archive.chats": "Чаты",
+  "archive.noChats": "Нет архивированных чатов.",
+  "archive.projects": "Проекты",
+  "archive.noProjects": "Нет архивированных проектов.",
+  "archive.emptyTitle": "Архив пуст",
+  "archive.emptyDesc": "Архивированные элементы появятся здесь. Используйте контекстное меню в Create или Projects для архивации.",
+  "archive.deleteProjectTitle": "Удалить проект?",
+  "archive.deleteChatTitle": "Удалить чат?",
+  "archive.deleteProjectConfirm": "Навсегда удалить этот проект? Это действие необратимо.",
+  "archive.deleteChatConfirm": "Навсегда удалить этот чат? Это действие необратимо.",
+  "archive.deleteForever": "Удалить навсегда",
+  "archive.typeChat": "Чат",
+  "archive.typeProject": "Проект",
+  "archive.restore": "Восстановить",
   "help.notFound": "Страница помощи не найдена",
   "menu.supportChat": "Чат поддержки",
   "help.supportChat.title": "Чат поддержки",
@@ -1143,6 +1292,26 @@ const fr: Dict = {
   "prompts.title": "Prompts",
   "export.title": "Exporter",
   "editor.title": "Éditeur",
+  "notifications.title": "Notificaciones",
+  "notifications.subtitle": "Actualizaciones sobre generaciones, facturación y noticias del producto.",
+  "notifications.empty.title": "Sin notificaciones aún",
+  "notifications.empty.body": "Te avisaremos cuando finalicen las generaciones, los créditos bajen o haya novedades del producto.",
+  "archive.title": "Archivo",
+  "archive.subtitle": "Chats y proyectos archivados. Restaurar o eliminar permanentemente.",
+  "archive.chats": "Chats",
+  "archive.noChats": "No hay chats archivados.",
+  "archive.projects": "Proyectos",
+  "archive.noProjects": "No hay proyectos archivados.",
+  "archive.emptyTitle": "El archivo está vacío",
+  "archive.emptyDesc": "Los elementos archivados aparecerán aquí. Usa el menú contextual en Crear o Proyectos para archivar.",
+  "archive.deleteProjectTitle": "¿Eliminar proyecto?",
+  "archive.deleteChatTitle": "¿Eliminar chat?",
+  "archive.deleteProjectConfirm": "¿Eliminar permanentemente este proyecto? No se puede deshacer.",
+  "archive.deleteChatConfirm": "¿Eliminar permanentemente este chat? No se puede deshacer.",
+  "archive.deleteForever": "Eliminar para siempre",
+  "archive.typeChat": "Chat",
+  "archive.typeProject": "Proyecto",
+  "archive.restore": "Restaurar",
 };
 
 const de: Dict = {
@@ -1203,6 +1372,26 @@ const de: Dict = {
   "prompts.title": "Prompts",
   "export.title": "Export",
   "editor.title": "Editor",
+  "notifications.title": "Benachrichtigungen",
+  "notifications.subtitle": "Updates zu Generierungen, Abrechnung und Produktnews.",
+  "notifications.empty.title": "Noch keine Benachrichtigungen",
+  "notifications.empty.body": "Wir informieren Sie, wenn Generierungen fertig sind, Credits zur Neige gehen oder es Produktnews gibt.",
+  "archive.title": "Archiv",
+  "archive.subtitle": "Archivierte Chats und Projekte. Wiederherstellen oder endgültig löschen.",
+  "archive.chats": "Chats",
+  "archive.noChats": "Keine archivierten Chats.",
+  "archive.projects": "Projekte",
+  "archive.noProjects": "Keine archivierten Projekte.",
+  "archive.emptyTitle": "Archiv ist leer",
+  "archive.emptyDesc": "Archivierte Elemente erscheinen hier. Nutzen Sie das Kontextmenü in Erstellen oder Projekte zum Archivieren.",
+  "archive.deleteProjectTitle": "Projekt löschen?",
+  "archive.deleteChatTitle": "Chat löschen?",
+  "archive.deleteProjectConfirm": "Dieses Projekt endgültig löschen? Dies kann nicht rückgängig gemacht werden.",
+  "archive.deleteChatConfirm": "Diesen Chat endgültig löschen? Dies kann nicht rückgängig gemacht werden.",
+  "archive.deleteForever": "Endgültig löschen",
+  "archive.typeChat": "Chat",
+  "archive.typeProject": "Projekt",
+  "archive.restore": "Wiederherstellen",
 };
 
 const pt: Dict = {
@@ -1239,6 +1428,26 @@ const pt: Dict = {
   "library.folders": "Pastas",
   "settings.general": "Geral",
   "settings.interface": "Interface",
+  "notifications.title": "Notificações",
+  "notifications.subtitle": "Atualizações sobre gerações, faturamento e notícias do produto.",
+  "notifications.empty.title": "Sem notificações ainda",
+  "notifications.empty.body": "Avisaremos quando as gerações terminarem, os créditos acabarem ou houver novidades do produto.",
+  "archive.title": "Arquivo",
+  "archive.subtitle": "Chats e projetos arquivados. Restaurar ou excluir permanentemente.",
+  "archive.chats": "Chats",
+  "archive.noChats": "Nenhum chat arquivado.",
+  "archive.projects": "Projetos",
+  "archive.noProjects": "Nenhum projeto arquivado.",
+  "archive.emptyTitle": "O arquivo está vazio",
+  "archive.emptyDesc": "Itens arquivados aparecerão aqui. Use o menu contextual em Criar ou Projetos para arquivar.",
+  "archive.deleteProjectTitle": "Excluir projeto?",
+  "archive.deleteChatTitle": "Excluir chat?",
+  "archive.deleteProjectConfirm": "Excluir permanentemente este projeto? Não pode ser desfeito.",
+  "archive.deleteChatConfirm": "Excluir permanentemente este chat? Não pode ser desfeito.",
+  "archive.deleteForever": "Excluir para sempre",
+  "archive.typeChat": "Chat",
+  "archive.typeProject": "Projeto",
+  "archive.restore": "Restaurar",
 };
 
 const it: Dict = {
@@ -1275,6 +1484,26 @@ const it: Dict = {
   "library.folders": "Cartelle",
   "settings.general": "Generale",
   "settings.interface": "Interfaccia",
+  "notifications.title": "Notifiche",
+  "notifications.subtitle": "Aggiornamenti su generazioni, fatturazione e novità del prodotto.",
+  "notifications.empty.title": "Nessuna notifica per ora",
+  "notifications.empty.body": "Ti avviseremo quando le generazioni finiscono, i crediti scarseggiano o ci sono novità del prodotto.",
+  "archive.title": "Archivio",
+  "archive.subtitle": "Chat e progetti archiviati. Ripristinare o eliminare definitivamente.",
+  "archive.chats": "Chat",
+  "archive.noChats": "Nessuna chat archiviata.",
+  "archive.projects": "Progetti",
+  "archive.noProjects": "Nessun progetto archiviato.",
+  "archive.emptyTitle": "L'archivio è vuoto",
+  "archive.emptyDesc": "Gli elementi archiviati appariranno qui. Usa il menu contestuale in Crea o Progetti per archiviare.",
+  "archive.deleteProjectTitle": "Eliminare progetto?",
+  "archive.deleteChatTitle": "Eliminare chat?",
+  "archive.deleteProjectConfirm": "Eliminare definitivamente questo progetto? Questa azione non può essere annullata.",
+  "archive.deleteChatConfirm": "Eliminare definitivamente questa chat? Questa azione non può essere annullata.",
+  "archive.deleteForever": "Eliminare per sempre",
+  "archive.typeChat": "Chat",
+  "archive.typeProject": "Progetto",
+  "archive.restore": "Ripristinare",
 };
 
 const ja: Dict = {
@@ -1311,6 +1540,26 @@ const ja: Dict = {
   "library.folders": "フォルダ",
   "settings.general": "一般",
   "settings.interface": "インターフェース",
+  "notifications.title": "通知",
+  "notifications.subtitle": "生成、請求、製品ニュースに関する更新情報。",
+  "notifications.empty.title": "通知はありません",
+  "notifications.empty.body": "生成が完了したとき、クレジットが少なくなったとき、製品ニュースがあるときにお知らせします。",
+  "archive.title": "アーカイブ",
+  "archive.subtitle": "アーカイブされたチャットとプロジェクト。復元または完全削除。",
+  "archive.chats": "チャット",
+  "archive.noChats": "アーカイブされたチャットはありません。",
+  "archive.projects": "プロジェクト",
+  "archive.noProjects": "アーカイブされたプロジェクトはありません。",
+  "archive.emptyTitle": "アーカイブは空です",
+  "archive.emptyDesc": "アーカイブされたアイテムがここに表示されます。作成またはプロジェクトのコンテキストメニューを使用してアーカイブします。",
+  "archive.deleteProjectTitle": "プロジェクトを削除？",
+  "archive.deleteChatTitle": "チャットを削除？",
+  "archive.deleteProjectConfirm": "このプロジェクトを完全に削除しますか？この操作は元に戻せません。",
+  "archive.deleteChatConfirm": "このチャットを完全に削除しますか？この操作は元に戻せません。",
+  "archive.deleteForever": "完全に削除",
+  "archive.typeChat": "チャット",
+  "archive.typeProject": "プロジェクト",
+  "archive.restore": "復元",
 };
 
 const zh: Dict = {
@@ -1347,6 +1596,26 @@ const zh: Dict = {
   "library.folders": "文件夹",
   "settings.general": "常规",
   "settings.interface": "界面",
+  "notifications.title": "通知",
+  "notifications.subtitle": "关于生成、订阅和产品新闻的更新。",
+  "notifications.empty.title": "暂无通知",
+  "notifications.empty.body": "生成完成、积分不足或有产品新闻时，我们会通知您。",
+  "archive.title": "归档",
+  "archive.subtitle": "已归档的聊天和项目。恢复或永久删除。",
+  "archive.chats": "聊天",
+  "archive.noChats": "没有已归档的聊天。",
+  "archive.projects": "项目",
+  "archive.noProjects": "没有已归档的项目。",
+  "archive.emptyTitle": "归档为空",
+  "archive.emptyDesc": "已归档的项目将显示在这里。在创作或项目中使用右键菜单进行归档。",
+  "archive.deleteProjectTitle": "删除项目？",
+  "archive.deleteChatTitle": "删除聊天？",
+  "archive.deleteProjectConfirm": "永久删除此项目？此操作无法撤销。",
+  "archive.deleteChatConfirm": "永久删除此聊天？此操作无法撤销。",
+  "archive.deleteForever": "永久删除",
+  "archive.typeChat": "聊天",
+  "archive.typeProject": "项目",
+  "archive.restore": "恢复",
 };
 
 const ar: Dict = {
@@ -1366,6 +1635,26 @@ const ar: Dict = {
   "common.back": "رجوع",
   "common.cancel": "إلغاء",
   "common.save": "حفظ",
+  "notifications.title": "الإشعارات",
+  "notifications.subtitle": "تحديثات حول الإنشاءات، الفوترة، وأخبار المنتج.",
+  "notifications.empty.title": "لا توجد إشعارات حالياً",
+  "notifications.empty.body": "سنخبرك عند اكتمال الإنشاءات، انخفاض الرصيد، أو وجود أخبار جديدة.",
+"archive.title": "الأرشيف",
+  "archive.subtitle": "المحادثات والمشاريع المؤرشفة. استعادة أو حذف نهائي.",
+  "archive.chats": "محادثات",
+  "archive.noChats": "لا توجد محادثات مؤرشفة.",
+  "archive.projects": "مشاريع",
+  "archive.noProjects": "لا توجد مشاريع مؤرشفة.",
+  "archive.emptyTitle": "الأرشيف فارغ",
+  "archive.emptyDesc": "ستظهر العناصر المؤرشفة هنا. استخدم قائمة السياق في الإنشاء أو المشاريع للأرشفة。",
+  "archive.deleteProjectTitle": "حذف المشروع؟",
+  "archive.deleteChatTitle": "حذف المحادثة？",
+  "archive.deleteProjectConfirm": "حذف المشروع \"{name}\" نهائيًا؟ لا يمكن التراجع عن هذا الإجراء。",
+  "archive.deleteChatConfirm": "حذف المحادثة \"{name}\" نهائيًا؟ لا يمكن التراجع عن هذا الإجراء。",
+  "archive.deleteForever": "حذف نهائي",
+  "archive.typeChat": "محادثة",
+  "archive.typeProject": "项目",
+  "archive.restore": "استعادة",
 };
 
 export const DICTIONARIES: Record<LanguageCode, Record<TranslationKey, string>> = {

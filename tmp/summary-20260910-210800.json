@@ -1,0 +1,4 @@
+{
+  "summary": "Continued credit infrastructure work: pushed commits ff6af08 and 42a5610 to origin/main and origin/Preview-tests, deployed production Worker (web-interface-v1-5-3) and preview Worker (web-interface-v1-5-3-preview). Verified /api/generate and /api/credits now route correctly and return 503 SUPABASE_NOT_CONFIGURED instead of 404, confirming API handlers are mounted. Added SUPABASE_URL to wrangler vars and explicit deploy scripts. Remaining blockers for full production validation: set SUPABASE_SERVICE_ROLE_KEY (and inference secrets) via wrangler secret put on both environments, and apply Supabase schema migrations from supabase/schema/.",
+  "current_status": "Credit API routing and Worker deployment are live on Cloudflare for main and preview. GitHub branches main and Preview-tests are synced. End-to-end generation lifecycle validation is pending Cloudflare secrets configuration and production Supabase schema/RPC deployment."
+}

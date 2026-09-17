@@ -6,6 +6,7 @@ import { getSupabase, supabaseConfigured } from "../lib/supabase";
 import { ensureSignupCredits } from "../lib/creditsService";
 import { markNeedsOnboarding } from "../lib/onboardingService";
 import { useAuth } from "../hooks/useAuth";
+import { useLanguage } from "../i18n/LanguageProvider";
 
 const WEBSITE_URL =
   (import.meta.env.VITE_WEBSITE_URL as string | undefined)?.replace(/\/$/, "") ??
@@ -20,6 +21,7 @@ export default function OAuthRegistration() {
   const location = useLocation();
   const navigate = useNavigate();
   const { markFreshSession } = useAuth();
+  const { t } = useLanguage();
   const isSignUp = location.pathname === "/sign-up" || location.pathname === "/auth";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,20 +34,20 @@ export default function OAuthRegistration() {
     () =>
       isSignUp
         ? {
-            title: "Sign up",
-            cta: "Create account",
-            switchText: "Already have an account?",
+            title: t("auth.signUp"),
+            cta: t("auth.createAccount"),
+            switchText: t("auth.alreadyHaveAccount"),
             switchPath: "/sign-in",
-            switchLabel: "Sign in",
+            switchLabel: t("auth.signIn"),
           }
         : {
-            title: "Sign in",
-            cta: "Sign in",
-            switchText: "Need an account?",
+            title: t("auth.signIn"),
+            cta: t("auth.signIn"),
+            switchText: t("auth.needAccount"),
             switchPath: "/sign-up",
-            switchLabel: "Sign up",
+            switchLabel: t("auth.signUp"),
           },
-    [isSignUp],
+    [isSignUp, t],
   );
 
   const redirectAfterSignUp = (userId?: string) => {
@@ -56,7 +58,7 @@ export default function OAuthRegistration() {
 
   const redirectAfterSignIn = () => {
     markFreshSession();
-    navigate("/create?fresh=1", { replace: true });
+    navigate("/app/generator?fresh=1", { replace: true });
   };
 
   const startOAuth = async (provider: Provider) => {
@@ -118,8 +120,13 @@ export default function OAuthRegistration() {
     setNotice(null);
 
     try {
-      const supabase = getSupabase();
-      if (!supabase) {
+    const supabase = getSupabase();
+    if (!supabase) {
+      // UX-025: fail closed in production; demo-auth fallback is dev-only.
+      if (import.meta.env.PROD) {
+        setError("Authentication is not configured. Please try again later.");
+        return;
+      }
         setError("Auth is not configured yet. Please set Supabase variables and try again.");
         return;
       }
@@ -188,46 +195,32 @@ export default function OAuthRegistration() {
       data-theme="pro"
       className="theme-pro min-h-screen bg-[var(--background-primary)] font-codec text-[var(--text-primary)]"
     >
-      <div className="mx-auto grid min-h-screen w-full max-w-[1200px] gap-10 px-6 py-10 lg:grid-cols-2 lg:items-center lg:gap-16">
-        <section className="auth-brand-panel relative flex min-h-[420px] flex-col justify-center p-10 lg:min-h-[560px]">
-          <div className="relative z-[1]">
-            <Link
-              to={`${WEBSITE_URL}/`}
-              className="mb-10 inline-flex items-center gap-2 text-sm text-[var(--text-secondary)] transition-colors hover:text-primary"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to website
-            </Link>
-            <div className="font-syne text-[42px] font-bold tracking-[-0.03em]">SoundAI</div>
-            <p className="mt-6 max-w-md font-codec text-[22px] font-medium leading-snug text-[var(--text-primary)]">
-              Create production-ready
-            </p>
-            <ul className="mt-4 space-y-2 font-codec text-[18px] text-[var(--text-secondary)]">
-              <li>Audio Samples</li>
-              <li>MIDI</li>
-              <li>VST Presets</li>
-            </ul>
-            <p className="mt-6 font-codec text-[15px] leading-7 text-[var(--text-secondary)]">
-              for any DAW
-            </p>
-            <p className="mt-8 max-w-sm font-codec text-sm leading-7 text-[var(--text-muted)]">
-              Built for producers, composers, sound designers, and studios.
+      <div className="mx-auto grid min-h-screen w-full max-w-[480px] px-6 py-10">
+        <div className="flex flex-col items-center justify-center">
+          <Link
+            to={`${WEBSITE_URL}/`}
+            className="mb-6 inline-flex items-center gap-2 text-sm text-[var(--text-secondary)] transition-colors hover:text-primary"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {t("auth.backToWebsite")}
+          </Link>
+          <div className="mb-8 text-center">
+            <div className="font-syne text-[32px] font-bold tracking-[-0.02em]">SoundAI</div>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">
+              {t("auth.subtitle")}
             </p>
           </div>
-        </section>
-
-        <section className="flex justify-center lg:justify-end">
-          <div className="auth-card w-full max-w-[560px] p-8 sm:p-10">
-            <div className="mb-8">
-              <h1 className="font-syne text-[28px] font-bold">{copy.title}</h1>
-              <p className="mt-2 text-sm text-[var(--text-secondary)]">
+          <div className="auth-card w-full p-8">
+            <div className="mb-6">
+              <h1 className="font-syne text-[24px] font-bold text-center">{copy.title}</h1>
+              <p className="mt-3 text-center text-sm text-[var(--text-secondary)]">
                 {copy.switchText}{" "}
                 <Link to={copy.switchPath} className="font-semibold text-primary hover:opacity-80">
                   {copy.switchLabel}
                 </Link>
               </p>
               {!supabaseConfigured() && (
-                <span className="mt-3 inline-flex rounded-full border border-[var(--border-primary)] bg-[var(--surface-secondary)] px-3 py-1 text-[11px] font-semibold text-primary">
+                <span className="mt-3 block text-center inline-flex rounded-full border border-[var(--border-primary)] bg-[var(--surface-secondary)] px-3 py-1 text-[11px] font-semibold text-primary">
                   Demo auth
                 </span>
               )}
@@ -313,7 +306,7 @@ export default function OAuthRegistration() {
               )}
 
               <button type="submit" disabled={busy} className="app-btn-primary w-full py-3">
-                {busy ? "Please wait…" : copy.cta}
+                {busy ? "Please waitâ€¦" : copy.cta}
                 <ArrowRight className="h-4 w-4" />
               </button>
               {!isSignUp && (
@@ -328,9 +321,8 @@ export default function OAuthRegistration() {
               )}
             </form>
           </div>
-        </section>
+        </div>
       </div>
     </main>
   );
 }
-

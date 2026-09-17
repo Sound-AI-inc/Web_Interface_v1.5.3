@@ -4,6 +4,7 @@ import creditsHandler from "../api/credits";
 import stripeCheckoutHandler from "../api/stripe/checkout";
 import stripePortalHandler from "../api/stripe/portal";
 import stripeWebhookHandler from "../api/stripe/webhook";
+import healthHandler from "../api/health";
 import { runNodeHandler } from "../api/_lib/workerAdapter";
 
 type Env = {
@@ -33,6 +34,7 @@ const apiRoutes: Record<string, (request: IncomingMessage, response: ServerRespo
   "/api/stripe/checkout": stripeCheckoutHandler,
   "/api/stripe/portal": stripePortalHandler,
   "/api/stripe/webhook": stripeWebhookHandler,
+  "/api/health": healthHandler,
 };
 
 export default {

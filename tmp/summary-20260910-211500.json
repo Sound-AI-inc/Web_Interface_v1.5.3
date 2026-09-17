@@ -1,0 +1,4 @@
+{
+  "summary": "Brief status update for user: credit infrastructure fixes are committed and pushed to main and Preview-tests (42a5610), both Cloudflare Workers are deployed, and /api/generate now routes correctly (503 SUPABASE_NOT_CONFIGURED instead of 404). Remaining follow-up is manual: set SUPABASE_SERVICE_ROLE_KEY via wrangler secret on both environments and apply Supabase schema migrations.",
+  "current_status": "Worker routing and deploy pipeline are complete. Full production generation validation is blocked only on Cloudflare secrets and Supabase schema application."
+}

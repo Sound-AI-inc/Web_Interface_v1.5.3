@@ -23,7 +23,9 @@ export type OutputFormat =
   | "Ableton Rack (.adv)"
   | "Massive (.nmsv)";
 
-export type ResultKind = "audio" | "midi" | "preset";
+/** "mus" is a forward extension point for MusCraft (modular music/audio).
+ *  No producer emits it yet; UI maps it to generic audio handling. */
+export type ResultKind = "audio" | "midi" | "preset" | "mus";
 
 export interface MidiNoteLite {
   pitch: number;

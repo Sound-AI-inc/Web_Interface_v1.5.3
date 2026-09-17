@@ -9,7 +9,10 @@
     "deploy:cloudflare": "npm run build && wrangler deploy --env=\"\"",
     "deploy:cloudflare:preview": "npm run build && wrangler deploy --env preview-tests",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "providers:check": "node scripts/providers-check.mjs",
+    "providers:health": "node scripts/providers-health.mjs",
+    "providers:smoke": "node scripts/providers-smoke.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.103.3",

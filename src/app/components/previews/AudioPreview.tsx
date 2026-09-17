@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Play, Pause } from "lucide-react";
 import { useInterfaceMode } from "../../hooks/useInterfaceMode";
+import { usePreviewPlayback, usePreviewState } from "../../hooks/usePreviewPlayback";
+import { useLanguage } from "../../i18n/LanguageProvider";
 
 interface AudioPreviewProps {
   seed?: number;
   audioUrl?: string;
   durationSeconds: number;
   className?: string;
+  assetId?: string;
+  inline?: boolean;
 }
 
 const LITE_PLAYED = "rgb(var(--color-primary))";
@@ -24,14 +28,19 @@ export default function AudioPreview({
   audioUrl,
   durationSeconds,
   className = "",
+  assetId,
+  inline = false,
 }: AudioPreviewProps) {
   const { mode } = useInterfaceMode();
+  const { t } = useLanguage();
   const playedColor = mode === "pro" ? PRO_PLAYED : LITE_PLAYED;
   const unplayedColor = mode === "pro" ? PRO_UNPLAYED : LITE_UNPLAYED;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [localPlaying, setLocalPlaying] = useState(false);
+  const [localProgress, setLocalProgress] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [hasAudioUrl, setHasAudioUrl] = useState(false);
   const progressRef = useRef(0);
   const ctxRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
@@ -40,7 +49,187 @@ export default function AudioPreview({
   const rafRef = useRef<number | null>(null);
   const bufferRef = useRef<AudioBuffer | null>(null);
 
-  const peaks = useMemo(() => synthesizePeaks(seed, 96, durationSeconds), [seed, durationSeconds]);
+  const { registerAudio, unregisterAudio, playAudio: playAudioAction } = usePreviewPlayback();
+  const previewState = usePreviewState(assetId ?? "", "audio");
+  const isGloballyControlled = assetId !== undefined;
+  const playing = isGloballyControlled ? previewState.playing : localPlaying;
+  const progress = isGloballyControlled ? previewState.progress : localProgress;
+  const effectiveDuration = isGloballyControlled && previewState.duration > 0 ? previewState.duration : durationSeconds;
+
+  const stopPlayback = useCallback(() => {
+    const src = sourceRef.current;
+    if (src) {
+      try {
+        src.onended = null;
+        src.stop();
+      } catch {
+        // ignore
+      }
+      sourceRef.current = null;
+    }
+
+    const audio = audioRef.current;
+    if (audio) {
+      audio.onended = null;
+      audio.pause();
+      audio.currentTime = 0;
+    }
+
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = null;
+  }, []);
+
+  const ensureBuffer = useCallback(async (ctx: AudioContext) => {
+    if (bufferRef.current) return bufferRef.current;
+    const buffer = synthesizeBuffer(ctx, seed, effectiveDuration);
+    bufferRef.current = buffer;
+    return buffer;
+  }, [seed, effectiveDuration]);
+
+  const tickPlayback = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      const safeDuration = audio.duration || effectiveDuration || 1;
+      const p = Math.min(1, Math.max(0, audio.currentTime / safeDuration));
+      if (isGloballyControlled) {
+        progressRef.current = p;
+      } else {
+        setLocalProgress(p);
+      }
+      if (!audio.paused) {
+        rafRef.current = requestAnimationFrame(tickPlayback);
+      }
+      return;
+    }
+
+    if (!sourceRef.current || !ctxRef.current) return;
+    const t = (ctxRef.current.currentTime - startedAtRef.current) / effectiveDuration;
+    const p = Math.min(1, Math.max(0, t));
+    if (isGloballyControlled) {
+      progressRef.current = p;
+    } else {
+      setLocalProgress(p);
+    }
+    rafRef.current = requestAnimationFrame(tickPlayback);
+  }, [effectiveDuration, isGloballyControlled]);
+
+  const toggle = useCallback(async () => {
+    if (playing) {
+      stopPlayback();
+      if (!isGloballyControlled) setLocalPlaying(false);
+      return;
+    }
+
+    if (isGloballyControlled) {
+      if (assetId) {
+        playAudioAction(assetId);
+      }
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (audioUrl) {
+        const absoluteUrl = new URL(audioUrl, window.location.href).href;
+        let audio = audioRef.current;
+        if (!audio || audio.src !== absoluteUrl) {
+          audio = new Audio(absoluteUrl);
+          audio.preload = "auto";
+          audioRef.current = audio;
+        }
+
+        audio.currentTime = 0;
+        audio.onended = () => {
+          if (!isGloballyControlled) {
+            setLocalPlaying(false);
+            setLocalProgress(0);
+          }
+          if (rafRef.current) cancelAnimationFrame(rafRef.current);
+          rafRef.current = null;
+        };
+
+        await audio.play();
+        if (!isGloballyControlled) setLocalPlaying(true);
+        rafRef.current = requestAnimationFrame(tickPlayback);
+        setLoading(false);
+        return;
+      }
+    } catch {
+      audioRef.current = null;
+    }
+
+    if (!ctxRef.current) {
+      ctxRef.current = new AudioContext();
+    }
+
+    const ctx = ctxRef.current;
+    if (ctx.state === "suspended") await ctx.resume();
+    const buffer = await ensureBuffer(ctx);
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.connect(ctx.destination);
+    src.onended = () => {
+      if (!isGloballyControlled) {
+        setLocalPlaying(false);
+        setLocalProgress(0);
+      }
+      sourceRef.current = null;
+    };
+    sourceRef.current = src;
+    startedAtRef.current = ctx.currentTime;
+    src.start();
+    if (!isGloballyControlled) setLocalPlaying(true);
+    rafRef.current = requestAnimationFrame(tickPlayback);
+    setLoading(false);
+  }, [playing, isGloballyControlled, assetId, playAudioAction, audioUrl, stopPlayback, ensureBuffer, tickPlayback, setLoading, setLocalPlaying, setLocalProgress]);
+
+  useEffect(() => {
+    if (audioUrl) {
+      setHasAudioUrl(true);
+    }
+  }, [audioUrl]);
+
+  useEffect(() => {
+    if (assetId) {
+      registerAudio(assetId, {
+        play: async () => {
+          setLoading(true);
+          await toggle();
+          setLoading(false);
+        },
+        pause: () => {
+          if (isGloballyControlled || localPlaying) {
+            stopPlayback();
+            if (!isGloballyControlled) setLocalPlaying(false);
+          }
+        },
+        stop: () => {
+          stopPlayback();
+          if (!isGloballyControlled) {
+            setLocalPlaying(false);
+            setLocalProgress(0);
+          }
+        },
+        onProgress: (p) => {
+          progressRef.current = p;
+          if (!isGloballyControlled) setLocalProgress(p);
+        },
+        onEnded: () => {
+          stopPlayback();
+          if (!isGloballyControlled) {
+            setLocalPlaying(false);
+            setLocalProgress(0);
+          }
+        },
+        duration: effectiveDuration,
+      });
+    }
+    return () => {
+      if (assetId) unregisterAudio(assetId);
+    };
+  }, [assetId, registerAudio, unregisterAudio, effectiveDuration, isGloballyControlled, localPlaying, stopPlayback, toggle]);
+
+  const peaks = useMemo(() => synthesizePeaks(seed, 128, effectiveDuration), [seed, effectiveDuration]);
 
   const drawWaveform = useCallback(() => {
     const canvas = canvasRef.current;
@@ -52,8 +241,8 @@ export default function AudioPreview({
     const h = canvas.height;
     ctx.clearRect(0, 0, w, h);
 
-    const barW = Math.max(2, w / peaks.length - 2);
-    const gap = 2;
+    const barW = Math.max(2, w / peaks.length - 1);
+    const gap = 1;
     const step = (w - (peaks.length - 1) * gap) / peaks.length;
 
     peaks.forEach((peak, index) => {
@@ -92,29 +281,6 @@ export default function AudioPreview({
     drawWaveform();
   }, [drawWaveform, progress]);
 
-  const stopPlayback = useCallback(() => {
-    const src = sourceRef.current;
-    if (src) {
-      try {
-        src.onended = null;
-        src.stop();
-      } catch {
-        // ignore
-      }
-      sourceRef.current = null;
-    }
-
-    const audio = audioRef.current;
-    if (audio) {
-      audio.onended = null;
-      audio.pause();
-      audio.currentTime = 0;
-    }
-
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    rafRef.current = null;
-  }, []);
-
   useEffect(() => {
     return () => {
       stopPlayback();
@@ -124,109 +290,88 @@ export default function AudioPreview({
 
   useEffect(() => {
     stopPlayback();
-    setPlaying(false);
-    setProgress(0);
+    if (!isGloballyControlled) {
+      setLocalPlaying(false);
+      setLocalProgress(0);
+    }
     bufferRef.current = null;
     audioRef.current = null;
-  }, [audioUrl, durationSeconds, seed, stopPlayback]);
+  }, [audioUrl, effectiveDuration, seed, stopPlayback, isGloballyControlled]);
 
-  const ensureBuffer = async (ctx: AudioContext) => {
-    if (bufferRef.current) return bufferRef.current;
-    const buffer = synthesizeBuffer(ctx, seed, durationSeconds);
-    bufferRef.current = buffer;
-    return buffer;
+  const formatTime = (seconds: number) => {
+    if (!Number.isFinite(seconds)) return "0:00";
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
-  const tickPlayback = () => {
-    const audio = audioRef.current;
-    if (audio) {
-      const safeDuration = audio.duration || durationSeconds || 1;
-      setProgress(Math.min(1, Math.max(0, audio.currentTime / safeDuration)));
-      if (!audio.paused) {
-        rafRef.current = requestAnimationFrame(tickPlayback);
-      }
-      return;
-    }
+  const currentTime = progress * effectiveDuration;
 
-    if (!sourceRef.current || !ctxRef.current) return;
-    const t = (ctxRef.current.currentTime - startedAtRef.current) / durationSeconds;
-    setProgress(Math.min(1, Math.max(0, t)));
-    rafRef.current = requestAnimationFrame(tickPlayback);
-  };
-
-  const toggle = async () => {
-    if (playing) {
-      stopPlayback();
-      setPlaying(false);
-      setProgress(0);
-      return;
-    }
-
-    if (audioUrl) {
-      try {
-        const absoluteUrl = new URL(audioUrl, window.location.href).href;
-        let audio = audioRef.current;
-        if (!audio || audio.src !== absoluteUrl) {
-          audio = new Audio(absoluteUrl);
-          audio.preload = "auto";
-          audioRef.current = audio;
-        }
-
-        audio.currentTime = 0;
-        audio.onended = () => {
-          setPlaying(false);
-          setProgress(0);
-          if (rafRef.current) cancelAnimationFrame(rafRef.current);
-          rafRef.current = null;
-        };
-
-        await audio.play();
-        setPlaying(true);
-        rafRef.current = requestAnimationFrame(tickPlayback);
-        return;
-      } catch {
-        audioRef.current = null;
-      }
-    }
-
-    if (!ctxRef.current) {
-      ctxRef.current = new AudioContext();
-    }
-
-    const ctx = ctxRef.current;
-    if (ctx.state === "suspended") await ctx.resume();
-    const buffer = await ensureBuffer(ctx);
-    const src = ctx.createBufferSource();
-    src.buffer = buffer;
-    src.connect(ctx.destination);
-    src.onended = () => {
-      setPlaying(false);
-      setProgress(0);
-      sourceRef.current = null;
-    };
-    sourceRef.current = src;
-    startedAtRef.current = ctx.currentTime;
-    src.start();
-    setPlaying(true);
-    rafRef.current = requestAnimationFrame(tickPlayback);
-  };
+  if (inline) {
+    return (
+      <div className={`flex items-center gap-2 ${className}`}>
+        <button
+          type="button"
+          onClick={toggle}
+          disabled={loading}
+          className="premium-icon-btn h-8 w-8"
+          aria-label={playing ? "Pause" : "Play"}
+          aria-pressed={playing}
+        >
+          {loading ? (
+            <span className="block h-3 w-3 animate-spin rounded-full border-2 border-current/40 border-t-current" />
+          ) : playing ? (
+            <Pause className="h-4 w-4" />
+          ) : (
+            <Play className="h-4 w-4" />
+          )}
+        </button>
+        <div
+          ref={containerRef}
+          className={`waveform-shell relative h-6 flex-1 overflow-hidden rounded-input border border-[var(--border-primary)] ${mode === "pro" ? "waveform-shell-pro" : "waveform-shell-lite"}`}
+        >
+          <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
+        </div>
+        <span className="font-mono text-[10px] text-[var(--text-muted)] shrink-0">
+          {formatTime(currentTime)} / {formatTime(effectiveDuration)}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <button
         type="button"
         onClick={toggle}
+        disabled={loading}
         className="app-btn-primary h-10 w-10 shrink-0 !px-0"
         aria-label={playing ? "Pause" : "Play"}
+        aria-pressed={playing}
       >
-        {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+        {loading ? (
+          <span className="block h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+        ) : playing ? (
+          <Pause className="h-4 w-4" />
+        ) : (
+          <Play className="h-4 w-4" />
+        )}
       </button>
       <div
         ref={containerRef}
-        className={`waveform-shell relative h-8 flex-1 overflow-hidden rounded-input ${mode === "pro" ? "waveform-shell-pro" : "waveform-shell-lite"}`}
+        className={`waveform-shell relative h-8 flex-1 overflow-hidden rounded-input border border-[var(--border-primary)] ${mode === "pro" ? "waveform-shell-pro" : "waveform-shell-lite"}`}
       >
         <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
+        <div
+          className="pointer-events-none absolute inset-0 flex items-center justify-center px-2 font-codec text-[10px] text-[var(--text-muted)]"
+          style={{ opacity: playing ? 0 : 1 }}
+        >
+          {hasAudioUrl ? t("workspace.preview.clickToPreview") : t("workspace.preview.unavailable")}
+        </div>
       </div>
+      <span className="font-mono text-[10px] text-[var(--text-muted)] shrink-0">
+        {formatTime(currentTime)} / {formatTime(effectiveDuration)}
+      </span>
     </div>
   );
 }
