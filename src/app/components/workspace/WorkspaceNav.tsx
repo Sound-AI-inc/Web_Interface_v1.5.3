@@ -21,6 +21,12 @@ import {
 import { focusComposerInput } from "../../lib/focusComposer";
 import { useLanguage } from "../../i18n/LanguageProvider";
 
+function SectionSeparator({ collapsed }: { collapsed: boolean }) {
+  return (
+    <div className={`my-3 ${collapsed ? "" : "mx-3"} h-px bg-[var(--ui-border-soft)]`} aria-hidden />
+  );
+}
+
 const GENERATOR_PATH = "/app/generator";
 
 function openWorkspaceChat(
@@ -184,16 +190,6 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
       <div className="mb-3 flex flex-col items-center gap-2 px-1">
         <button
           type="button"
-          title={t("workspace.chats")}
-          aria-label={t("workspace.chats")}
-          onClick={() => setChatsOpen((v) => !v)}
-          aria-expanded={chatsOpen}
-          className="flex h-9 w-9 items-center justify-center rounded-button text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
-        >
-          <MessageSquare className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
           title={t("workspace.projects")}
           aria-label={t("workspace.projects")}
           onClick={() => setProjectsOpen((v) => !v)}
@@ -201,6 +197,16 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
           className="flex h-9 w-9 items-center justify-center rounded-button text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
         >
           <FolderKanban className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          title={t("workspace.chats")}
+          aria-label={t("workspace.chats")}
+          onClick={() => setChatsOpen((v) => !v)}
+          aria-expanded={chatsOpen}
+          className="flex h-9 w-9 items-center justify-center rounded-button text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
+        >
+          <MessageSquare className="h-4 w-4" />
         </button>
       </div>
     );
@@ -235,58 +241,7 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
         />
       )}
 
-      {/* Standalone chats */}
-      <div>
-        <button
-          type="button"
-          onClick={() => setChatsOpen((v) => !v)}
-          className="flex w-full items-center justify-between px-3 py-1.5 font-codec text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--text-muted)]"
-        >
-          <span className="flex items-center gap-2">
-            <MessageSquare className="h-3.5 w-3.5" />
-            {t("workspace.chats")}
-          </span>
-          <ChevronDown className={`h-3.5 w-3.5 transition-transform ${chatsOpen ? "rotate-180" : ""}`} />
-        </button>
-        {chatsOpen && (
-          <div className="mt-1 px-1">
-            {standaloneChats.length === 0 ? (
-              <p className="px-2 py-1.5 font-codec text-[11px] text-[var(--text-muted)]">
-                {t("workspace.noChats")}
-              </p>
-            ) : (
-              standaloneChats.map((chat) => (
-                <ChatRow
-                  key={chat.id}
-                  chat={chat}
-                  activeChatId={activeChatId}
-                  onOpen={() => openWorkspaceChat(chat.id, setActiveChat, navigate, chat.projectId)}
-                  onContextMenu={(e) =>
-                    openMenu(
-                      { kind: "chat", id: chat.id, title: chat.title, projectId: chat.projectId },
-                      e,
-                    )
-                  }
-                />
-              ))
-            )}
-            <button
-              type="button"
-              onClick={() => {
-                startNewSession();
-                navigate(GENERATOR_PATH);
-                focusComposerInput();
-              }}
-              className="mt-1 flex w-full items-center gap-2 px-2 py-1.5 font-codec text-[11px] text-[var(--text-muted)] hover:text-primary"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              {t("workspace.newChat")}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Projects */}
+      {/* Projects - positioned near Tools (higher) */}
       <div>
         <button
           type="button"
@@ -433,6 +388,59 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
             >
               <Plus className="h-3.5 w-3.5" />
               {t("workspace.newProject")}
+            </button>
+          </div>
+        )}
+      </div>
+
+      <SectionSeparator collapsed={collapsed} />
+
+      {/* Standalone chats - positioned lower */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setChatsOpen((v) => !v)}
+          className="flex w-full items-center justify-between px-3 py-1.5 font-codec text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--text-muted)]"
+        >
+          <span className="flex items-center gap-2">
+            <MessageSquare className="h-3.5 w-3.5" />
+            {t("workspace.chats")}
+          </span>
+          <ChevronDown className={`h-3.5 w-3.5 transition-transform ${chatsOpen ? "rotate-180" : ""}`} />
+        </button>
+        {chatsOpen && (
+          <div className="mt-1 px-1">
+            {standaloneChats.length === 0 ? (
+              <p className="px-2 py-1.5 font-codec text-[11px] text-[var(--text-muted)]">
+                {t("workspace.noChats")}
+              </p>
+            ) : (
+              standaloneChats.map((chat) => (
+                <ChatRow
+                  key={chat.id}
+                  chat={chat}
+                  activeChatId={activeChatId}
+                  onOpen={() => openWorkspaceChat(chat.id, setActiveChat, navigate, chat.projectId)}
+                  onContextMenu={(e) =>
+                    openMenu(
+                      { kind: "chat", id: chat.id, title: chat.title, projectId: chat.projectId },
+                      e,
+                    )
+                  }
+                />
+              ))
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                startNewSession();
+                navigate(GENERATOR_PATH);
+                focusComposerInput();
+              }}
+              className="mt-1 flex w-full items-center gap-2 px-2 py-1.5 font-codec text-[11px] text-[var(--text-muted)] hover:text-primary"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              {t("workspace.newChat")}
             </button>
           </div>
         )}

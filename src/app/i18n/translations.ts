@@ -215,6 +215,14 @@ export type TranslationKey =
   | "settings.stemsBundleDesc"
   | "settings.preferLossless"
   | "settings.preferLosslessDesc"
+  | "settings.search"
+  | "settings.searchPlaceholder"
+  | "settings.generation"
+  | "settings.generationDesc"
+  | "settings.appearance"
+  | "settings.appearanceDesc"
+  | "settings.usage"
+  | "settings.usageDesc"
   // Workspace
   | "workspace.projects"
   | "workspace.chats"
@@ -443,6 +451,13 @@ export type TranslationKey =
   | "prompts.addPrompt"
   | "prompts.copied"
   | "prompts.historyEmpty"
+  | "prompts.usePrompt"
+  | "prompts.runs"
+  | "prompts.edit"
+  | "prompts.copy"
+  | "prompts.type.audio"
+  | "prompts.type.midi"
+  | "prompts.type.preset"
   // Settings sections
   | "settings.profile"
   | "settings.account"
@@ -538,6 +553,13 @@ const en: Record<TranslationKey, string> = {
   "prompts.searchPlaceholder": "Search prompts…",
   "prompts.noResults": "No prompts match your filters.",
   "prompts.noResultsHint": "Try clearing the search or selecting a different genre.",
+  "prompts.usePrompt": "Use prompt",
+  "prompts.runs": "runs",
+  "prompts.edit": "Edit prompt",
+  "prompts.copy": "Copy prompt",
+  "prompts.type.audio": "Audio Sample",
+  "prompts.type.midi": "MIDI",
+  "prompts.type.preset": "VST Preset",
   "arrangement.title": "Arrangement",
   "arrangement.subtitle": "Coming soon",
   "editor.title": "Editor Mode",
@@ -658,6 +680,14 @@ const en: Record<TranslationKey, string> = {
     "Adds separated stems (drums, bass, melody) to exported projects.",
   "settings.preferLossless": "Prefer lossless formats",
   "settings.preferLosslessDesc": "Use WAV / FLAC when the target supports them.",
+  "settings.search": "Search settings",
+  "settings.searchPlaceholder": "Search settings…",
+  "settings.generation": "Generation",
+  "settings.generationDesc": "Default model, format and quality behavior.",
+  "settings.appearance": "Appearance",
+  "settings.appearanceDesc": "Theme, density and visual preferences.",
+  "settings.usage": "Usage",
+  "settings.usageDesc": "Credit balance, generation history and limits.",
   "workspace.projects": "Projects",
   "workspace.chats": "Chats",
   "workspace.newChat": "New chat",
@@ -965,6 +995,13 @@ const ru: Dict = {
   "prompts.searchPlaceholder": "Поиск по промптам…",
   "prompts.noResults": "Нет промптов по заданным фильтрам.",
   "prompts.noResultsHint": "Сбросьте поиск или выберите другой жанр.",
+  "prompts.usePrompt": "Использовать промпт",
+  "prompts.runs": "запусков",
+  "prompts.edit": "Редактировать промпт",
+  "prompts.copy": "Копировать промпт",
+  "prompts.type.audio": "Аудио",
+  "prompts.type.midi": "MIDI",
+  "prompts.type.preset": "VST пресет",
   "arrangement.title": "Аранжировка",
   "arrangement.subtitle": "Скоро",
   "editor.title": "Редактор",
@@ -1076,6 +1113,14 @@ const ru: Dict = {
   "settings.preferLossless": "Предпочитать lossless-форматы",
   "settings.preferLosslessDesc":
     "Использовать WAV / FLAC, если формат поддерживается.",
+  "settings.search": "Поиск настроек",
+  "settings.searchPlaceholder": "Поиск настроек…",
+  "settings.generation": "Генерация",
+  "settings.generationDesc": "Модель, формат и качество по умолчанию.",
+  "settings.appearance": "Внешний вид",
+  "settings.appearanceDesc": "Тема, плотность и визуальные настройки.",
+  "settings.usage": "Использование",
+  "settings.usageDesc": "Баланс кредитов, история генераций и лимиты.",
   "settings.integrationsSection": "Интеграции",
   "integrations.daw.title": "Интеграции с DAW",
   "integrations.daw.subtitle": "Подключите SoundAI к вашему производственному рабочему процессу",
@@ -1230,6 +1275,13 @@ const es: Dict = {
   "profile.title": "Perfil",
   "integrations.title": "Integraciones",
   "prompts.title": "Prompts",
+  "prompts.usePrompt": "Utiliser le prompt",
+  "prompts.runs": "exécutions",
+  "prompts.edit": "Modifier le prompt",
+  "prompts.copy": "Copier le prompt",
+  "prompts.type.audio": "Échantillon audio",
+  "prompts.type.midi": "MIDI",
+  "prompts.type.preset": "Préréglage VST",
   "export.title": "Exportar",
   "editor.title": "Editor",
 };
@@ -1286,10 +1338,25 @@ const fr: Dict = {
   "settings.devices": "Appareils",
   "settings.export": "Exporter",
   "settings.language": "Langue",
+  "settings.search": "Rechercher les paramètres",
+  "settings.searchPlaceholder": "Rechercher les paramètres…",
+  "settings.generation": "Génération",
+  "settings.generationDesc": "Modèle, format et qualité par défaut.",
+  "settings.appearance": "Apparence",
+  "settings.appearanceDesc": "Thème, densité et préférences visuelles.",
+  "settings.usage": "Utilisation",
+  "settings.usageDesc": "Solde de crédits, historique des générations et limites.",
   "billing.title": "Facturation",
   "profile.title": "Profil",
   "integrations.title": "Intégrations",
   "prompts.title": "Prompts",
+  "prompts.usePrompt": "Utiliser le prompt",
+  "prompts.runs": "exécutions",
+  "prompts.edit": "Modifier le prompt",
+  "prompts.copy": "Copier le prompt",
+  "prompts.type.audio": "Échantillon audio",
+  "prompts.type.midi": "MIDI",
+  "prompts.type.preset": "Préréglage VST",
   "export.title": "Exporter",
   "editor.title": "Éditeur",
   "notifications.title": "Notificaciones",
@@ -1366,10 +1433,25 @@ const de: Dict = {
   "settings.devices": "Geräte",
   "settings.export": "Export",
   "settings.language": "Sprache",
+  "settings.search": "Einstellungen durchsuchen",
+  "settings.searchPlaceholder": "Einstellungen durchsuchen…",
+  "settings.generation": "Generierung",
+  "settings.generationDesc": "Standard-Modell, Format und Qualität.",
+  "settings.appearance": "Erscheinungsbild",
+  "settings.appearanceDesc": "Thema, Dichte und visuelle Einstellungen.",
+  "settings.usage": "Nutzung",
+  "settings.usageDesc": "Credit-Kontostand, Generierungsverlauf und Limits.",
   "billing.title": "Abrechnung",
   "profile.title": "Profil",
   "integrations.title": "Integrationen",
   "prompts.title": "Prompts",
+  "prompts.usePrompt": "Prompt verwenden",
+  "prompts.runs": "Ausführungen",
+  "prompts.edit": "Prompt bearbeiten",
+  "prompts.copy": "Prompt kopieren",
+  "prompts.type.audio": "Audio-Sample",
+  "prompts.type.midi": "MIDI",
+  "prompts.type.preset": "VST-Preset",
   "export.title": "Export",
   "editor.title": "Editor",
   "notifications.title": "Benachrichtigungen",
@@ -1428,6 +1510,14 @@ const pt: Dict = {
   "library.folders": "Pastas",
   "settings.general": "Geral",
   "settings.interface": "Interface",
+  "settings.search": "Pesquisar configurações",
+  "settings.searchPlaceholder": "Pesquisar configurações…",
+  "settings.generation": "Geração",
+  "settings.generationDesc": "Modelo, formato e qualidade padrão.",
+  "settings.appearance": "Aparência",
+  "settings.appearanceDesc": "Tema, densidade e preferências visuais.",
+  "settings.usage": "Uso",
+  "settings.usageDesc": "Saldo de créditos, histórico de gerações e limites.",
   "notifications.title": "Notificações",
   "notifications.subtitle": "Atualizações sobre gerações, faturamento e notícias do produto.",
   "notifications.empty.title": "Sem notificações ainda",
@@ -1448,6 +1538,14 @@ const pt: Dict = {
   "archive.typeChat": "Chat",
   "archive.typeProject": "Projeto",
   "archive.restore": "Restaurar",
+  "prompts.title": "Prompts",
+  "prompts.usePrompt": "Usar prompt",
+  "prompts.runs": "execuções",
+  "prompts.edit": "Editar prompt",
+  "prompts.copy": "Copiar prompt",
+  "prompts.type.audio": "Amostra de áudio",
+  "prompts.type.midi": "MIDI",
+  "prompts.type.preset": "Predefinição VST",
 };
 
 const it: Dict = {
@@ -1484,6 +1582,14 @@ const it: Dict = {
   "library.folders": "Cartelle",
   "settings.general": "Generale",
   "settings.interface": "Interfaccia",
+  "settings.search": "Cerca impostazioni",
+  "settings.searchPlaceholder": "Cerca impostazioni…",
+  "settings.generation": "Generazione",
+  "settings.generationDesc": "Modello, formato e qualità predefiniti.",
+  "settings.appearance": "Aspetto",
+  "settings.appearanceDesc": "Tema, densità e preferenze visive.",
+  "settings.usage": "Utilizzo",
+  "settings.usageDesc": "Saldo crediti, cronologia generazioni e limiti.",
   "notifications.title": "Notifiche",
   "notifications.subtitle": "Aggiornamenti su generazioni, fatturazione e novità del prodotto.",
   "notifications.empty.title": "Nessuna notifica per ora",
@@ -1504,6 +1610,14 @@ const it: Dict = {
   "archive.typeChat": "Chat",
   "archive.typeProject": "Progetto",
   "archive.restore": "Ripristinare",
+  "prompts.title": "Prompt",
+  "prompts.usePrompt": "Usa prompt",
+  "prompts.runs": "esecuzioni",
+  "prompts.edit": "Modifica prompt",
+  "prompts.copy": "Copia prompt",
+  "prompts.type.audio": "Campione audio",
+  "prompts.type.midi": "MIDI",
+  "prompts.type.preset": "Preset VST",
 };
 
 const ja: Dict = {
@@ -1540,6 +1654,14 @@ const ja: Dict = {
   "library.folders": "フォルダ",
   "settings.general": "一般",
   "settings.interface": "インターフェース",
+  "settings.search": "設定を検索",
+  "settings.searchPlaceholder": "設定を検索…",
+  "settings.generation": "生成",
+  "settings.generationDesc": "デフォルトのモデル、形式、品質。",
+  "settings.appearance": "外観",
+  "settings.appearanceDesc": "テーマ、密度、視覚設定。",
+  "settings.usage": "使用状況",
+  "settings.usageDesc": "クレジット残高、生成履歴、制限。",
   "notifications.title": "通知",
   "notifications.subtitle": "生成、請求、製品ニュースに関する更新情報。",
   "notifications.empty.title": "通知はありません",
@@ -1560,6 +1682,14 @@ const ja: Dict = {
   "archive.typeChat": "チャット",
   "archive.typeProject": "プロジェクト",
   "archive.restore": "復元",
+  "prompts.title": "プロンプト",
+  "prompts.usePrompt": "プロンプトを使用",
+  "prompts.runs": "実行",
+  "prompts.edit": "プロンプトを編集",
+  "prompts.copy": "プロンプトをコピー",
+  "prompts.type.audio": "オーディオ",
+  "prompts.type.midi": "MIDI",
+  "prompts.type.preset": "VSTプリセット",
 };
 
 const zh: Dict = {
@@ -1596,6 +1726,14 @@ const zh: Dict = {
   "library.folders": "文件夹",
   "settings.general": "常规",
   "settings.interface": "界面",
+  "settings.search": "搜索设置",
+  "settings.searchPlaceholder": "搜索设置…",
+  "settings.generation": "生成",
+  "settings.generationDesc": "默认模型、格式和质量。",
+  "settings.appearance": "外观",
+  "settings.appearanceDesc": "主题、密度和视觉偏好。",
+  "settings.usage": "使用情况",
+  "settings.usageDesc": "信用点余额、生成历史和限制。",
   "notifications.title": "通知",
   "notifications.subtitle": "关于生成、订阅和产品新闻的更新。",
   "notifications.empty.title": "暂无通知",
@@ -1616,6 +1754,14 @@ const zh: Dict = {
   "archive.typeChat": "聊天",
   "archive.typeProject": "项目",
   "archive.restore": "恢复",
+  "prompts.title": "提示词",
+  "prompts.usePrompt": "使用提示词",
+  "prompts.runs": "运行次数",
+  "prompts.edit": "编辑提示词",
+  "prompts.copy": "复制提示词",
+  "prompts.type.audio": "音频",
+  "prompts.type.midi": "MIDI",
+  "prompts.type.preset": "VST预设",
 };
 
 const ar: Dict = {
@@ -1655,6 +1801,22 @@ const ar: Dict = {
   "archive.typeChat": "محادثة",
   "archive.typeProject": "项目",
   "archive.restore": "استعادة",
+  "settings.search": "البحث في الإعدادات",
+  "settings.searchPlaceholder": "البحث في الإعدادات…",
+  "settings.generation": "الإنشاء",
+  "settings.generationDesc": "النموذج والتنسيق والجودة الافتراضية.",
+  "settings.appearance": "المظهر",
+  "settings.appearanceDesc": "السمة، الكثافة والتفضيلات البصرية.",
+  "settings.usage": "الاستخدام",
+  "settings.usageDesc": "رصيد النقاط، سجل الإنشاءات والحدود.",
+  "prompts.title": "المطالبات",
+  "prompts.usePrompt": "استخدام المطالبة",
+  "prompts.runs": "عمليات تشغيل",
+  "prompts.edit": "تعديل المطالبة",
+  "prompts.copy": "نسخ المطالبة",
+  "prompts.type.audio": "عينة صوتية",
+  "prompts.type.midi": "MIDI",
+  "prompts.type.preset": "إعداد VST مسبق",
 };
 
 export const DICTIONARIES: Record<LanguageCode, Record<TranslationKey, string>> = {

@@ -399,6 +399,20 @@ export default function AudioGenerator() {
     focusComposerInput();
   };
 
+  const handleAttach = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "audio/*,.mid,.midi,.vstpreset,.fxp,.fxb,.vital,.nmsv,.adv,.aupreset";
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (file) {
+        const fileInfo = `\n[Attached: ${file.name} (${(file.size / 1024).toFixed(1)} KB)]`;
+        setPrompt((prev) => prev + fileInfo);
+      }
+    };
+    input.click();
+  };
+
   const runGeneration = async (req: RunRequest): Promise<boolean> => {
     // UX-018/019: synchronous guard first — state updates are async, so
     // isGenerating alone cannot stop a click+Enter race in the same tick.
@@ -490,7 +504,7 @@ export default function AudioGenerator() {
       const actualCount = Math.max(1, response.items.length);
 
       // Backend-confirmed balance: always refresh from /api/credits after generation.
-      void refreshCredits();
+      await refreshCredits();
       void refreshCosts();
 
       if (actualCount < req.genCount) {
@@ -524,7 +538,7 @@ export default function AudioGenerator() {
         return false;
       }
       // Server restores credits on failure automatically; refresh authoritative state.
-      void refreshCredits();
+      await refreshCredits();
       const message = error instanceof Error ? error.message : "Generation failed unexpectedly.";
       // P4-A §17: failure is a first-class timeline entry with Retry — not
       // a transient warning. No restore claim beyond server-confirmed state.
@@ -615,6 +629,7 @@ export default function AudioGenerator() {
         value={prompt}
         onChange={setPrompt}
         onGenerate={handleGenerate}
+        onAttach={handleAttach}
         disabled={isGenerating || insufficientCredits}
         loading={isGenerating}
         generateLabel={isGenerating ? t("workspace.generating") : t("workspace.create")}
