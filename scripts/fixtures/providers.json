@@ -1,0 +1,92 @@
+{
+  "$comment": "P4-B test fixtures for provider integration work. Labelled fixtures ONLY — never served as production output.",
+  "cases": [
+    {
+      "name": "successful-audio-response",
+      "kind": "success",
+      "response": {
+        "generationId": "fixture-gen-001",
+        "status": "completed",
+        "provider": "SoundCraft",
+        "model": "SoundCraft",
+        "assets": [
+          {
+            "id": "fixture-asset-001",
+            "type": "audio",
+            "name": "Fixture Kick",
+            "format": "WAV",
+            "url": null,
+            "previewUrl": null,
+            "durationSeconds": 6,
+            "metadata": {},
+            "source": "backend"
+          }
+        ]
+      }
+    },
+    {
+      "name": "provider-unavailable",
+      "kind": "unavailable",
+      "error": {
+        "code": "SOUNDCRAFT_PROVIDER_UNAVAILABLE",
+        "provider": "SoundCraft",
+        "category": "provider_unavailable",
+        "retryable": true,
+        "message": "The generation service is currently unavailable."
+      }
+    },
+    {
+      "name": "invalid-response",
+      "kind": "invalid",
+      "raw": "{ not json",
+      "expectedCategory": "invalid_response",
+      "expectedRetryable": false
+    },
+    {
+      "name": "timeout",
+      "kind": "timeout",
+      "raw": "request timeout after 60000ms",
+      "expectedCategory": "timeout",
+      "expectedRetryable": true
+    },
+    {
+      "name": "malformed-asset",
+      "kind": "malformed",
+      "response": {
+        "generationId": "fixture-gen-002",
+        "status": "completed",
+        "provider": "MidiCraft",
+        "model": "MidiCraft",
+        "assets": [{ "id": "", "type": "midi", "name": "", "source": "backend" }]
+      },
+      "notes": "Asset missing name/format/url — UI must render metadata fallback, never crash."
+    },
+    {
+      "name": "partial-result",
+      "kind": "partial",
+      "response": {
+        "generationId": "fixture-gen-003",
+        "status": "completed",
+        "provider": "VSTCraft",
+        "model": "VSTCraft",
+        "assets": [
+          {
+            "id": "fixture-asset-003",
+            "type": "vst_preset",
+            "name": "Fixture Pad",
+            "format": "VST3 (.vstpreset)",
+            "source": "backend"
+          }
+        ],
+        "warning": "Requested 3 variants; received 1."
+      }
+    },
+    {
+      "name": "insufficient-credits",
+      "kind": "credits",
+      "raw": "402 insufficient credits for this generation",
+      "expectedCategory": "insufficient_credits",
+      "expectedRetryable": false
+    }
+  ]
+}

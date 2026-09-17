@@ -1,20 +1,19 @@
 import BillingCard from "./BillingCard";
 import { plans } from "../data/mock";
-import { useAuth } from "../hooks/useAuth";
-import { useCredits } from "../hooks/useCredits";
-import { grantPlanCredits } from "../lib/creditsService";
+import { useToast } from "./Toast";
 import { useLanguage } from "../i18n/LanguageProvider";
 
 export default function UpgradePlanModalContent() {
   const { t } = useLanguage();
-  const { user } = useAuth();
-  const { applyGrant, refresh } = useCredits();
+  const { notify } = useToast();
 
-  const handleSubscribe = async (planId: string, packageCredits?: number) => {
-    if (!user) return;
-    const grant = await grantPlanCredits(user.id, planId, packageCredits);
-    applyGrant(grant.balance, grant.quota);
-    await refresh();
+  // UX-006/007: STRIPE-DEPENDENT preview only. Previously this granted
+  // credits client-side as a fake subscription mechanism — removed.
+  const handleSubscribe = () => {
+    notify(
+      "Stripe billing is not yet connected. Checkout will become available when billing is enabled.",
+      "info",
+    );
   };
 
   return (
@@ -24,6 +23,9 @@ export default function UpgradePlanModalContent() {
           {t("upgrade.title")}
         </h2>
         <p className="app-meta mt-1">{t("upgrade.subtitle")}</p>
+        <p className="mt-2 font-codec text-[12px] italic text-[var(--text-muted)]">
+          Preview only — Stripe checkout is not yet connected.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 p-5 xl:grid-cols-2">

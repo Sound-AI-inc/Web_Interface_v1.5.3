@@ -5,22 +5,35 @@
 @layer base {
   :root {
     --radius: 0.5rem;
-    /* Semantic design tokens */
+    /* Radius scale — Tailwind button/card/input resolve through these. */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 12px;
+    --radius-xl: 20px;
+    /* Semantic design tokens (dark defaults; themes override below) */
     --background-primary: #0f0f12;
     --background-secondary: #0e1016;
+    --background-tertiary: #141417;
     --surface-primary: #18181c;
     --surface-secondary: #1e1e24;
     --surface-elevated: #22222a;
     --border-primary: rgba(255, 255, 255, 0.08);
     --border-secondary: rgba(255, 255, 255, 0.14);
+    --border-focus: rgba(255, 59, 107, 0.45);
     --text-primary: #ffffff;
     --text-secondary: rgba(255, 255, 255, 0.55);
     --text-muted: rgba(255, 255, 255, 0.3);
+    --text-disabled: rgba(255, 255, 255, 0.25);
     --accent-primary: #ff3b6b;
     --accent-secondary: #ff9cc0;
+    --accent-muted: rgba(255, 156, 192, 0.14);
     --success: #34d399;
     --warning: #fbbf24;
     --error: #f87171;
+    --info: #7dd3fc;
+    --interactive-hover: rgba(255, 255, 255, 0.05);
+    --interactive-active: rgba(255, 255, 255, 0.09);
+    --scrim: rgba(10, 10, 12, 0.55);
     --color-primary: 255 59 107;
     --color-primary-rgb: 255, 59, 107;
     --color-primary-soft: 255 156 192;
@@ -69,16 +82,27 @@
   .theme-pro {
     --background-primary: #0f0f12;
     --background-secondary: #0e1016;
+    --background-tertiary: #141417;
     --surface-primary: #18181c;
     --surface-secondary: #1e1e24;
     --surface-elevated: #22222a;
     --border-primary: rgba(255, 255, 255, 0.08);
     --border-secondary: rgba(255, 255, 255, 0.14);
+    --border-focus: rgba(255, 59, 107, 0.45);
     --text-primary: #ffffff;
     --text-secondary: rgba(255, 255, 255, 0.55);
     --text-muted: rgba(255, 255, 255, 0.3);
+    --text-disabled: rgba(255, 255, 255, 0.25);
     --accent-primary: #ff3b6b;
     --accent-secondary: #ff9cc0;
+    --accent-muted: rgba(255, 156, 192, 0.14);
+    --success: #34d399;
+    --warning: #fbbf24;
+    --error: #f87171;
+    --info: #7dd3fc;
+    --interactive-hover: rgba(255, 255, 255, 0.05);
+    --interactive-active: rgba(255, 255, 255, 0.09);
+    --scrim: rgba(10, 10, 12, 0.55);
     --color-primary: 255 59 107;
     --color-primary-rgb: 255, 59, 107;
     --color-primary-soft: 255 156 192;
@@ -111,35 +135,47 @@
     --logo-primary: #ffffff;
   }
   .theme-lite {
-    --background-primary: #f4f5f7;
-    --background-secondary: #eef0f4;
-    --surface-primary: #ffffff;
-    --surface-secondary: #ffffff;
-    --surface-elevated: #ffffff;
+    /* Warm-neutral paper: same SoundAI system as dark, not generic gray SaaS. */
+    --background-primary: #f5f4f1;
+    --background-secondary: #edecea;
+    --background-tertiary: #e4e2dd;
+    --surface-primary: #fffdf9;
+    --surface-secondary: #f7f5f1;
+    --surface-elevated: #fffdf9;
     --border-primary: rgba(0, 0, 0, 0.08);
     --border-secondary: rgba(0, 0, 0, 0.13);
+    --border-focus: rgba(2, 132, 199, 0.5);
     --text-primary: #0f0f12;
     --text-secondary: rgba(15, 15, 18, 0.55);
     --text-muted: rgba(15, 15, 18, 0.35);
+    --text-disabled: rgba(15, 15, 18, 0.25);
     --accent-primary: #38bdf8;
     --accent-secondary: #bae6fd;
+    --accent-muted: rgba(186, 230, 253, 0.5);
+    --success: #059669;
+    --warning: #b45309;
+    --error: #dc2626;
+    --info: #0284c7;
+    --interactive-hover: rgba(15, 23, 42, 0.05);
+    --interactive-active: rgba(15, 23, 42, 0.09);
+    --scrim: rgba(15, 23, 42, 0.4);
     --color-primary: 56 189 248;
     --color-primary-rgb: 56, 189, 248;
     --color-primary-soft: 186 230 253;
     --color-primary-soft-rgb: 186, 230, 253;
     --color-accent-light: 125 211 252;
-    --color-surface: 244 245 247;
-    --color-surface-muted: 255 255 255;
+    --color-surface: 245 244 241;
+    --color-surface-muted: 255 253 249;
     --color-text: 15 15 18;
-    --ui-bg: #f4f5f7;
-    --ui-card: #ffffff;
-    --ui-input: #ffffff;
-    --ui-elevated: #ffffff;
+    --ui-bg: #f5f4f1;
+    --ui-card: #fffdf9;
+    --ui-input: #fffdf9;
+    --ui-elevated: #fffdf9;
     --ui-border-soft: rgba(0, 0, 0, 0.08);
     --ui-border-strong: rgba(0, 0, 0, 0.13);
-    --ui-panel: rgba(255, 255, 255, 0.88);
-    --ui-panel-strong: rgba(255, 255, 255, 0.96);
-    --ui-panel-muted: rgba(255, 255, 255, 0.72);
+    --ui-panel: rgba(255, 253, 249, 0.88);
+    --ui-panel-strong: rgba(255, 253, 249, 0.96);
+    --ui-panel-muted: rgba(255, 253, 249, 0.72);
     --ui-shadow-ambient: 0 12px 36px rgba(15, 23, 42, 0.08);
     --ui-shadow-soft: 0 10px 28px rgba(15, 23, 42, 0.08);
     --ui-shadow-floating: 0 18px 60px rgba(15, 23, 42, 0.13);
@@ -150,10 +186,10 @@
     --ui-accent-gradient: linear-gradient(135deg, #38bdf8 0%, #7dd3fc 100%);
     --ui-shimmer-a: rgba(15, 15, 18, 0.04);
     --ui-shimmer-b: rgba(15, 15, 18, 0.1);
-    --surface-base: #f4f5f7;
-    --surface-floating: #ffffff;
-    --surface-overlay: rgba(244, 245, 247, 0.85);
-    --surface-modal: #ffffff;
+    --surface-base: #f5f4f1;
+    --surface-floating: #fffdf9;
+    --surface-overlay: rgba(245, 244, 241, 0.85);
+    --surface-modal: #fffdf9;
     --scrollbar-thumb: rgba(15, 15, 18, 0.14);
     --scrollbar-track: transparent;
     --text-on-accent: #0f0f12;
@@ -182,6 +218,21 @@
 }
 
 @layer components {
+  /* ---- Typography roles (single system; no page-specific stacks) ----
+     Display / Hero → font-syne weights 700 (brand wordmark, hero titles)
+     Page title     → font-poppins semibold via PageContainer
+     Section title  → .app-section-title (poppins 13px uppercase muted)
+     Body           → font-codec (Inter) 13–14px
+     Secondary      → .app-meta / text-secondary
+     Metadata       → font-mono 10–11px text-muted
+     Spacing rhythm (4-base) → 4 8 12 16 20 24 32 40 48 64.
+     Prefer these steps for new layout values; do not invent ad-hoc gaps. */
+  /* ---- Card hierarchy (single language; keep all three names) ----
+     Surface     → .token-card / .app-card  (static content)
+     Elevated    → .ui-surface-2 (grouped content)
+     Interactive → .asset-card (hover lift; feed/library cards)
+     Elevation scale: none → flat-sm → ui-shadow-soft → ui-shadow-floating.
+     Dark relies on surface contrast + border; light adds soft elevation. */
   .token-card {
     background: var(--surface-primary);
     border: 1px solid var(--border-primary);
@@ -208,7 +259,7 @@
     background: rgba(15, 15, 18, 0.72);
   }
   .theme-lite .shell-modal-backdrop {
-    background: rgba(244, 245, 247, 0.92);
+    background: rgba(245, 244, 241, 0.92);
   }
   .shell-modal-panel {
     background: var(--surface-modal) !important;
@@ -220,31 +271,32 @@
     isolation: isolate;
   }
   .theme-lite .shell-modal-panel {
-    background: #ffffff !important;
+    background: var(--surface-modal) !important;
   }
   .theme-pro .shell-modal-panel {
-    background: #18181c !important;
+    background: var(--surface-modal) !important;
   }
   .theme-lite .token-menu,
   .token-menu.theme-lite,
   .token-menu[data-theme="lite"] {
-    background: #ffffff !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    color: #0f0f12;
+    background: var(--surface-floating) !important;
+    border: 1px solid var(--border-primary) !important;
+    color: var(--text-primary);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    box-shadow: 0 18px 60px rgba(15, 23, 42, 0.13) !important;
+    box-shadow: var(--ui-shadow-floating) !important;
   }
   .token-menu[data-theme="lite"] button {
-    color: #374151;
+    color: var(--text-secondary);
   }
   .token-menu[data-theme="lite"] button[aria-selected="true"] {
-    background: rgba(59, 130, 246, 0.1);
-    color: #2563eb;
+    background: var(--accent-muted);
+    /* --info doubles as the on-light accent text (sky-500 fails contrast). */
+    color: var(--info);
   }
   .token-menu[data-theme="lite"] button:hover:not([aria-selected="true"]) {
-    background: #f3f4f6;
-    color: #111827;
+    background: var(--interactive-hover);
+    color: var(--text-primary);
   }
   .theme-lite .token-menu {
     backdrop-filter: none;
@@ -281,12 +333,6 @@
     box-shadow: var(--ui-shadow-soft);
     backdrop-filter: blur(24px);
   }
-  .app-card-muted {
-    @apply rounded-card;
-    background: var(--surface-secondary);
-    border: 1px solid var(--border-primary);
-    box-shadow: var(--ui-shadow-inset);
-  }
   .app-input {
     @apply w-full rounded-input px-4 py-3 text-sm font-codec
       focus:outline-none focus:border-primary/60 focus:ring-4 focus:ring-primary/10
@@ -298,12 +344,49 @@
   .app-input::placeholder {
     color: var(--text-muted);
   }
+  .app-input:hover:not(:disabled):not(:focus) {
+    border-color: var(--border-secondary);
+  }
+  .app-input:disabled {
+    color: var(--text-disabled);
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .app-input[aria-invalid="true"],
+  .app-input[data-error="true"] {
+    border-color: var(--error);
+  }
+  .app-input[aria-invalid="true"]:focus,
+  .app-input[data-error="true"]:focus {
+    border-color: var(--error);
+    --tw-ring-color: var(--error);
+  }
   .app-btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-button bg-primary px-4 py-2.5
-      font-poppins text-sm font-medium text-white
+      font-poppins text-sm font-medium
       hover:bg-primary/90 active:bg-primary/95
       disabled:opacity-40 disabled:pointer-events-none
       transition-colors;
+    color: var(--text-on-accent);
+  }
+  .app-btn-primary:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+  }
+  /* Danger fill is a fixed deep red so white text passes contrast in both
+     themes (documented exception: --error stays theme-relative for text). */
+  .app-btn-danger {
+    @apply inline-flex h-9 items-center justify-center gap-2 rounded-button px-4
+      font-poppins text-xs font-medium
+      hover:opacity-90 active:opacity-95
+      disabled:opacity-40 disabled:pointer-events-none
+      transition-colors;
+    background: #dc2626;
+    color: #ffffff;
+  }
+  .app-btn-danger:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
   }
   .app-btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-button px-4 py-2.5
@@ -315,6 +398,15 @@
   .app-btn-ghost:hover {
     border-color: rgba(var(--color-primary-rgb), 0.4);
     color: rgb(var(--color-primary));
+  }
+  .app-btn-ghost:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+  }
+  .app-btn-ghost:disabled {
+    color: var(--text-disabled);
+    opacity: 0.6;
+    pointer-events: none;
   }
   .app-chip {
     @apply inline-flex items-center gap-1.5 rounded-full border border-surface
@@ -331,31 +423,6 @@
   }
   .soundai-logo-mark {
     @apply object-contain;
-  }
-  .prompt-shell {
-    position: relative;
-    overflow: hidden;
-  }
-  .prompt-shell::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(70% 120% at 0% 100%, rgba(255, 152, 168, 0.12) 0%, rgba(255, 152, 168, 0) 52%),
-      radial-gradient(58% 86% at 100% 0%, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0) 62%);
-    pointer-events: none;
-  }
-  .prompt-shell::after {
-    content: "";
-    position: absolute;
-    inset: -1px;
-    border-radius: inherit;
-    pointer-events: none;
-    background:
-      linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.16), rgba(255, 255, 255, 0) 36%),
-      radial-gradient(72% 120% at 80% 100%, rgba(var(--color-primary-soft-rgb), 0.14), rgba(255, 255, 255, 0) 68%);
-    opacity: 0.72;
-    mix-blend-mode: screen;
   }
   .logo-drift {
     animation: logoDrift 4.8s ease-in-out infinite;
@@ -592,39 +659,6 @@
     animation: particleFloat 16s ease-in-out infinite;
   }
 
-  .gradient-text {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-pink to-accent-cyan;
-  }
-  .section-padding {
-    @apply px-4 sm:px-6 lg:px-8 py-16 md:py-24;
-  }
-  .container-max {
-    @apply max-w-7xl mx-auto;
-  }
-  .btn-primary {
-    @apply inline-flex items-center justify-center px-6 py-3 rounded-lg font-poppins font-semibold text-sm
-      bg-accent-pink text-white hover:bg-accent-pink/90 transition-all duration-300
-      shadow-lg shadow-accent-pink/25 hover:shadow-accent-pink/40;
-  }
-  .btn-secondary {
-    @apply inline-flex items-center justify-center px-6 py-3 rounded-lg font-poppins font-semibold text-sm
-      bg-transparent border transition-all duration-300
-      text-gray-700 border-gray-300 hover:border-accent-cyan/60 hover:text-accent-cyan
-      dark:text-light-bg dark:border-light-bg/20 dark:hover:border-accent-cyan/60 dark:hover:text-accent-cyan;
-  }
-  .card {
-    @apply backdrop-blur-sm rounded-xl p-6 transition-all duration-300
-      bg-gray-50 border border-gray-200 hover:border-accent-pink/30
-      dark:bg-dark-bg/60 dark:border-white/5 dark:hover:border-accent-pink/20;
-  }
-  .waveform-bg {
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ff3c82' fill-opacity='0.03'%3E%3Cpath d='M30 0v60M0 30h60'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  }
-
-  .generator-page {
-    min-height: calc(100vh - 64px);
-    color: rgb(var(--color-text));
-  }
   .composer-shell {
     position: relative;
     overflow: hidden;
@@ -656,6 +690,10 @@
     border-color: var(--ui-border-strong);
     color: rgb(var(--color-text));
   }
+  .composer-control:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+  }
   .mode-toggle {
     display: inline-flex;
     width: fit-content;
@@ -681,6 +719,10 @@
     background: var(--ui-accent-gradient);
     box-shadow: 0 2px 12px var(--ui-glow);
   }
+  .mode-toggle-button:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+  }
   .theme-lite .mode-toggle-button[data-active="true"] {
     color: #0f0f12;
   }
@@ -705,6 +747,10 @@
     border-color: var(--border-secondary);
     color: var(--text-primary);
     transform: translateY(-1px);
+  }
+  .quick-chip:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
   }
   .feed-enter {
     animation: feedIn 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
@@ -746,6 +792,13 @@
     font-weight: 700;
     color: rgb(var(--color-text));
   }
+  .credits-pill:hover {
+    border-color: var(--ui-border-strong);
+  }
+  .credits-pill:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+  }
   .generator-hero-title {
     text-align: center;
     background: linear-gradient(135deg, rgb(var(--color-text)) 0%, rgb(var(--color-text) / 0.6) 100%);
@@ -766,7 +819,7 @@
     backdrop-filter: blur(12px);
   }
   .theme-lite .composer-dock-surface {
-    background: linear-gradient(180deg, rgba(244, 245, 247, 0) 0%, var(--ui-bg) 34%);
+    background: linear-gradient(180deg, rgba(245, 244, 241, 0) 0%, var(--ui-bg) 34%);
   }
   .generating-dots {
     display: inline-block;
@@ -1308,6 +1361,10 @@
 .premium-asset-action:hover {
   border-color: var(--border-secondary);
   color: var(--text-primary);
+}
+.premium-asset-action:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
 }
 
 /* Conversation artifact — generation results inside chat feed */

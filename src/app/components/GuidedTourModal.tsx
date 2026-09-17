@@ -43,7 +43,7 @@ export default function GuidedTourModal({ open, userId, onClose }: GuidedTourMod
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--scrim)] px-4 py-6 backdrop-blur-sm">
       <div className="w-full max-w-[560px] rounded-[24px] border border-[var(--border-primary)] bg-[var(--surface-primary)] p-6 shadow-[var(--ui-shadow-floating)]">
         <div className="flex items-start justify-between gap-4">
           <div>

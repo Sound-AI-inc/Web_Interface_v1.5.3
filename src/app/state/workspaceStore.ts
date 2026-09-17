@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { AudioResult } from "../data/mock";
 
+export type GenerationBatchStatus = "completed" | "preview" | "failed";
+
 export interface GenerationBatch {
   id: string;
   prompt: string;
@@ -11,6 +13,13 @@ export interface GenerationBatch {
   format: string;
   createdAt: string;
   items: AudioResult[];
+  /** Backend-confirmed result origin. Absent on batches saved before UX-002. */
+  source?: "backend" | "demo";
+  /** P4-A conversation lineage: failed batches carry the error; follow-up
+      regenerations reference their parent. Additive; old batches omit it. */
+  status?: GenerationBatchStatus;
+  error?: string;
+  parentBatchId?: string | null;
 }
 
 export interface WorkspaceChat {
@@ -51,12 +60,14 @@ interface WorkspaceState {
   createChat: (projectId?: string | null, title?: string) => string;
   startNewSession: (projectId?: string | null) => string;
   deleteChat: (id: string) => void;
+  restoreChat: (id: string) => void;
   renameChat: (id: string, title: string) => void;
   moveChatToProject: (chatId: string, projectId: string | null) => void;
   togglePinChat: (id: string) => void;
   toggleArchiveChat: (id: string) => void;
   togglePinProject: (id: string) => void;
   toggleArchiveProject: (id: string) => void;
+  restoreProject: (id: string) => void;
   setActiveProject: (id: string) => void;
   setActiveChat: (id: string) => void;
   updateChat: (chatId: string, patch: Partial<WorkspaceChat>) => void;
@@ -128,7 +139,7 @@ function repairPersistedState(
   const projectIds = new Set(projects.map((p) => p.id));
   const fallbackProjectId = projects[0]?.id ?? DEFAULT_PROJECT_ID;
 
-  let chats = Array.isArray(state.chats)
+  const chats = Array.isArray(state.chats)
     ? state.chats.map((c) => normalizeChat(c as Partial<WorkspaceChat>, projectIds))
     : seed.chats;
 
@@ -284,6 +295,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }));
       },
 
+      restoreChat: (id) => {
+        set((s) => ({
+          chats: s.chats.map((c) =>
+            c.id === id ? { ...c, archived: false, updatedAt: Date.now() } : c,
+          ),
+        }));
+      },
+
       togglePinProject: (id) => {
         set((s) => ({
           projects: s.projects.map((p) =>
@@ -296,6 +315,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set((s) => ({
           projects: s.projects.map((p) =>
             p.id === id ? { ...p, archived: !p.archived } : p,
+          ),
+        }));
+      },
+
+      restoreProject: (id) => {
+        set((s) => ({
+          projects: s.projects.map((p) =>
+            p.id === id ? { ...p, archived: false } : p,
           ),
         }));
       },

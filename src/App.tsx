@@ -1,7 +1,8 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { AuthProvider, useAuth } from "./app/hooks/useAuth";
 import { LanguageProvider } from "./app/i18n/LanguageProvider";
+import RequirePro from "./app/components/RequirePro";
 
 const AppLayout = lazy(() => import("./app/AppLayout"));
 const AudioGenerator = lazy(() => import("./app/pages/AudioGenerator"));
@@ -11,11 +12,11 @@ const Arrangement = lazy(() => import("./app/pages/Arrangement"));
 const EditorMode = lazy(() => import("./app/pages/EditorMode"));
 const Library = lazy(() => import("./app/pages/Library"));
 const Export = lazy(() => import("./app/pages/Export"));
-const Integrations = lazy(() => import("./app/pages/Integrations"));
 const Billing = lazy(() => import("./app/pages/Billing"));
 const Profile = lazy(() => import("./app/pages/Profile"));
 const Settings = lazy(() => import("./app/pages/Settings"));
 const Notifications = lazy(() => import("./app/pages/Notifications"));
+const Archive = lazy(() => import("./app/pages/Archive"));
 const HelpPage = lazy(() => import("./app/pages/help/HelpPage"));
 const OAuthRegistration = lazy(() => import("./app/pages/OAuthRegistration"));
 const OnboardingSurvey = lazy(() => import("./app/pages/OnboardingSurvey"));
@@ -74,12 +75,28 @@ function RootRedirect() {
     return <Navigate to="/app/generator" replace />;
   }
 
+  // UX-025: production without Supabase configuration fails closed to
+  // sign-in; only development keeps the demo-auth path.
+  if (!configured && import.meta.env.PROD) {
+    return <Navigate to="/sign-in" replace />;
+  }
+
   console.info("[auth-debug] redirect", {
     from: "/",
     to: "/sign-up",
     reason: "unauthenticated",
   });
   return <Navigate to="/sign-up" replace />;
+}
+
+/**
+ * UX-011: legacy entry point. Forwards to the canonical generator,
+ * preserving query parameters (e.g. ?fresh=1). Replace (no history spam,
+ * sane back/forward, no redirect loop — distinct path).
+ */
+function CreateRedirect() {
+  const { search } = useLocation();
+  return <Navigate to={`/app/generator${search}`} replace />;
 }
 
 function App() {
@@ -104,7 +121,7 @@ function App() {
               }
             />
 
-            <Route path="/create" element={<AudioGenerator />} />
+            <Route path="/create" element={<CreateRedirect />} />
 
             <Route path="/app" element={<AppLayout />}>
               <Route index element={<Navigate to="/app/generator" replace />} />
@@ -112,14 +129,47 @@ function App() {
               <Route path="projects/:projectId" element={<ProjectWorkspace />} />
               <Route path="prompts" element={<Prompts />} />
               <Route path="arrangement" element={<Arrangement />} />
-              <Route path="editor" element={<EditorMode />} />
-              <Route path="library" element={<Library />} />
-              <Route path="export" element={<Export />} />
-              <Route path="integrations" element={<Integrations />} />
+              <Route
+                path="editor"
+                element={
+                  <RequirePro
+                    title="Editor Mode"
+                    subtitle="Lightweight editing layer for generated assets."
+                    feature="Editor Mode unlocks audio trimming, MIDI piano roll, and synth preset editing."
+                  >
+                    <EditorMode />
+                  </RequirePro>
+                }
+              />
+              <Route
+                path="library"
+                element={
+                  <RequirePro
+                    title="Library"
+                    subtitle="Your generated audio, MIDI, and preset assets."
+                    feature="Library organizes your generated audio, MIDI, and preset assets across folders."
+                  >
+                    <Library />
+                  </RequirePro>
+                }
+              />
+              <Route
+                path="export"
+                element={
+                  <RequirePro
+                    title="Export"
+                    subtitle="Send library assets to your DAW or disk."
+                    feature="Export sends your library assets to your local DAW or disk."
+                  >
+                    <Export />
+                  </RequirePro>
+                }
+              />
               <Route path="billing" element={<Billing />} />
               <Route path="profile" element={<Profile />} />
               <Route path="settings" element={<Settings />} />
               <Route path="notifications" element={<Notifications />} />
+              <Route path="archive" element={<Archive />} />
             </Route>
 
             <Route

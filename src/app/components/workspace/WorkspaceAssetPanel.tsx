@@ -10,6 +10,9 @@ import {
 } from "lucide-react";
 import type { AudioResult } from "../../data/mock";
 import { useLanguage } from "../../i18n/LanguageProvider";
+import AudioPreview from "../previews/AudioPreview";
+import MidiPreview from "../previews/MidiPreview";
+import PresetPreview from "../previews/PresetPreview";
 
 interface WorkspaceAssetPanelProps {
   sessionAssets: AudioResult[];
@@ -17,6 +20,8 @@ interface WorkspaceAssetPanelProps {
   onToggleFavorite: (id: string) => void;
   collapsed: boolean;
   onToggleCollapsed: () => void;
+  /** Render inside the <lg drawer/sheet instead of the desktop rail. */
+  forceVisible?: boolean;
 }
 
 function kindIcon(kind: AudioResult["kind"]) {
@@ -113,12 +118,98 @@ function AssetRow({
   );
 }
 
+function AssetRowWithPreview({
+  item,
+  favorited,
+  onToggleFavorite,
+}: {
+  item: AudioResult;
+  favorited: boolean;
+  onToggleFavorite: () => void;
+}) {
+  const [showPreview, setShowPreview] = useState(false);
+  const { t } = useLanguage();
+
+  const renderPreview = () => {
+    if (!showPreview) return null;
+    
+    const audioUrl = item.metadata?.assetUrl ?? item.metadata?.previewUrl ?? undefined;
+
+    if (item.kind === "audio") {
+      return (
+        <AudioPreview
+          assetId={item.id}
+          audioUrl={audioUrl}
+          durationSeconds={item.durationSeconds ?? 30}
+          inline
+          seed={Number(item.id.split("-").pop()?.slice(-6) || "1")}
+        />
+      );
+    }
+    if (item.kind === "midi") {
+      return (
+        <MidiPreview
+          assetId={item.id}
+          notes={item.notes ?? []}
+          durationSeconds={item.durationSeconds ?? 30}
+          inline
+        />
+      );
+    }
+    if (item.kind === "preset") {
+      return (
+        <PresetPreview
+          assetId={item.id}
+          preset={item.preset!}
+          inline
+        />
+      );
+    }
+    return null;
+  };
+
+  const Icon = kindIcon(item.kind);
+
+  return (
+    <div className="space-y-1">
+      <div className="asset-panel-row group flex items-center gap-2 rounded-[10px] px-2 py-2">
+        <Icon className="h-3.5 w-3.5 shrink-0 text-primary" />
+        <div className="min-w-0 flex-1">
+          <div className="truncate font-codec text-[12px] font-medium text-[var(--text-primary)]">
+            {item.title}
+          </div>
+          <div className="truncate font-mono text-[10px] text-[var(--text-muted)]">{item.format}</div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowPreview(!showPreview)}
+          aria-label={showPreview ? t("workspace.preview.hide") : t("workspace.preview.show")}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] transition-colors"
+        >
+          <Music2 className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
+          onClick={onToggleFavorite}
+          className="opacity-0 transition-opacity group-hover:opacity-100 data-[active=true]:opacity-100"
+          data-active={favorited ? "true" : "false"}
+        >
+          <Heart className={`h-3.5 w-3.5 ${favorited ? "fill-primary text-primary" : "text-[var(--text-muted)]"}`} />
+        </button>
+      </div>
+      {renderPreview()}
+    </div>
+  );
+}
+
 export default function WorkspaceAssetPanel({
   sessionAssets,
   favoriteIds,
   onToggleFavorite,
   collapsed,
   onToggleCollapsed,
+  forceVisible = false,
 }: WorkspaceAssetPanelProps) {
   const { t } = useLanguage();
   const audio = sessionAssets.filter((a) => a.kind === "audio");
@@ -130,7 +221,10 @@ export default function WorkspaceAssetPanel({
   return (
     <aside
       data-collapsed={collapsed ? "true" : "false"}
-      className="workspace-assets hidden h-full min-h-0 shrink-0 flex-col border-l border-[var(--border-primary)] bg-[var(--background-secondary)] lg:flex"
+      aria-label="Session assets"
+      className={`workspace-assets h-full min-h-0 shrink-0 flex-col border-l border-[var(--border-primary)] bg-[var(--background-secondary)] ${
+        forceVisible ? "flex w-full" : "hidden xl:flex"
+      }`}
     >
       <div className="flex shrink-0 items-center justify-between border-b border-[var(--border-primary)] px-3 py-3">
         {!collapsed && (
@@ -178,7 +272,7 @@ export default function WorkspaceAssetPanel({
                 </p>
               ) : (
                 recent.map((item) => (
-                  <AssetRow
+                  <AssetRowWithPreview
                     key={item.id}
                     item={item}
                     favorited={favoriteIds.has(item.id)}
@@ -194,7 +288,7 @@ export default function WorkspaceAssetPanel({
                 </p>
               ) : (
                 favorites.map((item) => (
-                  <AssetRow
+                  <AssetRowWithPreview
                     key={item.id}
                     item={item}
                     favorited
@@ -213,7 +307,7 @@ export default function WorkspaceAssetPanel({
                 <p className="px-2 py-1 font-codec text-[12px] text-[var(--text-muted)]">—</p>
               ) : (
                 audio.map((item) => (
-                  <AssetRow
+                  <AssetRowWithPreview
                     key={item.id}
                     item={item}
                     favorited={favoriteIds.has(item.id)}
@@ -232,7 +326,7 @@ export default function WorkspaceAssetPanel({
                 <p className="px-2 py-1 font-codec text-[12px] text-[var(--text-muted)]">—</p>
               ) : (
                 midi.map((item) => (
-                  <AssetRow
+                  <AssetRowWithPreview
                     key={item.id}
                     item={item}
                     favorited={favoriteIds.has(item.id)}
@@ -252,7 +346,7 @@ export default function WorkspaceAssetPanel({
                 <p className="px-2 py-1 font-codec text-[12px] text-[var(--text-muted)]">—</p>
               ) : (
                 preset.map((item) => (
-                  <AssetRow
+                  <AssetRowWithPreview
                     key={item.id}
                     item={item}
                     favorited={favoriteIds.has(item.id)}

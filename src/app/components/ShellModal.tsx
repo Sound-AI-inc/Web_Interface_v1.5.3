@@ -1,4 +1,5 @@
 import { createPortal } from "react-dom";
+import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { useInterfaceMode } from "../hooks/useInterfaceMode";
 
@@ -15,6 +16,22 @@ export default function ShellModal({
 }) {
   const { mode } = useInterfaceMode();
   const themeClass = mode === "lite" ? "theme-lite" : "theme-pro";
+  const closeRef = useRef<HTMLButtonElement | null>(null);
+  const previousFocus = useRef<Element | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    previousFocus.current = document.activeElement;
+    closeRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      if (previousFocus.current instanceof HTMLElement) previousFocus.current.focus();
+    };
+  }, [open, onClose]);
 
   if (!open) return null;
 
@@ -23,10 +40,12 @@ export default function ShellModal({
       data-theme={mode}
       className={`shell-modal-root ${themeClass} fixed inset-0`}
       style={{ zIndex: "var(--z-modal)" }}
+      role="dialog"
+      aria-modal="true"
     >
       <button
         type="button"
-        aria-label="Close modal"
+        aria-label="Close dialog"
         className="shell-modal-backdrop absolute inset-0"
         onClick={onClose}
       />
@@ -35,8 +54,10 @@ export default function ShellModal({
           className={`shell-modal-panel pointer-events-auto relative max-h-[88vh] w-full overflow-hidden ${widthClassName}`}
         >
           <button
+            ref={closeRef}
             type="button"
             onClick={onClose}
+            aria-label="Close dialog"
             className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-primary)] bg-[var(--surface-floating)] text-[var(--text-secondary)] transition-colors hover:text-primary"
           >
             <X className="h-4 w-4" />

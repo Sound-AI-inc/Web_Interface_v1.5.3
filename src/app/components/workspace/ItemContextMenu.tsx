@@ -6,7 +6,6 @@ import {
   FolderInput,
   FolderX,
   Pin,
-  Share2,
   Pencil,
   Trash2,
 } from "lucide-react";
@@ -25,7 +24,6 @@ interface ItemContextMenuProps {
   onClose: () => void;
   onRename: () => void;
   onDelete: () => void;
-  onShare: () => void;
   onMoveToProject: (projectId: string | null) => void;
   onPin?: () => void;
   onArchive?: () => void;
@@ -38,7 +36,6 @@ export default function ItemContextMenu({
   onClose,
   onRename,
   onDelete,
-  onShare,
   onMoveToProject,
   onPin,
   onArchive,
@@ -90,10 +87,9 @@ export default function ItemContextMenu({
       className={`token-menu ${themeClass} w-[240px] rounded-card p-1.5 shadow-[var(--ui-shadow-floating)]`}
       style={style}
     >
-      <button type="button" className="menu-row" onClick={() => { onShare(); onClose(); }}>
-        <Share2 className="h-4 w-4 text-[var(--text-muted)]" />
-        <span className="flex-1 text-left">{t("context.share")}</span>
-      </button>
+      {/* UX-012: Share removed — ?share= links were copied but never
+          consumed by a deep-link handler. Reintroduce with real share
+          infrastructure, not a clipboard dead-end. */}
       <button type="button" className="menu-row" onClick={() => { onRename(); onClose(); }}>
         <Pencil className="h-4 w-4 text-[var(--text-muted)]" />
         <span className="flex-1 text-left">{t("context.rename")}</span>

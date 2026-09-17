@@ -6,6 +6,7 @@ import {
   Music,
   Waves,
   SlidersHorizontal,
+  Database,
 } from "lucide-react";
 import { useEditor } from "../core/store";
 import WaveformEditor from "./WaveformEditor";
@@ -18,6 +19,11 @@ import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { decodeArrayBuffer } from "../audio/engine";
 import { generateDefaultAudioBuffer } from "../audio/defaultBuffer";
 import { peekEditorIntent } from "../../lib/editorIntent";
+import { useLibraryStore } from "../../state/libraryStore";
+import { useWorkspaceStore } from "../../state/workspaceStore";
+import { useToast } from "../../components/Toast";
+import { useLanguage } from "../../i18n/LanguageProvider";
+import type { AudioResult, ResultKind } from "../../data/contracts";
 
 const TABS = [
   { id: "audio" as const, label: "Audio", icon: Waves },
@@ -37,10 +43,19 @@ export default function EditorPanel() {
   const canRedo = useEditor((s) => s.canRedo());
   const dirty = useEditor((s) => s.dirty);
   const markSaved = useEditor((s) => s.markSaved);
+  const notes = useEditor((s) => s.notes);
+  const synth = useEditor((s) => s.synth);
+
+  const addFromResult = useLibraryStore((s) => s.addFromResult);
+  const assignAssetToProject = useWorkspaceStore((s) => s.assignAssetToProject);
+  const { notify } = useToast();
+  const { t } = useLanguage();
 
   const playToggleRef = useRef<() => void>(() => {});
   const [loading, setLoading] = useState(true);
   const [dragOver, setDragOver] = useState(false);
+
+  const editorIntent = peekEditorIntent();
 
   // Bootstrap default audio once unless an asset import is pending.
   useEffect(() => {
@@ -66,6 +81,55 @@ export default function EditorPanel() {
     // backend persistence without changing callers.
     markSaved();
   }, [markSaved]);
+
+  const handleSaveToLibrary = useCallback(async () => {
+    if (!editorIntent) {
+      notify(t("editor.noAssetToSave"), "info");
+      return;
+    }
+
+    // Create an AudioResult from the current editor state
+    const kind = editorIntent.kind === "audio" ? "audio" : editorIntent.kind === "midi" ? "midi" : "preset";
+    
+    const audioResult: AudioResult = {
+      id: editorIntent.assetId,
+      title: editorIntent.title,
+      model: "Editor Mode",
+      kind: kind as ResultKind,
+      format: kind === "audio" ? "WAV" : kind === "midi" ? "MIDI" : "VST3 (.vstpreset)",
+      durationSeconds: buffer?.duration ?? (kind === "audio" ? 4.0 : kind === "midi" ? 8.0 : 0),
+      description: `Edited in Editor Mode`,
+      tags: ["edited", "editor-mode"],
+      metadata: {
+        assetId: editorIntent.assetId,
+        generatedFrom: "editor-mode",
+      },
+    };
+
+    if (kind === "midi") {
+      audioResult.notes = notes;
+    } else if (kind === "preset") {
+      audioResult.preset = {
+        oscillator: "sawtooth",
+        attack: synth.attack,
+        decay: synth.decay,
+        sustain: synth.sustain,
+        release: synth.release,
+        filterCutoff: synth.filterCutoff,
+        filterResonance: synth.filterResonance,
+      };
+    }
+
+    addFromResult(audioResult);
+    
+    // Assign to project if there's a projectId in the intent
+    if (editorIntent.projectId) {
+      assignAssetToProject(editorIntent.projectId, editorIntent.assetId);
+    }
+    
+    notify(t("editor.savedToLibrary"), "success");
+    markSaved();
+  }, [editorIntent, buffer, notes, synth, addFromResult, assignAssetToProject, notify, t, markSaved]);
 
   useKeyboardShortcuts({
     onPlayToggle: () => playToggleRef.current(),
@@ -147,6 +211,16 @@ export default function EditorPanel() {
           <button type="button" onClick={onSave} className="app-btn-ghost h-9 px-3" title="Save (Cmd/Ctrl+S)">
             <Save className="h-3.5 w-3.5" /> Save
           </button>
+          {editorIntent && (
+            <button
+              type="button"
+              onClick={handleSaveToLibrary}
+              className="app-btn-primary h-9 px-3"
+              title={t("editor.saveToLibrary")}
+            >
+              <Database className="h-3.5 w-3.5" /> {t("editor.saveToLibrary")}
+            </button>
+          )}
         </div>
       </div>
 

@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Coins } from "lucide-react";
-import ThemedLogo from "./ThemedLogo";
+import { Bell, Coins, Menu } from "lucide-react";
 import { useInterfaceMode } from "../hooks/useInterfaceMode";
 import { useLanguage } from "../i18n/LanguageProvider";
 import { useCredits } from "../hooks/useCredits";
 import { useAuth } from "../hooks/useAuth";
 
-export default function AppHeader() {
+export default function AppHeader({ onOpenMobileNav }: { onOpenMobileNav?: () => void }) {
   const { mode, setMode } = useInterfaceMode();
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -22,14 +21,10 @@ export default function AppHeader() {
     (user?.user_metadata?.picture as string | undefined) ??
     null;
   const initial = displayName.charAt(0).toUpperCase() || "S";
-  const notifications = [
-    { id: "generation-completed", title: "Generation completed", body: "Your latest audio assets are ready.", time: "Now" },
-    { id: "credits-added", title: "Credits added", body: "Your credit balance was updated.", time: "12m" },
-    { id: "subscription-updated", title: "Subscription updated", body: "Plan settings are synced.", time: "1h" },
-    { id: "project-shared", title: "Project shared", body: "A workspace collaborator received access.", time: "3h" },
-    { id: "model-update", title: "Model update available", body: "SoundCraft received a quality update.", time: "1d" },
-  ];
-  const unreadCount = notifications.filter((item) => !readIds.has(item.id)).length;
+  // Notifications will be connected to real data source when available.
+  // Currently shows truthful empty state.
+  const notifications: Array<{ id: string; title: string; body: string; time: string; read?: boolean }> = [];
+  const unreadCount = 0;
 
   useEffect(() => {
     if (!notificationsOpen) return;
@@ -45,12 +40,14 @@ export default function AppHeader() {
   return (
     <header className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-[var(--border-primary)] bg-[var(--background-primary)] px-4 sm:px-6">
       <div className="flex min-w-0 items-center gap-2.5">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center">
-          <ThemedLogo />
-        </div>
-        <span className="truncate font-syne text-[17px] font-bold tracking-[-0.02em] text-[var(--text-primary)]">
-          SoundAI
-        </span>
+        <button
+          type="button"
+          onClick={onOpenMobileNav}
+          aria-label="Open navigation"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-button text-[var(--text-secondary)] transition-colors hover:bg-[var(--ui-input)] hover:text-text md:hidden"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
       </div>
 
       <div className="mode-toggle" aria-label="Product mode">
@@ -145,6 +142,18 @@ export default function AppHeader() {
                     );
                   })
                 )}
+              </div>
+              <div className="border-t border-[var(--border-primary)] p-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNotificationsOpen(false);
+                    navigate("/app/notifications");
+                  }}
+                  className="flex w-full items-center justify-center rounded-[12px] px-3 py-2 font-codec text-[12px] font-semibold text-primary transition-colors hover:bg-[var(--surface-secondary)]"
+                >
+                  View all notifications
+                </button>
               </div>
             </div>
           )}

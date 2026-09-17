@@ -1,4 +1,6 @@
+import { useState } from "react";
 import {
+  Download,
   Heart,
   KeyboardMusic,
   Pencil,
@@ -6,12 +8,15 @@ import {
   Repeat,
   SlidersHorizontal,
   Star,
+  Waves,
+  MousePointer2,
 } from "lucide-react";
 import { useInterfaceMode } from "../hooks/useInterfaceMode";
 import type { AudioResult, LibraryAsset, ResultKind } from "../data/mock";
 import AudioPreview from "./previews/AudioPreview";
 import MidiPreview from "./previews/MidiPreview";
 import PresetPreview from "./previews/PresetPreview";
+import { useLanguage } from "../i18n/LanguageProvider";
 
 export interface ResultCardItem {
   id: string;
@@ -36,10 +41,15 @@ interface ResultCardProps {
   onAddToLibrary?: () => void;
   onRemix?: () => void;
   onEdit?: () => void;
+  onDownload?: () => void;
+  onDragStart?: (event: React.DragEvent) => void;
+  onDragEnd?: () => void;
   onToggleFavorite?: () => void;
   savedToLibrary?: boolean;
   favorited?: boolean;
   saveLabel?: string;
+  downloadDisabled?: boolean;
+  downloadTitle?: string;
   statusLabel?: string;
   statusProgress?: number;
   disableActions?: boolean;
@@ -47,10 +57,13 @@ interface ResultCardProps {
   footer?: React.ReactNode;
 }
 
+/** Extensible kind map: new asset types (e.g. MusCraft "mus") plug in here
+ *  without rewriting the card. Unknown kinds fall back to audio rendering. */
 const kindCopy: Record<ResultKind, { label: string; icon: typeof Play }> = {
   audio: { label: "Audio", icon: Play },
   midi: { label: "MIDI", icon: KeyboardMusic },
   preset: { label: "Preset", icon: SlidersHorizontal },
+  mus: { label: "Mus", icon: Waves },
 };
 
 export default function ResultCard({
@@ -58,21 +71,44 @@ export default function ResultCard({
   onAddToLibrary,
   onRemix,
   onEdit,
+  onDownload,
   onToggleFavorite,
   savedToLibrary,
   favorited,
   saveLabel,
+  downloadDisabled,
+  downloadTitle,
   statusLabel,
   statusProgress,
   disableActions,
   variant = "feed",
   footer,
+  onDragStart,
+  onDragEnd,
 }: ResultCardProps) {
   const { mode } = useInterfaceMode();
+  const { t } = useLanguage();
   const isPro = mode === "pro";
   const isFeed = variant === "feed";
-  const Icon = kindCopy[item.kind].icon;
+  const Icon = (kindCopy[item.kind] ?? kindCopy.audio).icon;
+  const kindLabel = (kindCopy[item.kind] ?? kindCopy.audio).label;
   const meta = buildMetadata(item);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.effectAllowed = "copy";
+    e.dataTransfer.setData("text/soundai-asset-id", item.id);
+    e.dataTransfer.setData("text/soundai-asset-title", item.title);
+    e.dataTransfer.setData("text/soundai-asset-kind", item.kind);
+    e.dataTransfer.setData("text/soundai-asset-format", item.format);
+    setIsDragging(true);
+    onDragStart?.(e);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    onDragEnd?.();
+  };
 
   if (isFeed) {
     return (
@@ -92,7 +128,7 @@ export default function ResultCard({
           <div className="conversation-artifact-heading">
             <span className="conversation-artifact-kind">
               <Icon className="h-3 w-3" />
-              {kindCopy[item.kind].label}
+              {kindLabel}
             </span>
             <h3 className="conversation-artifact-title">{item.title}</h3>
             {item.description && (
@@ -112,15 +148,36 @@ export default function ResultCard({
               <MidiPreview notes={item.notes} durationSeconds={item.durationSeconds} />
             )}
             {item.kind === "preset" && item.preset && <PresetPreview preset={item.preset} />}
+            {item.kind === "mus" && (
+              <p className="px-1 py-2 font-codec text-[12px] text-[var(--text-muted)]">
+                Mus output preview is not available yet — MusCraft integration is pending.
+              </p>
+            )}
           </div>
 
           <div className="conversation-artifact-meta">
             {meta.map((entry) => (
               <span key={entry}>{entry}</span>
             ))}
+            {onDragStart && (
+              <span className="premium-chip ml-2" data-daw-compatible>
+                <MousePointer2 className="h-3 w-3" />
+                {t("result.dawCompatible")}
+              </span>
+            )}
           </div>
 
           <div className="conversation-artifact-actions">
+            {onDownload && (
+              <span title={downloadTitle}>
+                <ArtifactAction
+                  disabled={disableActions || downloadDisabled}
+                  icon={Download}
+                  label="Download"
+                  onClick={onDownload}
+                />
+              </span>
+            )}
             <ArtifactAction
               disabled={savedToLibrary || disableActions}
               icon={Heart}
@@ -140,6 +197,21 @@ export default function ResultCard({
             )}
             {isPro && onEdit && (
               <ArtifactAction disabled={disableActions} icon={Pencil} label="Edit" onClick={onEdit} />
+            )}
+            {onDragStart && (
+              <button
+                type="button"
+                draggable
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                disabled={disableActions}
+                className={`conversation-artifact-action ${isDragging ? "is-dragging" : ""}`}
+                title={t("result.dragToDaw")}
+                aria-label={t("result.dragToDaw")}
+              >
+                <MousePointer2 className={`h-3.5 w-3.5 ${isDragging ? "text-primary animate-pulse" : ""}`} />
+                {isDragging ? t("drag.dragging") : t("result.dragToDaw")}
+              </button>
             )}
           </div>
 
@@ -166,6 +238,12 @@ export default function ResultCard({
             {meta.map((entry) => (
               <span key={entry}>{entry}</span>
             ))}
+            {onDragStart && (
+              <span className="premium-chip ml-2" data-daw-compatible>
+                <MousePointer2 className="h-3 w-3" />
+                {t("result.dawCompatible")}
+              </span>
+            )}
           </div>
         </div>
         {statusLabel && <span className="premium-asset-status">{statusLabel}</span>}
@@ -183,6 +261,11 @@ export default function ResultCard({
           <MidiPreview notes={item.notes} durationSeconds={item.durationSeconds} />
         )}
         {item.kind === "preset" && item.preset && <PresetPreview preset={item.preset} />}
+        {item.kind === "mus" && (
+          <p className="px-1 py-2 font-codec text-[12px] text-[var(--text-muted)]">
+            Mus output preview is not available yet — MusCraft integration is pending.
+          </p>
+        )}
       </div>
 
       {typeof statusProgress === "number" && statusProgress < 1 && (
@@ -195,6 +278,16 @@ export default function ResultCard({
       )}
 
       <div className="premium-asset-actions">
+        {onDownload && (
+          <span title={downloadTitle}>
+            <AssetAction
+              disabled={disableActions || downloadDisabled}
+              icon={Download}
+              label="Download"
+              onClick={onDownload}
+            />
+          </span>
+        )}
         <AssetAction
           disabled={savedToLibrary || disableActions}
           icon={Heart}
@@ -205,6 +298,21 @@ export default function ResultCard({
         <AssetAction disabled={disableActions} icon={Repeat} label="Reuse" onClick={onRemix} />
         {isPro && onEdit && (
           <AssetAction disabled={disableActions} icon={Pencil} label="Edit" onClick={onEdit} />
+        )}
+        {onDragStart && (
+          <button
+            type="button"
+            draggable
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            disabled={disableActions}
+            className={`premium-asset-action ${isDragging ? "is-dragging" : ""}`}
+            title={t("result.dragToDaw")}
+            aria-label={t("result.dragToDaw")}
+          >
+            <MousePointer2 className={`h-3.5 w-3.5 ${isDragging ? "text-primary animate-pulse" : ""}`} />
+            {isDragging ? t("drag.dragging") : t("result.dragToDaw")}
+          </button>
         )}
       </div>
     </article>
@@ -279,6 +387,10 @@ function buildMetadata(item: ResultCardItem): string[] {
       `${Math.max(1, Math.round(item.durationSeconds / 2))} bars`,
       duration,
     ];
+  }
+
+  if (item.kind === "mus") {
+    return [item.format, item.genre ?? item.tags?.[0] ?? "Mus", duration];
   }
 
   return [item.format, item.genre ?? item.tags?.[0] ?? "Preset", duration];

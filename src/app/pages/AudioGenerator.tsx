@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Check, RefreshCw, Sparkles } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Check, PanelRight, RefreshCw, Sparkles, X } from "lucide-react";
 import PromptInput from "../components/PromptInput";
 import BrandSelect from "../components/BrandSelect";
 import type { AudioResult } from "../data/mock";
@@ -15,8 +15,14 @@ import AddToProjectMenu from "../components/workspace/AddToProjectMenu";
 import { consumeComposerPrefill } from "../lib/composerPrefill";
 import { setEditorIntent } from "../lib/editorIntent";
 import { COMPOSER_INPUT_ID, focusComposerInput } from "../lib/focusComposer";
-import { toModelSelectOptions } from "../lib/modelOptions";
+import { useToast } from "../components/Toast";
 import { recordGenerationHistory } from "../lib/creditsService";
+import {
+  estimateCost,
+  fetchGenerationCostMap,
+  type GenerationCostMap,
+} from "../lib/generation/costs";
+import { modelSelectOptions as catalogModelOptions } from "../lib/generation/models";
 import { useLibraryStore } from "../state/libraryStore";
 import {
   selectActiveChat,
@@ -29,24 +35,11 @@ import { useCredits } from "../hooks/useCredits";
 import { useAuth } from "../hooks/useAuth";
 
 const LITE_TYPES = ["Audio Sample"] as const;
-const LITE_MODELS_BY_TYPE: Record<(typeof LITE_TYPES)[number], string[]> = {
-  "Audio Sample": [
-    "facebook/musicgen-small",
-    "facebook/audiogen-medium",
-    "stabilityai/stable-audio-open-small",
-    "chinedudave06/musicgen-small-onnx",
-  ],
-};
 const LITE_FORMATS_BY_TYPE: Record<(typeof LITE_TYPES)[number], string[]> = {
   "Audio Sample": ["MP3"],
 };
 
 const PRO_TYPES = ["Audio Sample", "MIDI Melody", "VST Preset"] as const;
-const PRO_MODELS_BY_TYPE: Record<(typeof PRO_TYPES)[number], string[]> = {
-  "Audio Sample": ["SoundCraft"],
-  "MIDI Melody": ["MidiCraft"],
-  "VST Preset": ["VSTCraft"],
-};
 const PRO_FORMATS_BY_TYPE: Record<(typeof PRO_TYPES)[number], string[]> = {
   "Audio Sample": ["WAV", "FLAC", "OGG"],
   "MIDI Melody": ["MIDI"],
@@ -79,7 +72,15 @@ interface PendingGeneration {
   model: string;
   format: string;
   stage: string;
-  progress: number;
+}
+
+interface RunRequest {
+  promptValue: string;
+  genType: string;
+  genModel: string;
+  genFormat: string;
+  genCount: number;
+  parentBatchId?: string | null;
 }
 
 interface PromptControlConfig {
@@ -103,10 +104,27 @@ function sleep(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
+const BACKEND_GENERATED_FROM = new Set([
+  "ai-orchestration-api",
+  "soundcraft-api",
+  "midicraft-api",
+  "vstcraft-api",
+]);
+
 function mapSuggestionType(rec: Suggestion) {
   if (rec.type === "MIDI") return "MIDI Melody";
   if (rec.type === "VST Preset") return "VST Preset";
   return "Audio Sample";
+}
+
+/** UX-002: batches without an explicit source predate disclosure; infer from item metadata. */
+function isDemoBatch(batch: GenerationBatch): boolean {
+  if (batch.source === "demo") return true;
+  if (batch.source === "backend") return false;
+  if (batch.items.length === 0) return false;
+  return batch.items.every(
+    (item) => !BACKEND_GENERATED_FROM.has(item.metadata?.generatedFrom ?? ""),
+  );
 }
 
 export default function AudioGenerator() {
@@ -132,7 +150,15 @@ export default function AudioGenerator() {
   const assetsPanelCollapsed = useWorkspaceStore((s) => s.assetsPanelCollapsed);
   const setAssetsPanelCollapsed = useWorkspaceStore((s) => s.setAssetsPanelCollapsed);
   const addFromResult = useLibraryStore((s) => s.addFromResult);
-  const { refresh: refreshCredits } = useCredits();
+  const { notify } = useToast();
+  const [searchParams] = useSearchParams();
+  const projectParam = searchParams.get("projectId");
+  // UX-018/019: synchronous in-flight guard (no re-render race between
+  // click and Enter) + sequence invalidation for stale async completions.
+  // The gateway exposes no AbortSignal, so cancellation means ignoring
+  // stale results — backend idempotency is untouched.
+  const inFlightRef = useRef(false);
+  const generationSeq = useRef(0);
 
   const history = activeChat?.history ?? [];
   const sessionAssets = activeChat?.sessionAssets ?? [];
@@ -154,6 +180,9 @@ export default function AudioGenerator() {
 
   const isFirstSessionMount = useRef(true);
   useEffect(() => {
+    // Invalidate any in-flight generation from the previous chat context.
+    generationSeq.current += 1;
+    inFlightRef.current = false;
     if (isFirstSessionMount.current) {
       isFirstSessionMount.current = false;
       const prefill = consumeComposerPrefill();
@@ -172,14 +201,40 @@ export default function AudioGenerator() {
     focusComposerInput();
   }, [activeChatId, typeOptions]);
 
-  const modelOptions = useMemo(() => {
-    if (isPro) {
-      const key = type as (typeof PRO_TYPES)[number];
-      return PRO_MODELS_BY_TYPE[key] ?? PRO_MODELS_BY_TYPE["Audio Sample"];
+  // UX-013: hydrate project context from ?projectId= (direct links, refresh,
+  // back/forward). Store remains the single source of truth; an explicitly
+  // open chat from another project always wins over the parameter.
+  useEffect(() => {
+    if (!projectParam) return;
+    const st = useWorkspaceStore.getState();
+    if (!st.projects.some((p) => p.id === projectParam)) return;
+    const chat = st.chats.find((c) => c.id === st.activeChatId);
+    if (chat && chat.projectId && chat.projectId !== projectParam) return;
+    if (!st.activeChatId) {
+      if (st.pendingChatProjectId !== projectParam) st.startNewSession(projectParam);
+    } else if (st.activeProjectId !== projectParam) {
+      st.setActiveProject(projectParam);
     }
-    const key = type as (typeof LITE_TYPES)[number];
-    return LITE_MODELS_BY_TYPE[key] ?? LITE_MODELS_BY_TYPE["Audio Sample"];
-  }, [isPro, type]);
+  }, [projectParam]);
+
+  // Invalidate stale generations on unmount.
+  useEffect(() => {
+    return () => {
+      generationSeq.current += 1;
+      inFlightRef.current = false;
+    };
+  }, []);
+
+  // P4-A §23: model lists + availability come from the catalog, not from
+  // hardcoded provider assumptions in the UI.
+  const { options: modelSelectOptions, availability: modelAvailability } = useMemo(
+    () => catalogModelOptions(type as GenerationType, isPro ? "pro" : "lite"),
+    [type, isPro],
+  );
+  const modelOptions = useMemo(
+    () => modelSelectOptions.map((o) => String(o.value)),
+    [modelSelectOptions],
+  );
 
   const formatOptions = useMemo(() => {
     if (isPro) {
@@ -194,6 +249,7 @@ export default function AudioGenerator() {
   const [format, setFormat] = useState(formatOptions[0]);
   const resolvedModel = modelOptions.includes(model) ? model : modelOptions[0];
   const resolvedFormat = formatOptions.includes(format) ? format : formatOptions[0];
+  const selectedModelInfo = modelAvailability[resolvedModel] ?? null;
 
   useEffect(() => {
     if (!modelOptions.includes(model)) setModel(modelOptions[0]);
@@ -206,13 +262,38 @@ export default function AudioGenerator() {
   const [pending, setPending] = useState<PendingGeneration | null>(null);
   const [generationWarning, setGenerationWarning] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  // P4-A §20: assets drawer for viewports below lg (desktop rail stays).
+  const [assetsDrawerOpen, setAssetsDrawerOpen] = useState(false);
+  useEffect(() => {
+    if (!assetsDrawerOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setAssetsDrawerOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [assetsDrawerOpen]);
 
   const hasFeed = history.length > 0 || Boolean(pending);
 
-  const modelSelectOptions = useMemo(
-    () => toModelSelectOptions(modelOptions, isPro ? "pro" : "lite"),
-    [modelOptions, isPro],
+  // P4-A §8–9: authoritative cost preview. Estimate only; the server charge
+  // is final. Null map → "unavailable", never a guessed price.
+  const { remaining: creditBalance, loading: creditsLoading, refresh: refreshCredits } = useCredits();
+  const [costMap, setCostMap] = useState<GenerationCostMap | null>(null);
+  const refreshCosts = useMemo(
+    () => async () => {
+      setCostMap(await fetchGenerationCostMap());
+    },
+    [],
   );
+  useEffect(() => {
+    void refreshCosts();
+  }, [refreshCosts]);
+  const costEstimate = useMemo(
+    () => estimateCost(type as GenerationType, isPro ? "pro" : "lite", generationCount, costMap),
+    [type, isPro, generationCount, costMap],
+  );
+  const insufficientCredits =
+    !creditsLoading && costEstimate !== null && creditBalance < costEstimate.total;
 
   const promptControls: PromptControlConfig[] = useMemo(
     () => [
@@ -290,9 +371,26 @@ export default function AudioGenerator() {
     focusComposerInput();
   };
 
+  const handleCancelGeneration = () => {
+    if (!inFlightRef.current) return;
+    generationSeq.current += 1;
+    inFlightRef.current = false;
+    setPending(null);
+    setIsGenerating(false);
+    notify("Generation cancelled.", "info");
+  };
+
   const handleRegenerate = (batch: GenerationBatch) => {
-    setPrompt(batch.prompt);
-    focusComposerInput();
+    // P4-A §12: a real generation request (new id, lineage preserved),
+    // not a prompt refill.
+    void runGeneration({
+      promptValue: batch.prompt,
+      genType: batch.type,
+      genModel: batch.model,
+      genFormat: batch.format,
+      genCount: batch.count,
+      parentBatchId: batch.id,
+    });
   };
 
   const handleSuggestion = (rec: Suggestion) => {
@@ -301,53 +399,64 @@ export default function AudioGenerator() {
     focusComposerInput();
   };
 
-  const handleGenerate = async () => {
-    if (isGenerating || prompt.trim().length < 3) return;
+  const runGeneration = async (req: RunRequest): Promise<boolean> => {
+    // UX-018/019: synchronous guard first — state updates are async, so
+    // isGenerating alone cannot stop a click+Enter race in the same tick.
+    if (inFlightRef.current || isGenerating) return false;
 
-    // No client-side credit pre-check: the server enforces entitlements and
-    // reserves credits atomically. The UI only shows backend-confirmed state.
-    const promptValue = prompt.trim();
+    // P4-A §8–9: cost gate from the authoritative map. Estimate only —
+    // the server remains the final authority and enforces on request.
+    const estimate = estimateCost(
+      req.genType as GenerationType,
+      isPro ? "pro" : "lite",
+      req.genCount,
+      costMap,
+    );
+    if (!creditsLoading && estimate && creditBalance < estimate.total) {
+      const blocked =
+        `Not enough credits — this generation needs ~${estimate.total} credits ` +
+        `(balance ${creditBalance}). Top up in Billing to continue.`;
+      setGenerationWarning(blocked);
+      notify(blocked, "error");
+      return false;
+    }
+
+    // No client-side credit pre-check beyond the estimate gate: the server
+    // enforces entitlements and reserves credits atomically.
+    inFlightRef.current = true;
+    const seq = generationSeq.current;
     const pendingId = crypto.randomUUID();
     setIsGenerating(true);
     setGenerationWarning(null);
     setPending({
       id: pendingId,
-      prompt: promptValue,
-      count: generationCount,
-      type,
-      model: resolvedModel,
-      format: resolvedFormat,
+      prompt: req.promptValue,
+      count: req.genCount,
+      type: req.genType,
+      model: req.genModel,
+      format: req.genFormat,
       stage: GENERATION_STAGES[0],
-      progress: 0.12,
     });
 
     const startedAt = Date.now();
-    const progressTimer = window.setInterval(() => {
-      const elapsed = Date.now() - startedAt;
-      const nextProgress = Math.min(0.92, elapsed / MIN_GENERATION_VISUAL_MS);
-      const nextStageIndex = Math.min(
-        GENERATION_STAGES.length - 1,
-        Math.floor(nextProgress * GENERATION_STAGES.length),
-      );
-      setPending((current) =>
-        current
-          ? {
-              ...current,
-              stage: GENERATION_STAGES[nextStageIndex],
-              progress: nextProgress,
-            }
-          : current,
-      );
-    }, 120);
+    // Indeterminate: generic stage rotation, no fabricated percentages.
+    const stageTimer = window.setInterval(() => {
+      setPending((current) => {
+        if (!current) return current;
+        const idx = GENERATION_STAGES.indexOf(current.stage as (typeof GENERATION_STAGES)[number]);
+        const next = GENERATION_STAGES[Math.min(idx + 1, GENERATION_STAGES.length - 1)];
+        return { ...current, stage: next };
+      });
+    }, 900);
 
     try {
       const response = await generateResults({
-        prompt: promptValue,
+        prompt: req.promptValue,
         mode: isPro ? "pro" : "lite",
-        type: type as GenerationType,
-        model: resolvedModel,
-        format: resolvedFormat,
-        count: generationCount,
+        type: req.genType as GenerationType,
+        model: req.genModel,
+        format: req.genFormat,
+        count: req.genCount,
         idempotencyKey: pendingId,
       });
 
@@ -356,27 +465,38 @@ export default function AudioGenerator() {
         await sleep(MIN_GENERATION_VISUAL_MS - elapsed);
       }
 
+      // Stale completion (chat switched, cancelled, or unmounted): ignore.
+      if (seq !== generationSeq.current) {
+        window.clearInterval(stageTimer);
+        return false;
+      }
+
       setGenerationWarning(response.warning ?? null);
+      const isPreview = response.source === "demo";
       const batch: GenerationBatch = {
         id: pendingId,
-        prompt: promptValue,
-        count: generationCount,
-        type,
-        model: resolvedModel,
-        format: resolvedFormat,
+        prompt: req.promptValue,
+        count: req.genCount,
+        type: req.genType,
+        model: req.genModel,
+        format: req.genFormat,
         createdAt: formatBatchTimestamp(new Date()),
         items: response.items,
+        source: response.source,
+        status: isPreview ? "preview" : "completed",
+        parentBatchId: req.parentBatchId ?? null,
       };
 
       const actualCount = Math.max(1, response.items.length);
 
       // Backend-confirmed balance: always refresh from /api/credits after generation.
       void refreshCredits();
+      void refreshCosts();
 
-      if (actualCount < generationCount) {
+      if (actualCount < req.genCount) {
         setGenerationWarning(
           (response.warning ? `${response.warning} ` : "") +
-            `Requested ${generationCount} variants; received ${actualCount}. Credits charged: ${response.credits?.consumed ?? 0}.`,
+            `Requested ${req.genCount} variants; received ${actualCount}. Credits charged: ${response.credits?.consumed ?? 0}.`,
         );
       }
 
@@ -387,26 +507,82 @@ export default function AudioGenerator() {
         userId: user?.id ?? null,
         projectId: createdChat?.projectId ?? null,
         generationId: pendingId,
-        prompt: promptValue,
-        generationType: type,
-        model: resolvedModel,
-        format: resolvedFormat,
+        prompt: req.promptValue,
+        generationType: req.genType,
+        model: req.genModel,
+        format: req.genFormat,
         count: actualCount,
         creditsSpent: response.credits?.consumed ?? 0,
         status: "success",
       });
       setPrompt("");
       setPending(null);
+      return true;
     } catch (error) {
+      if (seq !== generationSeq.current) {
+        window.clearInterval(stageTimer);
+        return false;
+      }
       // Server restores credits on failure automatically; refresh authoritative state.
       void refreshCredits();
-      setGenerationWarning(
-        error instanceof Error ? error.message : "Generation failed unexpectedly.",
-      );
+      const message = error instanceof Error ? error.message : "Generation failed unexpectedly.";
+      // P4-A §17: failure is a first-class timeline entry with Retry — not
+      // a transient warning. No restore claim beyond server-confirmed state.
+      const failedBatch: GenerationBatch = {
+        id: pendingId,
+        prompt: req.promptValue,
+        count: req.genCount,
+        type: req.genType,
+        model: req.genModel,
+        format: req.genFormat,
+        createdAt: formatBatchTimestamp(new Date()),
+        items: [],
+        source: "backend",
+        status: "failed",
+        error: message,
+        parentBatchId: req.parentBatchId ?? null,
+      };
+      appendBatch(ensureActiveChat(), failedBatch, []);
+      setGenerationWarning(message);
+      notify(message, "error");
       setPending(null);
+      return false;
     } finally {
-      window.clearInterval(progressTimer);
-      setIsGenerating(false);
+      window.clearInterval(stageTimer);
+      inFlightRef.current = false;
+      if (seq === generationSeq.current) setIsGenerating(false);
+    }
+  };
+
+  const handleGenerate = () => {
+    if (prompt.trim().length < 3) return;
+    void runGeneration({
+      promptValue: prompt.trim(),
+      genType: type,
+      genModel: resolvedModel,
+      genFormat: resolvedFormat,
+      genCount: generationCount,
+    });
+  };
+
+  const handleDownload = (item: AudioResult) => {
+    // P4-A §11: real bytes download; otherwise an honest unavailable message.
+    const url = item.metadata?.previewUrl ?? item.metadata?.assetUrl ?? null;
+    if (!url) {
+      notify("Preview unavailable — inference service not connected.", "error");
+      return;
+    }
+    try {
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${item.title}.${(item.format || "bin").toLowerCase().replace(/[^a-z0-9]+/g, "") || "bin"}`;
+      anchor.rel = "noopener";
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      notify("Download started.", "success");
+    } catch {
+      notify("Download failed — try again.", "error");
     }
   };
 
@@ -420,23 +596,51 @@ export default function AudioGenerator() {
 
   const dock = (
     <div className="prompt-dock-wrap" data-state={hasFeed ? "docked" : "centered"}>
+      <CostPreviewLine
+        estimate={costEstimate}
+        balance={creditBalance}
+        loading={creditsLoading}
+        count={generationCount}
+        typeLabel={type}
+      />
+      {selectedModelInfo && !selectedModelInfo.available && (
+        <p
+          className="mx-auto mb-2 w-fit rounded-full border border-[var(--border-primary)] bg-[var(--surface-secondary)] px-3 py-1 font-codec text-[11px] text-[var(--text-secondary)]"
+          role="note"
+        >
+          {selectedModelInfo.id} endpoint not connected — output will be labelled Preview.
+        </p>
+      )}
       <PromptInput
         value={prompt}
         onChange={setPrompt}
         onGenerate={handleGenerate}
-        disabled={isGenerating}
+        disabled={isGenerating || insufficientCredits}
         loading={isGenerating}
         generateLabel={isGenerating ? t("workspace.generating") : t("workspace.create")}
         mode={isPro ? "pro" : "lite"}
         layout="dock"
         controls={controls}
         textareaId={COMPOSER_INPUT_ID}
+        placeholder={
+          hasFeed
+            ? "Describe a variation or refinement… (Shift+Enter for newline)"
+            : undefined
+        }
       />
+      {insufficientCredits && costEstimate && (
+        <p className="mx-auto mt-2 w-fit font-codec text-[12px] text-[var(--error)]" role="alert">
+          Not enough credits — this needs ~{costEstimate.total} credits.{" "}
+          <button type="button" className="underline" onClick={() => navigate("/app/billing")}>
+            View plans
+          </button>
+        </p>
+      )}
     </div>
   );
 
   return (
-    <div className="workspace-layout flex h-[calc(100dvh-4rem)] min-h-0 flex-col overflow-hidden">
+    <div className="workspace-layout relative flex h-[calc(100dvh-4rem)] min-h-0 flex-col overflow-hidden">
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <section className="workspace-conversation relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {!hasFeed ? (
@@ -467,10 +671,12 @@ export default function AudioGenerator() {
                       onToggleFavorite={(id) => patchChatIds("favoriteIds", id)}
                       onRemix={(item) => handleRemix(item, batch.prompt)}
                       onEditInEditor={handleEditInEditor}
+                      onDownload={handleDownload}
                       onRegenerate={() => handleRegenerate(batch)}
+                      onRetry={() => handleRegenerate(batch)}
                     />
                   ))}
-                  {pending && <PendingTimeline pending={pending} />}
+                  {pending && <PendingTimeline pending={pending} onCancel={handleCancelGeneration} />}
                   {generationWarning && (
                     <div className="generation-card rounded-[20px] px-4 py-3 font-codec text-sm text-primary">
                       {generationWarning}
@@ -496,6 +702,99 @@ export default function AudioGenerator() {
           onToggleCollapsed={() => setAssetsPanelCollapsed(!assetsPanelCollapsed)}
         />
       </div>
+      {/* Mobile/tablet assets entry point (desktop uses the rail). */}
+      <button
+        type="button"
+        onClick={() => setAssetsDrawerOpen(true)}
+        aria-label={`Open assets panel, ${sessionAssets.length} assets`}
+        className="composer-control absolute bottom-24 right-4 z-30 flex h-11 w-11 items-center justify-center rounded-full !rounded-full lg:hidden"
+      >
+        <PanelRight className="h-5 w-5" />
+        {sessionAssets.length > 0 && (
+          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 font-codec text-[10px] font-bold text-on-accent">
+            {sessionAssets.length}
+          </span>
+        )}
+      </button>
+      {assetsDrawerOpen && (
+        <div className="fixed inset-0 z-[65] lg:hidden" role="dialog" aria-modal="true" aria-label="Session assets">
+          <button
+            type="button"
+            aria-label="Close assets panel"
+            onClick={() => setAssetsDrawerOpen(false)}
+            className="absolute inset-0 bg-[var(--scrim)]"
+          />
+          <div className="absolute inset-y-0 right-0 flex w-[340px] max-w-[88vw] flex-col border-l border-[var(--border-primary)] bg-[var(--background-secondary)] shadow-[var(--ui-shadow-floating)]">
+            <div className="flex shrink-0 items-center justify-between border-b border-[var(--border-primary)] px-3 py-2">
+              <span className="px-1 font-codec text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-muted)]">
+                Assets
+              </span>
+              <button
+                type="button"
+                onClick={() => setAssetsDrawerOpen(false)}
+                aria-label="Close assets panel"
+                className="composer-control flex h-8 w-8 items-center justify-center rounded-full"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1">
+              <WorkspaceAssetPanel
+                sessionAssets={sessionAssets}
+                favoriteIds={favoriteIds}
+                onToggleFavorite={(id) => patchChatIds("favoriteIds", id)}
+                collapsed={false}
+                onToggleCollapsed={() => setAssetsDrawerOpen(false)}
+                forceVisible
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CostPreviewLine({
+  estimate,
+  balance,
+  loading,
+  count,
+  typeLabel,
+}: {
+  estimate: { unit: number; total: number } | null;
+  balance: number;
+  loading: boolean;
+  count: number;
+  typeLabel: string;
+}) {
+  return (
+    <div
+      className="mx-auto mb-2 flex w-fit flex-wrap items-center justify-center gap-x-2 gap-y-0.5 font-codec text-[11px] text-[var(--text-muted)]"
+      aria-live="polite"
+    >
+      {loading ? (
+        <span>Checking credit cost…</span>
+      ) : estimate ? (
+        <>
+          <span>
+            {count} × {estimate.unit} credits
+          </span>
+          <span aria-hidden>·</span>
+          <span className="font-semibold text-[var(--text-secondary)]">
+            Cost ~{estimate.total} credits (estimate)
+          </span>
+          <span aria-hidden>·</span>
+          <span>
+            Balance {balance} → after ~{Math.max(0, balance - estimate.total)}
+          </span>
+          <span className="w-full text-center text-[10px]" title="Server-computed unit cost; final charge is server-authoritative">
+            {typeLabel} · server unit cost, final charge confirmed after generation
+          </span>
+        </>
+      ) : (
+        <span>Credit cost unavailable — balance shown in header.</span>
+      )}
     </div>
   );
 }
@@ -527,7 +826,9 @@ function GenerationTimeline({
   onToggleFavorite,
   onRemix,
   onEditInEditor,
+  onDownload,
   onRegenerate,
+  onRetry,
 }: {
   batch: GenerationBatch;
   saved: Set<string>;
@@ -539,7 +840,9 @@ function GenerationTimeline({
   onToggleFavorite: (id: string) => void;
   onRemix: (item: AudioResult) => void;
   onEditInEditor: (item: AudioResult) => void;
+  onDownload: (item: AudioResult) => void;
   onRegenerate: () => void;
+  onRetry: () => void;
 }) {
   const label =
     batch.type === "Audio Sample"
@@ -547,6 +850,49 @@ function GenerationTimeline({
       : batch.type === "MIDI Melody"
         ? `${batch.count} MIDI File${batch.count > 1 ? "s" : ""} Generated`
         : `${batch.count} VST Preset${batch.count > 1 ? "s" : ""} Generated`;
+  // UX-002: demo fallback must never look like a production render.
+  const isPreview = batch.status === "preview" || (batch.status !== "failed" && isDemoBatch(batch));
+  const isFailed = batch.status === "failed";
+
+  if (isFailed) {
+    return (
+      <article className="space-y-5">
+        <div className="flex justify-end">
+          <div className="user-bubble max-w-[85%] px-4 py-3 font-codec text-sm leading-6 text-[var(--text-primary)]">
+            {batch.prompt}
+          </div>
+        </div>
+        <div className="flex justify-start">
+          <div
+            className="assistant-bubble premium-generation-bubble w-full max-w-full md:max-w-[92%] rounded-[20px] border border-[var(--error)]/30 bg-[var(--surface-primary)] p-5"
+            role="alert"
+          >
+            <div className="mb-2 flex flex-wrap items-center gap-3">
+              <div className="font-codec text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-muted)]">
+                SoundAI
+              </div>
+              <span className="timeline-status" data-state="loading">
+                <X className="h-3 w-3" />
+                Generation failed
+              </span>
+              <span className="font-mono text-[11px] text-[var(--text-muted)]">
+                {batch.model} · {batch.format}
+              </span>
+            </div>
+            <p className="font-codec text-[13px] leading-6 text-[var(--text-primary)]">
+              {batch.error ?? "The generation service is currently unavailable."}
+            </p>
+            <p className="mt-1 font-codec text-[12px] leading-5 text-[var(--text-secondary)]">
+              Your balance was refreshed from the server — failed generations are not charged.
+            </p>
+            <div className="mt-4">
+              <TimelineAction icon={RefreshCw} label="Retry" onClick={onRetry} />
+            </div>
+          </div>
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article className="space-y-5">
@@ -565,11 +911,26 @@ function GenerationTimeline({
               <Check className="h-3 w-3" />
               {label}
             </span>
+            {isPreview && (
+              <span
+                className="timeline-status"
+                data-state="loading"
+                title="Preview mode — demo synthesis, not a production render."
+              >
+                Preview
+              </span>
+            )}
             <span className="font-mono text-[11px] text-[var(--text-muted)]">
               {batch.model} · {batch.format}
             </span>
             <TimelineAction icon={RefreshCw} label="Regenerate" onClick={onRegenerate} />
           </div>
+          {isPreview && (
+            <p className="mb-4 font-codec text-[12px] leading-5 text-[var(--text-secondary)]">
+              Preview mode — demo synthesis, not a production render. Downloads and
+              exports from this batch are preview-quality.
+            </p>
+          )}
           <div className="space-y-6">
             {batch.items.map((item, index) => (
               <div key={item.id} style={{ animationDelay: `${index * 80}ms` }}>
@@ -582,6 +943,7 @@ function GenerationTimeline({
                   onToggleFavorite={() => onToggleFavorite(item.id)}
                   onRemix={() => onRemix(item)}
                   onEdit={() => onEditInEditor(item)}
+                  onDownload={() => onDownload(item)}
                   saveLabel={saved.has(item.id) ? "Saved" : "Save to Library"}
                   footer={
                     <AddToProjectMenu
@@ -600,9 +962,9 @@ function GenerationTimeline({
   );
 }
 
-function PendingTimeline({ pending }: { pending: PendingGeneration }) {
+function PendingTimeline({ pending, onCancel }: { pending: PendingGeneration; onCancel: () => void }) {
   return (
-    <article className="space-y-4">
+    <article className="space-y-4" aria-busy="true" aria-live="polite">
       <div className="flex justify-end">
         <div className="user-bubble max-w-[85%] px-4 py-3 font-codec text-sm leading-6 text-[var(--text-primary)]">
           {pending.prompt}
@@ -622,19 +984,24 @@ function PendingTimeline({ pending }: { pending: PendingGeneration }) {
                 </span>
               </div>
               <div className="mt-1 font-mono text-[11px] text-[var(--text-muted)]">
-                {pending.stage} · {Math.round(pending.progress * 100)}%
+                {pending.stage}
               </div>
             </div>
-            <span className="timeline-status" data-state="loading">
-              <Sparkles className="h-3.5 w-3.5 animate-pulse text-primary" />
-              In progress
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="timeline-status" data-state="loading">
+                <Sparkles className="h-3.5 w-3.5 animate-pulse text-primary" />
+                In progress
+              </span>
+              <TimelineAction icon={X} label="Cancel" onClick={onCancel} />
+            </div>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-secondary)]">
-            <div
-              className="h-full rounded-full bg-[var(--ui-create-gradient)] transition-[width] duration-300"
-              style={{ width: `${Math.max(8, Math.round(pending.progress * 100))}%` }}
-            />
+          {/* Indeterminate: exact inference progress is unknown — no fabricated %. */}
+          <div
+            className="h-2 overflow-hidden rounded-full bg-[var(--surface-secondary)]"
+            role="progressbar"
+            aria-label={`Generating ${pending.type.toLowerCase()}`}
+          >
+            <div className="skeleton-line h-full w-full rounded-full" />
           </div>
           <div className="space-y-3">
             {Array.from({ length: pending.count }, (_, index) => (

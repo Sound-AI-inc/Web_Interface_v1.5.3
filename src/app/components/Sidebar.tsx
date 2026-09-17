@@ -5,7 +5,6 @@ import {
   LayoutGrid,
   Pencil,
   Library as LibraryIcon,
-  Plug,
   CreditCard,
   PanelLeftClose,
   PanelLeftOpen,
@@ -48,7 +47,6 @@ const coreProduct: NavItem[] = [
 const assetsSystem: NavItem[] = [
   { labelKey: "nav.library", to: "/app/library", icon: LibraryIcon },
   { labelKey: "nav.export", to: "/app/export", icon: Upload },
-  { labelKey: "nav.integrations", to: "/app/integrations", icon: Plug },
   { labelKey: "nav.billing", to: "/app/billing", icon: CreditCard },
 ];
 
@@ -91,12 +89,15 @@ function Item({
       </button>
     );
   }
+  // UX-009: future routes stay keyboard-accessible and clickable so they
+  // resolve to an honest SOON page instead of a dead element.
   if (item.disabled) {
     return (
-      <div
-        className={`${collapsed ? collapsedBase : NAV_ITEM_BASE} cursor-not-allowed text-text/30`}
+      <NavLink
+        to={item.to}
         title={collapsed ? `${label}${item.badge ? ` • ${item.badge}` : ""}` : undefined}
-        aria-disabled
+        aria-label={`${label} — coming soon`}
+        className={`${collapsed ? collapsedBase : NAV_ITEM_BASE} text-text/30`}
       >
         <Icon className="h-4 w-4" />
         {!collapsed && (
@@ -109,7 +110,7 @@ function Item({
             )}
           </>
         )}
-      </div>
+      </NavLink>
     );
   }
   return (
@@ -153,13 +154,26 @@ function SectionSeparator({ collapsed }: { collapsed: boolean }) {
 export default function Sidebar({
   onOpenSettings,
   onOpenUpgrade,
+  mobileOpen = false,
+  onCloseMobile,
 }: {
   onOpenSettings: () => void;
   onOpenUpgrade: () => void;
+  mobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const width = collapsed ? "w-[56px]" : "w-[216px]";
+  // Closing the drawer when a modal flow starts keeps focus and overlay sane.
+  const handleOpenSettings = () => {
+    onCloseMobile?.();
+    onOpenSettings();
+  };
+  const handleOpenUpgrade = () => {
+    onCloseMobile?.();
+    onOpenUpgrade();
+  };
   const profileRef = useRef<HTMLButtonElement>(null);
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -194,9 +208,22 @@ export default function Sidebar({
   }, [userMenuOpen]);
 
   return (
-    <aside
-      className={`sticky top-0 flex h-screen ${width} shrink-0 flex-col self-start border-r border-[var(--ui-border-soft)] bg-[var(--ui-bg)] shadow-[8px_0_40px_rgba(0,0,0,0.12)] transition-[width] duration-150 ease-linear`}
-    >
+    <>
+      {/* Mobile scrim — drawer is an overlay below md, inline sidebar above. */}
+      {mobileOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          onClick={onCloseMobile}
+          className="fixed inset-0 z-[60] bg-[var(--scrim)] md:hidden"
+        />
+      )}
+      <aside
+        aria-label="Primary"
+        className={`top-0 flex h-screen ${width} shrink-0 flex-col self-start border-r border-[var(--ui-border-soft)] bg-[var(--ui-bg)] shadow-[8px_0_40px_rgba(0,0,0,0.12)] transition-[width,transform] duration-150 ease-linear md:sticky ${
+          mobileOpen ? "max-md:translate-x-0" : "max-md:-translate-x-full"
+        } max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-[70]`}
+      >
       {/* Top: brand + collapse toggle */}
       <div
         className={`flex h-16 items-center ${
@@ -236,7 +263,7 @@ export default function Sidebar({
         )}
         <div className="flex flex-col gap-1">
           {coreProduct.map((i) => (
-            <Item key={i.to} item={i} collapsed={collapsed} onOpenUpgrade={onOpenUpgrade} />
+            <Item key={i.to} item={i} collapsed={collapsed} onOpenUpgrade={handleOpenUpgrade} />
           ))}
         </div>
 
@@ -244,7 +271,7 @@ export default function Sidebar({
 
         <div className="flex flex-col gap-1">
           {assetsSystem.map((i) => (
-            <Item key={i.to} item={i} collapsed={collapsed} onOpenUpgrade={onOpenUpgrade} />
+            <Item key={i.to} item={i} collapsed={collapsed} onOpenUpgrade={handleOpenUpgrade} />
           ))}
         </div>
       </nav>
@@ -256,8 +283,8 @@ export default function Sidebar({
           open={userMenuOpen}
           anchorRef={profileRef}
           onClose={() => setUserMenuOpen(false)}
-          onOpenSettings={onOpenSettings}
-          onOpenUpgrade={onOpenUpgrade}
+          onOpenSettings={handleOpenSettings}
+          onOpenUpgrade={handleOpenUpgrade}
         />
         <button
           ref={profileRef}
@@ -291,6 +318,7 @@ export default function Sidebar({
           )}
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

@@ -7,10 +7,12 @@ import AnimatedBackground from "./components/AnimatedBackground";
 import SettingsContent from "./components/SettingsContent";
 import UpgradePlanModalContent from "./components/UpgradePlanModalContent";
 import ShellModal from "./components/ShellModal";
+import { ToastProvider } from "./components/Toast";
 import { InterfaceModeContext, type InterfaceMode } from "./hooks/useInterfaceMode";
 import { useAuth } from "./hooks/useAuth";
 import { useWorkspaceStore } from "./state/workspaceStore";
 import { LanguageProvider } from "./i18n/LanguageProvider";
+import { PreviewPlaybackProvider } from "./hooks/usePreviewPlayback";
 import {
   fetchOnboardingStatus,
   isOnboardingCompleteSync,
@@ -30,6 +32,9 @@ export default function AppLayout() {
   const [mode, setModeState] = useState<InterfaceMode>(readStoredMode);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  // Mobile navigation drawer state (minimum architecture: overlay below md,
+  // closes on route change and Escape).
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { session, loading, configured, consumeFreshSession, markFreshSession } = useAuth();
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -48,6 +53,19 @@ export default function AppLayout() {
   );
 
   const ctx = useMemo(() => ({ mode, setMode, toggle }), [mode, setMode, toggle]);
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileNavOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [mobileNavOpen]);
 
   useEffect(() => {
     if (searchParams.get("fresh") === "1") {
@@ -128,6 +146,13 @@ export default function AppLayout() {
     return <Navigate to="/sign-in" replace />;
   }
 
+  // Fail closed in production: without Supabase configuration there is no
+  // authenticated app access, even though development keeps an explicit
+  // demo workspace. (UX-025)
+  if (!configured && !loading && import.meta.env.PROD) {
+    return <Navigate to="/sign-in" replace />;
+  }
+
   if (session?.user && onboardingComplete === false) {
     return <Navigate to="/onboarding" replace />;
   }
@@ -143,6 +168,8 @@ export default function AppLayout() {
   return (
     <LanguageProvider>
       <InterfaceModeContext.Provider value={ctx}>
+        <ToastProvider>
+        <PreviewPlaybackProvider>
         <AnimatedBackground />
         <div
           data-theme={mode === "pro" ? "pro" : "lite"}
@@ -153,9 +180,11 @@ export default function AppLayout() {
           <Sidebar
             onOpenSettings={() => setSettingsModalOpen(true)}
             onOpenUpgrade={() => setUpgradeModalOpen(true)}
+            mobileOpen={mobileNavOpen}
+            onCloseMobile={() => setMobileNavOpen(false)}
           />
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-            <AppHeader />
+            <AppHeader onOpenMobileNav={() => setMobileNavOpen(true)} />
             <main
               className={`min-h-0 flex-1 bg-[var(--background-primary)] ${
                 isWorkspaceRoute ? "overflow-hidden" : "token-scroll overflow-y-auto"
@@ -173,6 +202,8 @@ export default function AppLayout() {
             <UpgradePlanModalContent />
           </ShellModal>
         </div>
+        </PreviewPlaybackProvider>
+        </ToastProvider>
       </InterfaceModeContext.Provider>
     </LanguageProvider>
   );

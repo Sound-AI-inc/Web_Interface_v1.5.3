@@ -49,7 +49,7 @@ export default function PageContainer({
             {actions}
             {userInitials && (
               <div
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-on-accent"
                 aria-hidden
               >
                 {userInitials}
