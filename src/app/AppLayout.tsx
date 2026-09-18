@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Outlet, Navigate, useLocation, useSearchParams } from "react-router-dom";
+import { Outlet, Navigate, useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import AppHeader from "./components/AppHeader";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Sidebar from "./components/Sidebar";
 import AnimatedBackground from "./components/AnimatedBackground";
-import SettingsContent from "./components/SettingsContent";
 import UpgradePlanModalContent from "./components/UpgradePlanModalContent";
 import ShellModal from "./components/ShellModal";
 import { ToastProvider } from "./components/Toast";
@@ -30,7 +29,6 @@ function readStoredMode(): InterfaceMode {
 
 export default function AppLayout() {
   const [mode, setModeState] = useState<InterfaceMode>(readStoredMode);
-  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   // Mobile navigation drawer state (minimum architecture: overlay below md,
   // closes on route change and Escape).
@@ -38,6 +36,7 @@ export default function AppLayout() {
   const { session, loading, configured, consumeFreshSession, markFreshSession } = useAuth();
   const [searchParams] = useSearchParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const startNewSession = useWorkspaceStore((s) => s.startNewSession);
   const isWorkspaceRoute = location.pathname.includes("/generator");
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
@@ -178,7 +177,7 @@ export default function AppLayout() {
           }`}
         >
           <Sidebar
-            onOpenSettings={() => setSettingsModalOpen(true)}
+            onOpenSettings={() => navigate("/app/settings")}
             onOpenUpgrade={() => setUpgradeModalOpen(true)}
             mobileOpen={mobileNavOpen}
             onCloseMobile={() => setMobileNavOpen(false)}
@@ -195,9 +194,6 @@ export default function AppLayout() {
               </ErrorBoundary>
             </main>
           </div>
-          <ShellModal open={settingsModalOpen} onClose={() => setSettingsModalOpen(false)} widthClassName="max-w-[1040px]">
-            <SettingsContent onSave={() => setSettingsModalOpen(false)} compact />
-          </ShellModal>
           <ShellModal open={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} widthClassName="max-w-[1240px]">
             <UpgradePlanModalContent />
           </ShellModal>

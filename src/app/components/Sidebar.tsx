@@ -254,8 +254,8 @@ export default function Sidebar({
           collapsed ? "px-2" : "px-3"
         } pb-4 pt-2`}
       >
-        <WorkspaceNav collapsed={collapsed} />
-        <SectionSeparator collapsed={collapsed} />
+        {/* Projects - positioned near Tools (higher) */}
+        <WorkspaceNav collapsed={collapsed} section="projects" />
         {!collapsed && (
           <div className="mb-2 px-3 font-codec text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--text-muted)]">
             {t("sidebar.tools")}
@@ -274,6 +274,11 @@ export default function Sidebar({
             <Item key={i.to} item={i} collapsed={collapsed} onOpenUpgrade={handleOpenUpgrade} />
           ))}
         </div>
+
+        <SectionSeparator collapsed={collapsed} />
+
+        {/* Chats - positioned lower */}
+        <WorkspaceNav collapsed={collapsed} section="chats" />
       </nav>
 
       {/* User profile docked at very bottom */}

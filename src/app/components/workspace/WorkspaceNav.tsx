@@ -85,7 +85,7 @@ function ChatRow({
   );
 }
 
-export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
+export default function WorkspaceNav({ collapsed, section = "all" }: { collapsed: boolean; section?: "all" | "projects" | "chats" }) {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const projects = useWorkspaceStore((s) => s.projects);
@@ -186,6 +186,38 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
   };
 
   if (collapsed) {
+    if (section === "projects") {
+      return (
+        <div className="mb-3 flex flex-col items-center gap-2 px-1">
+          <button
+            type="button"
+            title={t("workspace.projects")}
+            aria-label={t("workspace.projects")}
+            onClick={() => setProjectsOpen((v) => !v)}
+            aria-expanded={projectsOpen}
+            className="flex h-9 w-9 items-center justify-center rounded-button text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
+          >
+            <FolderKanban className="h-4 w-4" />
+          </button>
+        </div>
+      );
+    }
+    if (section === "chats") {
+      return (
+        <div className="mb-3 flex flex-col items-center gap-2 px-1">
+          <button
+            type="button"
+            title={t("workspace.chats")}
+            aria-label={t("workspace.chats")}
+            onClick={() => setChatsOpen((v) => !v)}
+            aria-expanded={chatsOpen}
+            className="flex h-9 w-9 items-center justify-center rounded-button text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
+          >
+            <MessageSquare className="h-4 w-4" />
+          </button>
+        </div>
+      );
+    }
     return (
       <div className="mb-3 flex flex-col items-center gap-2 px-1">
         <button
@@ -241,8 +273,10 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
         />
       )}
 
-      {/* Projects - positioned near Tools (higher) */}
-      <div>
+      {section !== "chats" && (
+        <>
+          {/* Projects - positioned near Tools (higher) */}
+          <div>
         <button
           type="button"
           onClick={() => setProjectsOpen((v) => !v)}
@@ -381,22 +415,26 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
               );
             })}
 
-            <button
-              type="button"
-              onClick={() => createProject(t("workspace.newProject"))}
-              className="flex w-full items-center gap-2 px-3 py-2 font-codec text-[12px] text-[var(--text-muted)] hover:text-primary"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              {t("workspace.newProject")}
-            </button>
+<button
+                  type="button"
+                  onClick={() => createProject(t("workspace.newProject"))}
+                  className="flex w-full items-center gap-2 px-3 py-2 font-codec text-[12px] text-[var(--text-muted)] hover:text-primary"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  {t("workspace.newProject")}
+                </button>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
 
-      <SectionSeparator collapsed={collapsed} />
+      {section !== "projects" && (
+        <>
+          <SectionSeparator collapsed={collapsed} />
 
-      {/* Standalone chats - positioned lower */}
-      <div>
+          {/* Standalone chats - positioned lower */}
+          <div>
         <button
           type="button"
           onClick={() => setChatsOpen((v) => !v)}
@@ -430,21 +468,23 @@ export default function WorkspaceNav({ collapsed }: { collapsed: boolean }) {
                 />
               ))
             )}
-            <button
-              type="button"
-              onClick={() => {
-                startNewSession();
-                navigate(GENERATOR_PATH);
-                focusComposerInput();
-              }}
-              className="mt-1 flex w-full items-center gap-2 px-2 py-1.5 font-codec text-[11px] text-[var(--text-muted)] hover:text-primary"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              {t("workspace.newChat")}
-            </button>
+<button
+                  type="button"
+                  onClick={() => {
+                    startNewSession();
+                    navigate(GENERATOR_PATH);
+                    focusComposerInput();
+                  }}
+                  className="mt-1 flex w-full items-center gap-2 px-2 py-1.5 font-codec text-[11px] text-[var(--text-muted)] hover:text-primary"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  {t("workspace.newChat")}
+                </button>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
       <ConfirmDialog
         open={deleteTarget !== null}
         title={deleteTarget?.kind === "project" ? "Delete project?" : "Delete chat?"}
