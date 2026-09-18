@@ -14,7 +14,6 @@ const Library = lazy(() => import("./app/pages/Library"));
 const Export = lazy(() => import("./app/pages/Export"));
 const Billing = lazy(() => import("./app/pages/Billing"));
 const Profile = lazy(() => import("./app/pages/Profile"));
-const Settings = lazy(() => import("./app/pages/Settings"));
 const Notifications = lazy(() => import("./app/pages/Notifications"));
 const Archive = lazy(() => import("./app/pages/Archive"));
 const HelpPage = lazy(() => import("./app/pages/help/HelpPage"));
@@ -188,7 +187,6 @@ function App() {
               />
               <Route path="billing" element={<Billing />} />
               <Route path="profile" element={<Profile />} />
-              <Route path="settings" element={<Settings />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="archive" element={<Archive />} />
             </Route>
