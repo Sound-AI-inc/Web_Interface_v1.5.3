@@ -106,10 +106,31 @@ function App() {
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={<RootRedirect />} />
-            <Route path="/auth" element={<OAuthRegistration />} />
+            <Route
+              path="/auth"
+              element={
+                <LanguageProvider>
+                  <OAuthRegistration />
+                </LanguageProvider>
+              }
+            />
             <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route path="/sign-in" element={<OAuthRegistration />} />
-            <Route path="/sign-up" element={<OAuthRegistration />} />
+            <Route
+              path="/sign-in"
+              element={
+                <LanguageProvider>
+                  <OAuthRegistration />
+                </LanguageProvider>
+              }
+            />
+            <Route
+              path="/sign-up"
+              element={
+                <LanguageProvider>
+                  <OAuthRegistration />
+                </LanguageProvider>
+              }
+            />
             <Route path="/welcome" element={<Navigate to="/sign-up" replace />} />
 
             <Route
